@@ -1,0 +1,2389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pokemon Catch Game — Sinnoh Adventure</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+<!-- =====  FIREBASE (cloud save + accounts)  =====
+     Replace the placeholder values below with your own Firebase project's config.
+     Step-by-step setup is in FIREBASE-SETUP.md (also saved in this folder).
+     Until you replace these, the game still works and saves locally in the browser.
+-->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, doc, setDoc, getDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // === REPLACE THIS BLOCK with the config from your Firebase console ===
+  const firebaseConfig = {
+    apiKey: "REPLACE_ME",
+    authDomain: "REPLACE_ME.firebaseapp.com",
+    projectId: "REPLACE_ME",
+    storageBucket: "REPLACE_ME.appspot.com",
+    messagingSenderId: "REPLACE_ME",
+    appId: "REPLACE_ME"
+  };
+  // =====================================================================
+
+  const firebaseEnabled = !firebaseConfig.apiKey.includes('REPLACE_ME');
+  window.firebaseEnabled = firebaseEnabled;
+
+  if (firebaseEnabled) {
+    try {
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+      window.fb = {
+        auth, db,
+        createUser: (e,p) => createUserWithEmailAndPassword(auth, e, p),
+        signIn:     (e,p) => signInWithEmailAndPassword(auth, e, p),
+        signOut:    () => signOut(auth),
+        onAuth:     (cb) => onAuthStateChanged(auth, cb),
+        saveDoc:    (uid, data) => setDoc(doc(db, "saves", uid), data),
+        loadDoc:    async (uid) => (await getDoc(doc(db, "saves", uid))).data(),
+      };
+      window.dispatchEvent(new Event('firebase-ready'));
+    } catch (e) {
+      console.warn('Firebase init failed:', e);
+      window.firebaseEnabled = false;
+    }
+  }
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --fr-red: #e03028;
+    --fr-red-dk: #a82020;
+    --fr-cream: #f8e0b0;
+    --fr-brown: #684028;
+    --fr-dark-brown: #402818;
+    --fr-tan: #e8c078;
+    --fr-blue: #2868a8;
+    --fr-dark: #202830;
+    --fr-light: #f8f8f8;
+  }
+  body {
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    background: #0c0c14;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(224,48,40,0.12) 0, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(40,104,168,0.12) 0, transparent 50%);
+    color: var(--fr-dark);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    user-select: none;
+  }
+  img { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+  #game {
+    width: 768px;
+    max-width: 100%;
+    background: var(--fr-red);
+    border: 4px solid #401010;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.7), inset 0 0 0 2px rgba(255,255,255,0.1);
+  }
+  #header {
+    background: linear-gradient(180deg, var(--fr-red) 0%, var(--fr-red-dk) 100%);
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+    font-size: 9px;
+    border-bottom: 3px solid #401010;
+    text-shadow: 1px 1px 0 #000;
+  }
+  #title { font-size: 10px; letter-spacing: 1px; }
+  #stats { font-size: 8px; letter-spacing: 1px; }
+
+  #screen {
+    position: relative;
+    width: 100%;
+    height: 480px;
+    background: #000;
+    overflow: hidden;
+    border-top: 2px solid #401010;
+    border-bottom: 2px solid #401010;
+  }
+
+  /* Title Screen */
+  .title-screen {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, #f87858 0%, #e03028 50%, #a81818 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; color: #fff; padding: 20px;
+  }
+  .title-screen h1 {
+    font-size: 26px;
+    text-shadow: 3px 3px 0 #401010, 6px 6px 0 rgba(0,0,0,0.4);
+    margin-bottom: 6px;
+    letter-spacing: 2px; line-height: 1.3;
+  }
+  .title-screen h2 {
+    font-size: 12px; color: #ffd030;
+    text-shadow: 2px 2px 0 #401010; margin-bottom: 18px;
+  }
+  .title-screen .big-sprite {
+    width: 150px; height: 150px;
+    background: rgba(255,255,255,0.22);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 10px 0;
+    box-shadow: 0 0 40px rgba(255,255,255,0.5);
+    animation: bob 2s ease-in-out infinite;
+  }
+  @keyframes bob { 50% { transform: translateY(-10px); } }
+  .title-screen .big-sprite img { width: 130px; height: 130px; }
+  .press-start {
+    margin-top: 16px; font-size: 10px;
+    animation: blink 1s infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  /* Intro */
+  .intro {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, #2a2a3a 0%, #0c0c14 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px; text-align: center; color: #fff;
+  }
+  .intro .prof-sprite {
+    width: 140px; height: 140px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+    font-size: 90px;
+    filter: drop-shadow(0 0 20px rgba(255,216,48,0.5));
+  }
+  .intro h2 { font-size: 13px; margin-bottom: 12px; color: #ffd030; text-shadow: 2px 2px 0 #401010; }
+  .intro p { font-size: 9px; line-height: 1.9; max-width: 600px; min-height: 60px; }
+
+  /* Starter choice */
+  .starters {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #2a3a20 0%, #1a2a18 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  .starters h2 {
+    color: #ffd030; font-size: 11px; margin-bottom: 14px;
+    text-shadow: 2px 2px 0 #000;
+  }
+  .starter-row { display: flex; gap: 16px; }
+  .starter {
+    width: 160px;
+    background: var(--fr-cream);
+    border: 3px solid var(--fr-brown);
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.15s;
+    color: var(--fr-dark);
+  }
+  .starter:hover { transform: translateY(-8px); border-color: var(--fr-red); box-shadow: 0 8px 0 rgba(0,0,0,0.3); }
+  .starter img { width: 90px; height: 90px; }
+  .starter .nm { font-size: 10px; margin-top: 4px; }
+  .starter .tp { font-size: 8px; margin-top: 4px; }
+  .starter .desc { font-size: 7px; margin-top: 6px; line-height: 1.5; color: #604020; }
+
+  /* OVERWORLD — big scrolling map */
+  #viewport {
+    position: absolute; inset: 0;
+    overflow: hidden;
+    background: #111;
+  }
+  #world {
+    position: absolute;
+    top: 0; left: 0;
+    display: grid;
+    grid-auto-flow: row;
+    transition: transform 0.14s linear;
+  }
+  .tile {
+    position: relative;
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .tile.grass { background: #58a048; background-image: repeating-linear-gradient(45deg, #58a048 0 5px, #68b050 5px 10px); }
+  .tile.tall-grass { background: #1e5028; background-image: repeating-linear-gradient(45deg, #1e5028 0 4px, #2d6838 4px 8px); color: #0f2a14; }
+  .tile.path { background: #d8b878; background-image: repeating-linear-gradient(90deg, #d8b878 0 8px, #c8a868 8px 12px); }
+  .tile.water { background: #4080c8; background-image: linear-gradient(180deg, #5090d8 0%, #3070b8 100%); }
+  .tile.water::after { content: '〰'; color: rgba(255,255,255,0.4); font-size: 12px; }
+  .tile.tree {
+    background: #184818;
+    background-image: radial-gradient(circle at 50% 40%, #286030 0 60%, transparent 60%),
+                      radial-gradient(circle at 50% 50%, #1a3818 0 70%, transparent 70%);
+  }
+  .tile.tree::after { content: ''; }
+  .tile.rock { background: #888888; background-image: radial-gradient(circle at 40% 40%, #aaa 0 40%, #666 60%, #444 100%); }
+  .tile.flower { background: #58a048; }
+  .tile.flower::after { content: '🌸'; font-size: 14px; }
+  .tile.sand { background: #e8d098; background-image: repeating-linear-gradient(90deg, #e8d098 0 6px, #dcc488 6px 10px); }
+  .tile.building-roof {
+    background: linear-gradient(180deg, #c04040 0%, #802020 100%);
+    border: 2px solid #401010;
+  }
+  .tile.building-wall {
+    background: #d8c090;
+    border: 2px solid #604020;
+    color: #402818; font-size: 10px;
+  }
+  .tile.door {
+    background: #401810;
+    border: 2px solid #604020;
+  }
+  .tile.door::after { content: ''; position: absolute; width: 4px; height: 4px; background: #ffd030; right: 20%; top: 50%; border-radius: 50%; }
+  .tile.sign {
+    background: #58a048;
+  }
+  .tile.sign::after { content: '📜'; font-size: 18px; }
+  .tile.ledge {
+    background: #58a048;
+    border-bottom: 4px solid #2a5a20;
+  }
+  .tile.cave {
+    background: #2a2a3a;
+    background-image: radial-gradient(circle at 50% 50%, #1a1a2a 0 50%, #000 100%);
+    color: #aaa; font-size: 10px;
+  }
+  .tile.pokecenter-roof { background: linear-gradient(180deg, #e04040 0%, #a02020 100%); border: 2px solid #401010; }
+  .tile.pokecenter-roof::after { content: 'P'; color: #fff; font-weight: bold; font-size: 16px; text-shadow: 1px 1px 0 #000; }
+  .tile.pokemart-roof { background: linear-gradient(180deg, #4080c8 0%, #2060a0 100%); border: 2px solid #102040; }
+  .tile.pokemart-roof::after { content: '🛒'; font-size: 16px; }
+  .tile.lab-roof { background: linear-gradient(180deg, #6090c0 0%, #406080 100%); border: 2px solid #102030; }
+  .tile.lab-roof::after { content: '🔬'; font-size: 14px; }
+  .tile.fence {
+    background: #58a048;
+    background-image: linear-gradient(90deg, transparent 40%, #8b6838 40% 60%, transparent 60%),
+                      linear-gradient(180deg, transparent 20%, #8b6838 20% 30%, transparent 30%, transparent 60%, #8b6838 60% 70%, transparent 70%);
+  }
+  .tile.npc { background: #d8b878; }
+
+  /* NPCs and player on world layer */
+  .entity {
+    position: absolute;
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    pointer-events: none;
+    z-index: 10;
+    filter: drop-shadow(2px 3px 2px rgba(0,0,0,0.6));
+    transition: left 0.14s linear, top 0.14s linear;
+  }
+  .entity.npc { z-index: 5; animation: bob-slow 3s ease-in-out infinite; }
+  @keyframes bob-slow { 50% { transform: translateY(-3px); } }
+
+  .location-toast {
+    position: absolute;
+    top: 16px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--fr-cream);
+    border: 3px solid var(--fr-brown);
+    padding: 8px 16px;
+    font-size: 9px;
+    color: var(--fr-dark);
+    z-index: 50;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    animation: toastShow 3s forwards;
+  }
+  @keyframes toastShow {
+    0% { opacity: 0; transform: translate(-50%, -20px); }
+    15%, 70% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -20px); }
+  }
+
+  .minimap-label {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    font-size: 8px;
+    padding: 5px 8px;
+    z-index: 40;
+    border-radius: 4px;
+    border: 1px solid #555;
+  }
+
+  /* BATTLE */
+  .battle {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, #98d8f8 0%, #98d8f8 45%, #58a848 45%, #48983c 100%);
+    overflow: hidden;
+  }
+  .battle-scene-transition {
+    position: absolute; inset: 0;
+    background: #000;
+    z-index: 100;
+    animation: sceneFade 0.8s forwards;
+    pointer-events: none;
+  }
+  @keyframes sceneFade {
+    0% { opacity: 1; clip-path: circle(0% at 50% 50%); }
+    100% { opacity: 0; clip-path: circle(100% at 50% 50%); }
+  }
+  .enemy-platform, .player-platform {
+    position: absolute;
+    width: 220px; height: 46px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(88,48,24,0.5) 0%, transparent 70%);
+  }
+  .enemy-platform { top: 130px; right: 40px; }
+  .player-platform { bottom: 50px; left: 40px; }
+
+  .enemy-area, .player-area { position: absolute; }
+  .enemy-area { top: 50px; right: 80px; }
+  .player-area { bottom: 80px; left: 50px; }
+
+  .mon-sprite {
+    width: 150px; height: 150px;
+    filter: drop-shadow(3px 5px 3px rgba(0,0,0,0.4));
+    transition: transform 0.2s, opacity 0.3s;
+  }
+  .mon-sprite.small { width: 120px; height: 120px; }
+  .mon-sprite.appear { animation: appear 0.6s; }
+  .mon-sprite.shake { animation: shake 0.4s; }
+  .mon-sprite.hit { animation: hit 0.6s; }
+  .mon-sprite.faint { animation: faint 0.9s forwards; }
+  .mon-sprite.attack-forward { animation: attackFwd 0.4s; }
+  .mon-sprite.attack-back { animation: attackBack 0.4s; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-12px); }
+    40% { transform: translateX(12px); }
+    60% { transform: translateX(-10px); }
+    80% { transform: translateX(10px); }
+  }
+  @keyframes hit {
+    0%,100% { opacity: 1; }
+    20% { opacity: 0.1; filter: drop-shadow(0 0 10px red) brightness(2); }
+    40% { opacity: 1; }
+    60% { opacity: 0.1; filter: drop-shadow(0 0 10px red) brightness(2); }
+    80% { opacity: 1; }
+  }
+  @keyframes faint {
+    to { transform: translateY(90px) scale(0.4); opacity: 0; }
+  }
+  @keyframes appear {
+    from { transform: scale(0.3); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  @keyframes attackFwd {
+    0%,100% { transform: translateX(0); }
+    50% { transform: translateX(60px) scale(1.08); }
+  }
+  @keyframes attackBack {
+    0%,100% { transform: translateX(0); }
+    50% { transform: translateX(-60px) scale(1.08); }
+  }
+
+  .mon-info {
+    position: absolute;
+    background: var(--fr-cream);
+    border: 3px solid var(--fr-brown);
+    border-radius: 6px;
+    padding: 7px 12px;
+    min-width: 220px;
+    color: var(--fr-dark);
+    font-size: 9px;
+    box-shadow: 2px 3px 0 #401818;
+  }
+  .enemy-info { top: 30px; left: 30px; }
+  .player-info { bottom: 30px; right: 30px; }
+  .mon-info .nm { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 10px; }
+  .hpbar-label { font-size: 7px; color: #d03030; margin-right: 4px; display: inline-block; vertical-align: middle; }
+  .hpbar {
+    display: inline-block; vertical-align: middle;
+    width: calc(100% - 30px);
+    background: #400; height: 10px;
+    border-radius: 2px; overflow: hidden;
+    border: 1px solid #200;
+  }
+  .hpbar-fill { height: 100%; background: #30c030; transition: width 0.6s ease-out, background 0.3s; }
+  .hp-text { font-size: 8px; margin-top: 3px; text-align: right; }
+  .xpbar { width: 100%; background: #222; height: 3px; border-radius: 1px; margin-top: 3px; overflow: hidden; }
+  .xpbar-fill { height: 100%; background: #40a8f0; transition: width 0.5s; }
+
+  /* Attack animations */
+  .move-fx {
+    position: absolute;
+    pointer-events: none;
+    z-index: 15;
+    font-size: 32px;
+  }
+  .move-particle {
+    position: absolute;
+    font-size: 24px;
+    pointer-events: none;
+  }
+  .fx-impact {
+    position: absolute;
+    font-size: 48px;
+    pointer-events: none;
+    z-index: 16;
+    animation: impactPulse 0.5s forwards;
+  }
+  @keyframes impactPulse {
+    0% { transform: scale(0) rotate(0); opacity: 1; }
+    50% { transform: scale(1.5) rotate(180deg); opacity: 1; }
+    100% { transform: scale(2) rotate(360deg); opacity: 0; }
+  }
+  @keyframes projectileToEnemy {
+    0% { left: 180px; top: 280px; opacity: 0; transform: scale(0.5); }
+    20% { opacity: 1; }
+    100% { left: 560px; top: 130px; opacity: 1; transform: scale(1.2); }
+  }
+  @keyframes projectileToPlayer {
+    0% { left: 560px; top: 130px; opacity: 0; transform: scale(0.5); }
+    20% { opacity: 1; }
+    100% { left: 180px; top: 280px; opacity: 1; transform: scale(1.2); }
+  }
+  .fx-slash {
+    position: absolute;
+    width: 180px; height: 180px;
+    pointer-events: none;
+    z-index: 16;
+    background: linear-gradient(45deg, transparent 40%, #fff 48%, #fff 52%, transparent 60%);
+    animation: slashAnim 0.4s forwards;
+  }
+  @keyframes slashAnim {
+    0% { transform: scale(0.5) rotate(-45deg); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: scale(1.5) rotate(45deg); opacity: 0; }
+  }
+  .fx-flash {
+    position: absolute; inset: 0;
+    background: #fff;
+    z-index: 14;
+    pointer-events: none;
+    animation: flashAttack 0.3s forwards;
+  }
+  @keyframes flashAttack {
+    0%,100% { opacity: 0; }
+    50% { opacity: 0.7; }
+  }
+  .fx-shake-screen { animation: screenShake 0.5s; }
+  @keyframes screenShake {
+    0%,100% { transform: translate(0,0); }
+    20% { transform: translate(-4px, 3px); }
+    40% { transform: translate(4px, -3px); }
+    60% { transform: translate(-3px, -3px); }
+    80% { transform: translate(3px, 3px); }
+  }
+
+  /* Pokeball */
+  .pokeball-anim {
+    position: absolute;
+    width: 40px; height: 40px;
+    z-index: 20;
+    background:
+      linear-gradient(180deg, #e03030 0 48%, #222 48% 52%, #fff 52% 100%);
+    border-radius: 50%;
+    border: 3px solid #222;
+    box-shadow: inset 0 -4px 0 rgba(0,0,0,0.3), 0 3px 5px rgba(0,0,0,0.5);
+  }
+  .pokeball-anim::after {
+    content: '';
+    position: absolute;
+    top: 40%; left: 40%;
+    width: 20%; height: 20%;
+    background: #fff;
+    border: 2px solid #222;
+    border-radius: 50%;
+  }
+  .pokeball-anim.throw { animation: throwball 0.9s forwards; }
+  .pokeball-anim.wiggle { animation: wiggle 0.6s infinite; }
+  @keyframes throwball {
+    0% { left: 70px; top: 340px; transform: rotate(0deg) scale(0.7); }
+    40% { left: 340px; top: 100px; transform: rotate(360deg) scale(1); }
+    70% { left: 520px; top: 110px; transform: rotate(720deg) scale(1); }
+    100% { left: 520px; top: 160px; transform: rotate(720deg) scale(1); }
+  }
+  @keyframes wiggle {
+    0%,100% { transform: rotate(-20deg); }
+    50% { transform: rotate(20deg); }
+  }
+
+  /* Dialog box - Fire Red style */
+  #ui {
+    background: #f8f8f8;
+    padding: 10px;
+    min-height: 130px;
+    border-top: 4px solid #401010;
+    background-image: linear-gradient(180deg, #fff 0%, #e8e8e8 100%);
+  }
+  #message {
+    background: #fff;
+    padding: 12px 14px;
+    border: 4px solid var(--fr-brown);
+    border-radius: 8px;
+    min-height: 60px;
+    font-size: 10px;
+    line-height: 1.8;
+    color: var(--fr-dark);
+    position: relative;
+    box-shadow: inset 0 0 0 2px #fff, 2px 3px 0 #401818;
+  }
+  #message::after {
+    content: '▼';
+    position: absolute;
+    right: 12px; bottom: 6px;
+    color: var(--fr-red);
+    font-size: 10px;
+    animation: arrow 0.7s infinite;
+  }
+  #message.no-arrow::after { display: none; }
+  @keyframes arrow { 50% { opacity: 0; } }
+
+  #actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .btn {
+    background: #fff;
+    border: 3px solid var(--fr-brown);
+    color: var(--fr-dark);
+    padding: 10px 6px;
+    font-family: inherit;
+    font-size: 9px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.1s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 2px 2px 0 #401818;
+  }
+  .btn:hover:not(:disabled) {
+    background: var(--fr-red); color: #fff; border-color: #401010;
+    transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 #401818;
+  }
+  .btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.back { grid-column: span 2; background: #d8d8d8; }
+  .btn.primary { background: var(--fr-red); color: #fff; border-color: #401010; }
+
+  /* Party */
+  .party-screen {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #4080c8 0%, #2060a0 100%);
+    padding: 14px;
+    overflow-y: auto;
+  }
+  .party-screen h2 {
+    color: #fff; font-size: 11px; margin-bottom: 10px;
+    text-shadow: 2px 2px 0 #000;
+  }
+  .party-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .party-mon {
+    background: var(--fr-cream);
+    border: 3px solid var(--fr-brown);
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: var(--fr-dark);
+  }
+  .party-mon:hover { border-color: var(--fr-red); }
+  .party-mon.active { border-color: #ffd030; background: #fff0c0; box-shadow: 0 0 8px #ffd030; }
+  .party-mon.fainted { opacity: 0.45; }
+  .party-mon img { width: 56px; height: 56px; }
+  .party-mon .info { flex: 1; font-size: 8px; line-height: 1.5; }
+  .party-mon .info .n { font-size: 9px; margin-bottom: 2px; }
+
+  .type-pill {
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 7px;
+    color: #fff;
+    margin-left: 2px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+  }
+  .type-fire { background: #f08030; }
+  .type-water { background: #6890f0; }
+  .type-grass { background: #78c850; }
+  .type-electric { background: #f8d030; color: #333; text-shadow: none; }
+  .type-normal { background: #a8a878; }
+  .type-bug { background: #a8b820; }
+  .type-poison { background: #a040a0; }
+  .type-ground { background: #e0c068; color: #333; text-shadow: none; }
+  .type-flying { background: #a890f0; }
+  .type-psychic { background: #f85888; }
+  .type-rock { background: #b8a038; }
+  .type-fairy { background: #ee99ac; color: #333; text-shadow: none; }
+  .type-dragon { background: #7038f8; }
+  .type-dark { background: #705848; }
+  .type-ghost { background: #705898; }
+  .type-steel { background: #b8b8d0; color: #333; text-shadow: none; }
+  .type-ice { background: #98d8d8; color: #333; text-shadow: none; }
+  .type-fighting { background: #c03028; }
+
+  .fade-in { animation: fadein 0.5s; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+  .hint {
+    position: absolute;
+    bottom: 10px; left: 50%; transform: translateX(-50%);
+    font-size: 7px; color: #fff;
+    background: rgba(0,0,0,0.6);
+    padding: 5px 10px; border-radius: 4px;
+    z-index: 30;
+  }
+
+  /* Account / login screens */
+  .login-screen {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #1a2a4a 0%, #0a1a2a 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px; color: #fff;
+  }
+  .login-screen h2 {
+    color: #ffd030; font-size: 13px; margin-bottom: 14px;
+    text-shadow: 2px 2px 0 #000;
+  }
+  .login-card {
+    background: var(--fr-cream);
+    border: 3px solid var(--fr-brown);
+    border-radius: 8px;
+    padding: 18px;
+    width: 360px;
+    color: var(--fr-dark);
+    box-shadow: 4px 4px 0 #401010;
+  }
+  .login-card label {
+    display: block; font-size: 8px; margin-bottom: 4px; color: var(--fr-brown);
+  }
+  .login-card input {
+    width: 100%;
+    padding: 8px;
+    font-family: inherit;
+    font-size: 10px;
+    border: 2px solid var(--fr-brown);
+    border-radius: 4px;
+    background: #fff;
+    margin-bottom: 10px;
+    outline: none;
+    color: var(--fr-dark);
+  }
+  .login-card input:focus { border-color: var(--fr-red); }
+  .login-msg {
+    font-size: 8px; color: #c02020; margin-top: 6px; min-height: 12px;
+    text-align: center; line-height: 1.5;
+  }
+  .login-msg.success { color: #206020; }
+  .account-status {
+    margin-top: 10px; font-size: 7px; color: #fff;
+    background: rgba(0,0,0,0.5);
+    padding: 6px 10px; border-radius: 4px;
+  }
+
+  #accountBadge {
+    background: rgba(255,255,255,0.15);
+    padding: 3px 6px;
+    border-radius: 3px;
+    margin-right: 6px;
+    font-size: 8px;
+  }
+  #accountBadge.online { background: #30a040; color: #fff; }
+
+  .cloud-indicator {
+    position: fixed;
+    top: 16px; right: 16px;
+    background: #30a040;
+    color: #fff;
+    font-size: 9px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .cloud-indicator.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="header">
+    <div id="title">🎮 NOAH'S SINNOH ADVENTURE</div>
+    <div id="stats">
+      <span id="accountBadge">👤 Guest</span>
+      💰<span id="money">500</span>
+      ⚪<span id="ballCount">10</span>
+      📕<span id="caughtCount">0</span>
+    </div>
+  </div>
+  <div id="screen"></div>
+  <div id="ui">
+    <div id="message">Loading Sinnoh region...</div>
+    <div id="actions"></div>
+  </div>
+</div>
+
+<script>
+// =========================================================================
+// POKEDEX (Sinnoh focus, real national dex IDs + PokeAPI sprites)
+// =========================================================================
+const SPRITE_FRONT = id => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+const SPRITE_BACK  = id => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${id}.png`;
+
+const POKEDEX = {
+  387: { name: 'Turtwig',    types: ['grass'],              hp: 55, atk: 68, def: 64, moves: ['Tackle','Razor Leaf','Withdraw'],     catchRate: 0.45 },
+  390: { name: 'Chimchar',   types: ['fire'],               hp: 44, atk: 58, def: 44, moves: ['Scratch','Ember','Leer'],             catchRate: 0.45 },
+  393: { name: 'Piplup',     types: ['water'],              hp: 53, atk: 51, def: 53, moves: ['Pound','Bubble','Growl'],              catchRate: 0.45 },
+  396: { name: 'Starly',     types: ['normal','flying'],    hp: 40, atk: 55, def: 30, moves: ['Tackle','Gust'],                       catchRate: 0.80 },
+  399: { name: 'Bidoof',     types: ['normal'],             hp: 59, atk: 45, def: 40, moves: ['Tackle','Quick Attack'],               catchRate: 0.85 },
+  401: { name: 'Kricketot',  types: ['bug'],                hp: 37, atk: 25, def: 41, moves: ['Tackle','Bug Bite'],                   catchRate: 0.85 },
+  403: { name: 'Shinx',      types: ['electric'],           hp: 45, atk: 65, def: 34, moves: ['Tackle','Thunder Shock'],              catchRate: 0.55 },
+  406: { name: 'Budew',      types: ['grass','poison'],     hp: 40, atk: 30, def: 35, moves: ['Absorb','Mega Drain'],                 catchRate: 0.65 },
+  412: { name: 'Burmy',      types: ['bug'],                hp: 40, atk: 29, def: 45, moves: ['Tackle','Bug Bite'],                   catchRate: 0.80 },
+  418: { name: 'Buizel',     types: ['water'],              hp: 55, atk: 65, def: 35, moves: ['Quick Attack','Water Gun'],            catchRate: 0.50 },
+  422: { name: 'Shellos',    types: ['water'],              hp: 76, atk: 48, def: 48, moves: ['Mud-Slap','Water Gun'],                catchRate: 0.65 },
+  425: { name: 'Drifloon',   types: ['ghost','flying'],     hp: 90, atk: 50, def: 34, moves: ['Astonish','Gust'],                     catchRate: 0.35 },
+  427: { name: 'Buneary',    types: ['normal'],             hp: 55, atk: 66, def: 44, moves: ['Pound','Quick Attack'],                catchRate: 0.50 },
+  434: { name: 'Stunky',     types: ['poison','dark'],      hp: 63, atk: 63, def: 47, moves: ['Scratch','Bite'],                      catchRate: 0.55 },
+  436: { name: 'Bronzor',    types: ['steel','psychic'],    hp: 57, atk: 24, def: 86, moves: ['Tackle','Confusion'],                  catchRate: 0.40 },
+  41:  { name: 'Zubat',      types: ['poison','flying'],    hp: 40, atk: 45, def: 35, moves: ['Bite','Leech Life'],                   catchRate: 0.70 },
+  54:  { name: 'Psyduck',    types: ['water'],              hp: 50, atk: 52, def: 48, moves: ['Water Gun','Scratch'],                 catchRate: 0.50 },
+  74:  { name: 'Geodude',    types: ['rock','ground'],      hp: 40, atk: 80, def: 100,moves: ['Tackle','Rock Throw'],                 catchRate: 0.60 },
+  129: { name: 'Magikarp',   types: ['water'],              hp: 20, atk: 10, def: 55, moves: ['Splash','Tackle'],                     catchRate: 0.90 },
+  133: { name: 'Eevee',      types: ['normal'],             hp: 55, atk: 55, def: 50, moves: ['Tackle','Quick Attack'],               catchRate: 0.30 },
+  443: { name: 'Gible',      types: ['dragon','ground'],    hp: 58, atk: 70, def: 45, moves: ['Tackle','Dragon Rage'],                catchRate: 0.20 },
+  447: { name: 'Riolu',      types: ['fighting'],           hp: 40, atk: 70, def: 40, moves: ['Quick Attack','Force Palm'],           catchRate: 0.20 },
+  453: { name: 'Croagunk',   types: ['poison','fighting'],  hp: 48, atk: 61, def: 40, moves: ['Astonish','Mud-Slap'],                 catchRate: 0.45 },
+  433: { name: 'Chingling',  types: ['psychic'],            hp: 45, atk: 30, def: 50, moves: ['Astonish','Confusion'],                catchRate: 0.45 },
+  459: { name: 'Snover',     types: ['grass','ice'],        hp: 60, atk: 62, def: 50, moves: ['Powder Snow','Leer'],                  catchRate: 0.40 },
+  408: { name: 'Cranidos',   types: ['rock'],               hp: 67, atk: 85, def: 40, moves: ['Headbutt','Rock Throw'],               catchRate: 0.25 },
+  420: { name: 'Cherubi',    types: ['grass'],              hp: 45, atk: 35, def: 45, moves: ['Tackle','Absorb'],                     catchRate: 0.60 },
+};
+
+const MOVES = {
+  'Tackle':        { power: 40, type: 'normal',  fx: 'impact' },
+  'Scratch':       { power: 40, type: 'normal',  fx: 'slash' },
+  'Pound':         { power: 40, type: 'normal',  fx: 'impact' },
+  'Quick Attack':  { power: 40, type: 'normal',  fx: 'dash' },
+  'Headbutt':      { power: 70, type: 'normal',  fx: 'impact' },
+  'Bite':          { power: 60, type: 'dark',    fx: 'bite' },
+  'Leer':          { power: 0,  type: 'normal',  fx: 'stat' },
+  'Withdraw':      { power: 0,  type: 'water',   fx: 'stat' },
+  'Growl':         { power: 0,  type: 'normal',  fx: 'stat' },
+  'Ember':         { power: 40, type: 'fire',    fx: 'fire' },
+  'Bubble':        { power: 40, type: 'water',   fx: 'water' },
+  'Water Gun':     { power: 40, type: 'water',   fx: 'water' },
+  'Razor Leaf':    { power: 55, type: 'grass',   fx: 'grass' },
+  'Absorb':        { power: 20, type: 'grass',   fx: 'grass' },
+  'Mega Drain':    { power: 40, type: 'grass',   fx: 'grass' },
+  'Thunder Shock': { power: 40, type: 'electric',fx: 'electric' },
+  'Gust':          { power: 40, type: 'flying',  fx: 'wind' },
+  'Bug Bite':      { power: 60, type: 'bug',     fx: 'bite' },
+  'Leech Life':    { power: 30, type: 'bug',     fx: 'bite' },
+  'Rock Throw':    { power: 50, type: 'rock',    fx: 'rock' },
+  'Mud-Slap':      { power: 20, type: 'ground',  fx: 'ground' },
+  'Astonish':      { power: 30, type: 'ghost',   fx: 'ghost' },
+  'Confusion':     { power: 50, type: 'psychic', fx: 'psychic' },
+  'Dragon Rage':   { power: 40, type: 'dragon',  fx: 'dragon' },
+  'Force Palm':    { power: 60, type: 'fighting',fx: 'fighting' },
+  'Powder Snow':   { power: 40, type: 'ice',     fx: 'ice' },
+  'Splash':        { power: 1,  type: 'normal',  fx: 'splash' },
+};
+
+const TYPE_CHART = {
+  fire:     { grass:2, bug:2, ice:2, steel:2, water:0.5, rock:0.5, fire:0.5, dragon:0.5 },
+  water:    { fire:2, rock:2, ground:2, water:0.5, grass:0.5, dragon:0.5 },
+  grass:    { water:2, rock:2, ground:2, fire:0.5, flying:0.5, bug:0.5, grass:0.5, poison:0.5, dragon:0.5, steel:0.5 },
+  electric: { water:2, flying:2, ground:0, grass:0.5, electric:0.5, dragon:0.5 },
+  bug:      { grass:2, psychic:2, dark:2, fire:0.5, flying:0.5, rock:0.5, fighting:0.5, poison:0.5, ghost:0.5, steel:0.5, fairy:0.5 },
+  flying:   { grass:2, bug:2, fighting:2, rock:0.5, electric:0.5, steel:0.5 },
+  normal:   { rock:0.5, ghost:0, steel:0.5 },
+  rock:     { fire:2, flying:2, bug:2, ice:2, ground:0.5, fighting:0.5, steel:0.5 },
+  ground:   { fire:2, electric:2, rock:2, poison:2, steel:2, grass:0.5, bug:0.5, flying:0 },
+  psychic:  { fighting:2, poison:2, dark:0, steel:0.5, psychic:0.5 },
+  poison:   { grass:2, fairy:2, rock:0.5, ground:0.5, ghost:0.5, poison:0.5, steel:0 },
+  ghost:    { psychic:2, ghost:2, normal:0, dark:0.5 },
+  dark:     { psychic:2, ghost:2, dark:0.5, fighting:0.5, fairy:0.5 },
+  dragon:   { dragon:2, steel:0.5, fairy:0 },
+  ice:      { grass:2, ground:2, flying:2, dragon:2, fire:0.5, water:0.5, ice:0.5, steel:0.5 },
+  steel:    { rock:2, ice:2, fairy:2, fire:0.5, water:0.5, electric:0.5, steel:0.5 },
+  fighting: { normal:2, rock:2, ice:2, dark:2, steel:2, flying:0.5, psychic:0.5, bug:0.5, ghost:0, fairy:0.5, poison:0.5 },
+};
+
+// =========================================================================
+// BIG SINNOH MAP (40 x 30 tiles, 48px each = 1920x1440 world)
+// =========================================================================
+const MAP_W = 40, MAP_H = 30;
+const TILE_SIZE = 48;
+const VIEW_W = 16, VIEW_H = 10; // visible tiles at a time
+
+// Tile codes: use characters for readability
+// . = grass, g = tall-grass, p = path, w = water, T = tree, r = rock, f = flower,
+// s = sand, # = building-wall, D = door, $ = sign, R = pokecenter-roof,
+// M = pokemart-roof, L = lab-roof, B = building-roof, C = cave, F = fence
+const MAP_STR = [
+  // Row 0-4: TWINLEAF TOWN (top-left) + northern woods
+  'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT', // 0
+  'T....................................TT',
+  'T....TTTTT.TTT...TTT......TTTTT.TTTT.TT',
+  'T....BBBB.TTT...TTT......BBBBB.TTTT.TT',
+  'T....BBBB.T.T...T.T......BBBBB.T..T.TT',
+  'T....DDDD.....p..........DDDDD.....f.TT', // 5
+  'T....................p............TTTT',
+  'T..T.T...T..T..p.....................TT',
+  'T..T.T..$T..T..p................T..T.TT',
+  'T..........ppppppppppppp.............TT',
+  'T...T..p..........p...pppppppp.....T.TT', // 10
+  'T..T.T.p.gggggg...p..........p.....T.TT',
+  'T.T....p.gggggg...p..........p....TTTTT',
+  'T......p.gggggg..ppppppp.....p.....T.TT',
+  'TTT....p.........p.....p.....p........T',
+  'Twwwwwww..ppppppppp...pppppppp....T...T', // 15 - Lake Verity
+  'Twwwwwss..p......p.....p......pppp....T',
+  'Twwwwwss..p..RRR.p....MMM.....BBBB....T',
+  'Twwwwwws..p..RRR.p....MMM.....BBBB....T',
+  'TTwwwws...p..DDD.p....DDD.....DDDD....T',
+  'TT..ss....p......p...............T..TT', // 20 - Sandgem Town
+  'T...T.....p.LLLL.p.....T.T.T....T..T.T',
+  'T..T.T....p.LLLL.p.....TTTTT..TTTTT.TT',
+  'T.T....f..p.DDDD.p.....T.$.T...TTT...T',
+  'T......f..ppppppppppppppppppppp.....TT',
+  'T...gggg..p.............pppp..T...T.TT', // 25 - Route 203
+  'T..gggggg.p...T..T..T...p.gg..T.T...TT',
+  'TT.gggggg.p...T..T..T...p.gg.TTTTTT.TT',
+  'TT.gggggg.p...T..T..T...p.gg..T...T.TT',
+  'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
+];
+// The string above is illustrative — we'll programmatically build the world to ensure it's consistent.
+
+function generateWorld() {
+  // Build a grid of tile codes
+  const g = Array.from({length: MAP_H}, () => Array(MAP_W).fill('.'));
+
+  // Border trees
+  for (let x = 0; x < MAP_W; x++) { g[0][x] = 'T'; g[MAP_H-1][x] = 'T'; }
+  for (let y = 0; y < MAP_H; y++) { g[y][0] = 'T'; g[y][MAP_W-1] = 'T'; }
+
+  // -------- TWINLEAF TOWN (upper-left region) --------
+  // Noah's house (3x3 top-left)
+  placeBuilding(g, 3, 3, 3, 2, 'B'); // 3x2 roof with doors
+  // Rival's house
+  placeBuilding(g, 8, 3, 3, 2, 'B');
+  // Sign
+  g[7][5] = '$';
+
+  // -------- PATH FROM TWINLEAF DOWN TO ROUTE 201 --------
+  for (let y = 6; y < 15; y++) g[y][5] = 'p';
+  // Route 201 east/west path
+  for (let x = 5; x < 25; x++) g[14][x] = 'p';
+  for (let x = 5; x < 25; x++) g[15][x] = 'p';
+
+  // Tall grass patches on Route 201
+  patch(g, 7, 11, 4, 2, 'g');
+  patch(g, 14, 11, 3, 2, 'g');
+  patch(g, 19, 16, 3, 2, 'g');
+
+  // -------- LAKE VERITY (bottom-left) --------
+  for (let y = 17; y < 24; y++)
+    for (let x = 1; x < 7; x++)
+      g[y][x] = 'w';
+  // sandy shore
+  for (let y = 17; y < 24; y++) g[y][7] = 's';
+  g[16][3] = 's'; g[16][4] = 's';
+
+  // -------- SANDGEM TOWN (middle area around col 10-18, row 17-23) --------
+  // Pokemon Center
+  placeBuilding(g, 10, 19, 3, 2, 'R');
+  // Poke Mart
+  placeBuilding(g, 15, 19, 3, 2, 'M');
+  // Professor Rowan's Lab
+  placeBuilding(g, 12, 23, 3, 2, 'L');
+  // Sign
+  g[22][13] = '$';
+
+  // Paths through Sandgem
+  for (let x = 9; x < 20; x++) { g[18][x] = 'p'; g[25][x] = 'p'; }
+  for (let y = 18; y < 26; y++) { g[y][9] = 'p'; g[y][19] = 'p'; }
+  // Connect Sandgem to Route 201
+  for (let y = 15; y <= 18; y++) g[y][9] = 'p';
+
+  // -------- ROUTE 202 (right of Twinleaf / top-right) --------
+  for (let y = 5; y < 15; y++) g[y][25] = 'p';
+  for (let x = 25; x < 38; x++) g[10][x] = 'p';
+  // Tall grass patches
+  patch(g, 27, 6, 4, 3, 'g');
+  patch(g, 32, 12, 3, 2, 'g');
+  patch(g, 30, 4, 3, 2, 'g');
+
+  // -------- JUBILIFE CITY (right side, col 26-38 row 16-26) --------
+  // Several larger buildings
+  placeBuilding(g, 27, 17, 4, 3, 'B');
+  placeBuilding(g, 33, 17, 4, 3, 'B');
+  placeBuilding(g, 27, 22, 4, 3, 'B');
+  placeBuilding(g, 33, 22, 4, 3, 'B');
+  // Pokecenter + mart
+  placeBuilding(g, 29, 27, 3, 2, 'R');
+  placeBuilding(g, 34, 27, 3, 2, 'M');
+  // Paths in city
+  for (let x = 26; x < 39; x++) { g[20][x] = 'p'; g[26][x] = 'p'; }
+  for (let y = 17; y < 28; y++) { g[y][26] = 'p'; g[y][32] = 'p'; g[y][38] = 'p'; }
+  // connect to Route 202
+  for (let x = 19; x < 27; x++) g[26][x] = 'p';
+
+  // -------- ROUTE 203 (between Sandgem and Jubilife) --------
+  patch(g, 21, 26, 4, 2, 'g');
+  patch(g, 22, 28, 3, 1, 'g');
+
+  // -------- OREBURGH GATE (cave tiles, bottom right) --------
+  for (let y = 27; y < 29; y++)
+    for (let x = 36; x < 39; x++)
+      g[y][x] = 'C';
+  // approach path
+  for (let x = 32; x < 37; x++) g[28][x] = 'p';
+
+  // -------- Decorative scatter: rocks, flowers, trees --------
+  const decor = [
+    [2,11,'f'],[3,11,'f'],[14,4,'f'],[18,4,'f'],[36,4,'f'],
+    [16,10,'r'],[24,13,'r'],[30,17,'r'],[6,25,'r'],
+    [2,9,'T'],[13,9,'T'],[28,14,'T'],[22,6,'T'],[38,14,'T'],
+  ];
+  decor.forEach(([x,y,t]) => { if (g[y] && g[y][x] === '.') g[y][x] = t; });
+
+  return g;
+}
+
+function placeBuilding(g, x, y, w, h, roofType) {
+  // Top row: roof; middle: walls; bottom row: walls with door
+  for (let dy = 0; dy < h; dy++) {
+    for (let dx = 0; dx < w; dx++) {
+      if (dy === 0) g[y+dy][x+dx] = roofType;
+      else if (dy === h-1) g[y+dy][x+dx] = '#';
+      else g[y+dy][x+dx] = '#';
+    }
+  }
+  // Put a door in the bottom row (center)
+  const doorX = x + Math.floor(w/2);
+  g[y + h - 1][doorX] = 'D';
+}
+function patch(g, x, y, w, h, ch) {
+  for (let dy = 0; dy < h; dy++)
+    for (let dx = 0; dx < w; dx++)
+      if (g[y+dy] && g[y+dy][x+dx] === '.') g[y+dy][x+dx] = ch;
+}
+
+const TILE_CLASS = {
+  '.': 'grass', 'g': 'tall-grass', 'p': 'path', 'w': 'water',
+  'T': 'tree', 'r': 'rock', 'f': 'flower', 's': 'sand',
+  '#': 'building-wall', 'D': 'door', '$': 'sign',
+  'R': 'pokecenter-roof', 'M': 'pokemart-roof', 'L': 'lab-roof',
+  'B': 'building-roof', 'C': 'cave', 'F': 'fence',
+};
+const BLOCKING = new Set(['T','r','w','#','R','M','L','B','C']);
+
+// =========================================================================
+// STATE
+// =========================================================================
+const state = {
+  screen: 'title',
+  playerName: 'Noah',
+  location: 'Twinleaf Town',
+  player: { x: 5, y: 4, dir: 'down' },
+  party: [],
+  activeMon: 0,
+  balls: 10,
+  money: 500,
+  caught: 0,
+  world: null,
+  battle: null,
+  stepsSinceEncounter: 0,
+  npcs: [],
+  interactCooldown: 0,
+  typewriterTimer: null,
+  lastLocation: '',
+  user: null,          // { uid, email } when signed in
+  cloudSyncing: false, // prevents overlapping cloud writes
+};
+
+// =========================================================================
+// SAVE / LOAD  (localStorage + optional Firebase cloud sync)
+// =========================================================================
+const SAVE_KEY = 'pokemon-noah-sinnoh-save-v1';
+
+function buildSavePayload() {
+  return {
+    v: 1,
+    savedAt: Date.now(),
+    playerName: state.playerName,
+    location: state.location,
+    player: state.player,
+    party: state.party,
+    activeMon: state.activeMon,
+    balls: state.balls,
+    money: state.money,
+    caught: state.caught,
+  };
+}
+
+function applySavePayload(s) {
+  if (!s || !s.party) return false;
+  state.playerName = s.playerName || 'Noah';
+  state.location   = s.location   || 'Twinleaf Town';
+  state.player     = s.player     || { x: 5, y: 4, dir: 'down' };
+  state.party      = s.party      || [];
+  state.activeMon  = Math.min(s.activeMon || 0, state.party.length - 1);
+  state.balls      = s.balls      ?? 10;
+  state.money      = s.money      ?? 500;
+  state.caught     = s.caught     ?? state.party.length;
+  return true;
+}
+
+function saveLocal() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(buildSavePayload()));
+    flashCloudIndicator('💾 Saved', '#808080');
+    // Also push to cloud if signed in (debounced)
+    if (state.user && window.fb) queueCloudSave();
+  } catch (e) { console.warn('Save failed:', e); }
+}
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    return applySavePayload(JSON.parse(raw));
+  } catch (e) { console.warn('Load failed:', e); return false; }
+}
+
+function hasLocalSave() {
+  try { return !!localStorage.getItem(SAVE_KEY); } catch { return false; }
+}
+
+function eraseSave() {
+  try { localStorage.removeItem(SAVE_KEY); } catch {}
+}
+
+let _cloudSaveTimer = null;
+function queueCloudSave() {
+  if (_cloudSaveTimer) clearTimeout(_cloudSaveTimer);
+  _cloudSaveTimer = setTimeout(doCloudSave, 1500);
+}
+
+async function doCloudSave() {
+  if (!state.user || !window.fb || state.cloudSyncing) return;
+  state.cloudSyncing = true;
+  try {
+    await window.fb.saveDoc(state.user.uid, buildSavePayload());
+    flashCloudIndicator('☁️ Synced to cloud', '#30a040');
+  } catch (e) {
+    console.warn('Cloud save failed:', e);
+    flashCloudIndicator('⚠️ Cloud save failed', '#c03030');
+  } finally { state.cloudSyncing = false; }
+}
+
+async function doCloudLoad() {
+  if (!state.user || !window.fb) return false;
+  try {
+    const data = await window.fb.loadDoc(state.user.uid);
+    if (!data) return false;
+    applySavePayload(data);
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch {}
+    flashCloudIndicator('☁️ Loaded cloud save', '#30a040');
+    return true;
+  } catch (e) {
+    console.warn('Cloud load failed:', e);
+    return false;
+  }
+}
+
+function flashCloudIndicator(text, color = '#30a040') {
+  let el = document.querySelector('.cloud-indicator');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'cloud-indicator';
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+  el.style.background = color;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 1500);
+}
+
+function updateAccountBadge() {
+  const b = document.getElementById('accountBadge');
+  if (!b) return;
+  if (state.user) {
+    b.textContent = `👤 ${state.user.email.split('@')[0]}`;
+    b.classList.add('online');
+  } else {
+    b.textContent = '👤 Guest';
+    b.classList.remove('online');
+  }
+}
+
+// =========================================================================
+// UTIL
+// =========================================================================
+const $ = sel => document.querySelector(sel);
+const screen = $('#screen');
+const msgBox = $('#message');
+const actionsEl = $('#actions');
+
+function setActions(buttons) {
+  actionsEl.innerHTML = '';
+  buttons.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'btn' + (b.back ? ' back' : '') + (b.primary ? ' primary' : '');
+    btn.textContent = b.label;
+    btn.disabled = !!b.disabled;
+    btn.onclick = b.onClick;
+    actionsEl.appendChild(btn);
+  });
+}
+
+function typewriter(txt, speed = 22) {
+  if (state.typewriterTimer) clearInterval(state.typewriterTimer);
+  msgBox.textContent = '';
+  msgBox.classList.add('no-arrow');
+  let i = 0;
+  state.typewriterTimer = setInterval(() => {
+    msgBox.textContent = txt.slice(0, ++i);
+    if (i >= txt.length) {
+      clearInterval(state.typewriterTimer);
+      state.typewriterTimer = null;
+      msgBox.classList.remove('no-arrow');
+    }
+  }, speed);
+}
+function setMsg(txt) { typewriter(txt); }
+function setMsgInstant(txt) {
+  if (state.typewriterTimer) { clearInterval(state.typewriterTimer); state.typewriterTimer = null; }
+  msgBox.textContent = txt;
+  msgBox.classList.add('no-arrow');
+}
+
+function updateHeader() {
+  $('#ballCount').textContent = state.balls;
+  $('#caughtCount').textContent = state.caught;
+  $('#money').textContent = state.money;
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function makeMon(id, level = 5) {
+  const base = POKEDEX[id];
+  const maxHp = Math.floor(base.hp * (1 + level * 0.1));
+  return {
+    id, level, name: base.name, types: base.types,
+    maxHp, hp: maxHp,
+    atk: Math.floor(base.atk * (1 + level * 0.08)),
+    def: Math.floor(base.def * (1 + level * 0.08)),
+    moves: [...base.moves], catchRate: base.catchRate, xp: 0,
+  };
+}
+const randLv = () => 3 + Math.floor(Math.random() * 6);
+
+// =========================================================================
+// TITLE
+// =========================================================================
+function renderTitle() {
+  state.screen = 'title';
+  const hasSave = hasLocalSave();
+  const fbOn = !!window.firebaseEnabled;
+  screen.innerHTML = `
+    <div class="title-screen fade-in">
+      <h1>POKEMON<br>CATCH GAME</h1>
+      <h2>— SINNOH ADVENTURE —</h2>
+      <div class="big-sprite"><img src="${SPRITE_FRONT(445)}" alt="Garchomp"></div>
+      <div class="press-start">▶ PRESS START ◀</div>
+      <div class="account-status">
+        ${state.user
+          ? `☁️ Signed in as ${state.user.email} — cloud save ON`
+          : (fbOn ? 'Guest mode — sign in to save to the cloud' : 'Local save only (Firebase not configured)')}
+      </div>
+    </div>
+  `;
+  setMsgInstant(hasSave
+    ? "Welcome back, Noah! Continue your adventure or start a new game."
+    : "Welcome to the SINNOH region! Press START to begin Noah's journey.");
+
+  const buttons = [];
+  if (hasSave) {
+    buttons.push({ label: '▶ CONTINUE', primary: true, onClick: () => {
+      if (loadLocal()) { enterOverworld(); updateAccountBadge(); }
+      else renderIntro();
+    }});
+    buttons.push({ label: '🆕 NEW GAME', onClick: confirmNewGame });
+  } else {
+    buttons.push({ label: '▶ NEW GAME', primary: true, onClick: renderIntro });
+  }
+  if (fbOn) {
+    buttons.push(state.user
+      ? { label: '🚪 SIGN OUT', onClick: handleSignOut }
+      : { label: '🔐 SIGN IN / UP', onClick: renderLogin });
+  }
+  setActions(buttons);
+}
+
+function confirmNewGame() {
+  setMsgInstant("Starting a NEW GAME will erase your current save. Are you sure?");
+  setActions([
+    { label: 'YES, ERASE', primary: true, onClick: () => { eraseSave(); renderIntro(); } },
+    { label: 'NO, GO BACK', onClick: renderTitle },
+  ]);
+}
+
+// =========================================================================
+// LOGIN / SIGN UP
+// =========================================================================
+function renderLogin(mode = 'signin') {
+  state.screen = 'login';
+  const isSignup = mode === 'signup';
+  screen.innerHTML = `
+    <div class="login-screen fade-in">
+      <h2>${isSignup ? '🆕 CREATE ACCOUNT' : '🔐 SIGN IN'}</h2>
+      <div class="login-card">
+        <label>EMAIL</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
+        <label>PASSWORD</label>
+        <input type="password" id="loginPassword" placeholder="at least 6 characters" autocomplete="${isSignup ? 'new-password' : 'current-password'}">
+        <div class="login-msg" id="loginMsg"></div>
+      </div>
+      <div class="account-status">Your saved game syncs to any device you sign in on.</div>
+    </div>
+  `;
+  setMsgInstant(isSignup
+    ? "Create an account to save your Pokemon to the cloud!"
+    : "Sign in to load your cloud save.");
+  setActions([
+    { label: isSignup ? '🆕 CREATE' : '🔐 SIGN IN', primary: true, onClick: () => doAuth(isSignup) },
+    { label: isSignup ? 'I HAVE AN ACCOUNT' : 'CREATE ACCOUNT', onClick: () => renderLogin(isSignup ? 'signin' : 'signup') },
+    { label: '⬅ BACK', back: true, onClick: renderTitle },
+  ]);
+  setTimeout(() => document.getElementById('loginEmail')?.focus(), 50);
+  document.addEventListener('keydown', loginKeyHandler);
+}
+
+function loginKeyHandler(e) {
+  if (state.screen !== 'login') { document.removeEventListener('keydown', loginKeyHandler); return; }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    // figure out mode from current title
+    const isSignup = document.querySelector('.login-screen h2')?.textContent?.includes('CREATE');
+    doAuth(isSignup);
+  }
+}
+
+async function doAuth(isSignup) {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPassword').value;
+  const msg   = document.getElementById('loginMsg');
+  msg.classList.remove('success');
+  if (!email || !pass) { msg.textContent = 'Please enter both fields.'; return; }
+  if (pass.length < 6) { msg.textContent = 'Password must be at least 6 characters.'; return; }
+  if (!window.fb) { msg.textContent = 'Firebase not configured. See FIREBASE-SETUP.md.'; return; }
+
+  msg.textContent = isSignup ? 'Creating account...' : 'Signing in...';
+  try {
+    const cred = isSignup ? await window.fb.createUser(email, pass)
+                          : await window.fb.signIn(email, pass);
+    state.user = { uid: cred.user.uid, email: cred.user.email };
+    updateAccountBadge();
+    msg.classList.add('success');
+    msg.textContent = isSignup ? '✓ Account created! Loading...' : '✓ Signed in! Loading cloud save...';
+
+    // Merge strategy: if cloud has a save and local has one, prefer cloud.
+    // If new signup, push local save up (so existing progress doesn't get lost).
+    if (isSignup) {
+      if (hasLocalSave()) await doCloudSave();
+    } else {
+      const loaded = await doCloudLoad();
+      if (!loaded && hasLocalSave()) {
+        // Signed in but no cloud save yet — push local up so future sessions get it
+        await doCloudSave();
+      }
+    }
+    setTimeout(renderTitle, 600);
+  } catch (e) {
+    const codeMap = {
+      'auth/email-already-in-use': 'That email already has an account. Try signing in.',
+      'auth/invalid-email': 'That email address is not valid.',
+      'auth/weak-password': 'Password is too weak (needs 6+ characters).',
+      'auth/wrong-password': 'Wrong password.',
+      'auth/user-not-found': 'No account with that email. Try creating one.',
+      'auth/invalid-credential': 'Wrong email or password.',
+      'auth/too-many-requests': 'Too many attempts. Wait a bit and try again.',
+    };
+    msg.textContent = codeMap[e.code] || ('Error: ' + (e.message || e.code));
+  }
+}
+
+async function handleSignOut() {
+  if (!window.fb) return;
+  try { await window.fb.signOut(); } catch {}
+  state.user = null;
+  updateAccountBadge();
+  renderTitle();
+}
+
+// =========================================================================
+// INTRO
+// =========================================================================
+function renderIntro() {
+  state.screen = 'intro';
+  screen.innerHTML = `
+    <div class="intro fade-in">
+      <div class="prof-sprite">👨‍🔬</div>
+      <h2>PROFESSOR ROWAN</h2>
+      <p id="introText"></p>
+    </div>
+  `;
+  const lines = [
+    `Hello there! Welcome to the world of POKEMON!`,
+    `My name is ROWAN. People affectionately refer to me as the POKEMON PROFESSOR.`,
+    `This world is inhabited by creatures called POKEMON. We live alongside them as friends and partners.`,
+    `Now, you... Your name is NOAH, correct?`,
+    `Your very own POKEMON adventure is about to unfold in the vast SINNOH region!`,
+    `You'll face fun times and tough challenges. A world of dreams and adventures with POKEMON awaits! Let's go!`,
+  ];
+  let i = 0;
+  const el = $('#introText');
+  function showLine() {
+    const txt = lines[i];
+    let c = 0;
+    if (state.typewriterTimer) clearInterval(state.typewriterTimer);
+    state.typewriterTimer = setInterval(() => {
+      el.textContent = txt.slice(0, ++c);
+      if (c >= txt.length) { clearInterval(state.typewriterTimer); state.typewriterTimer = null; }
+    }, 28);
+    setMsgInstant(`PROF. ROWAN  (${i+1}/${lines.length})   Press NEXT to continue...`);
+    setActions([{
+      label: i < lines.length - 1 ? 'NEXT ▶' : 'CHOOSE STARTER ▶',
+      primary: true,
+      onClick: () => { i++; if (i < lines.length) showLine(); else renderStarters(); }
+    }]);
+  }
+  showLine();
+}
+
+// =========================================================================
+// STARTER CHOICE
+// =========================================================================
+function renderStarters() {
+  state.screen = 'starter';
+  screen.innerHTML = `
+    <div class="starters fade-in">
+      <h2>"NOAH, choose your first POKEMON!"</h2>
+      <div class="starter-row">
+        <div class="starter" data-mon="387">
+          <img src="${SPRITE_FRONT(387)}" alt="Turtwig">
+          <div class="nm">TURTWIG</div>
+          <div class="tp"><span class="type-pill type-grass">GRASS</span></div>
+          <div class="desc">The Tiny Leaf Pokemon. Sturdy and loyal.</div>
+        </div>
+        <div class="starter" data-mon="390">
+          <img src="${SPRITE_FRONT(390)}" alt="Chimchar">
+          <div class="nm">CHIMCHAR</div>
+          <div class="tp"><span class="type-pill type-fire">FIRE</span></div>
+          <div class="desc">The Chimp Pokemon. Quick and fiery.</div>
+        </div>
+        <div class="starter" data-mon="393">
+          <img src="${SPRITE_FRONT(393)}" alt="Piplup">
+          <div class="nm">PIPLUP</div>
+          <div class="tp"><span class="type-pill type-water">WATER</span></div>
+          <div class="desc">The Penguin Pokemon. Proud and tough.</div>
+        </div>
+      </div>
+    </div>
+  `;
+  setMsg("Pick one of the three SINNOH starters to be your partner!");
+  actionsEl.innerHTML = '';
+  document.querySelectorAll('.starter').forEach(el => {
+    el.onclick = () => {
+      const id = parseInt(el.dataset.mon);
+      const mon = makeMon(id, 5);
+      state.party.push(mon);
+      state.caught = 1;
+      updateHeader();
+      saveLocal();
+      setMsg(`Noah received ${mon.name.toUpperCase()}! A grand adventure begins now!`);
+      setActions([{ label: 'BEGIN ADVENTURE ▶', primary: true, onClick: enterOverworld }]);
+    };
+  });
+}
+
+// =========================================================================
+// OVERWORLD
+// =========================================================================
+function spawnNpcs() {
+  state.npcs = [
+    { x: 6, y: 5, sprite: '👩', name: "Noah's Mom", lines: [
+      "Mom: Oh Noah! You're all ready to go! Be careful in the tall grass.",
+      "Mom: Professor Rowan is waiting at his lab in SANDGEM TOWN!"
+    ]},
+    { x: 9, y: 5, sprite: '👦', name: "Barry", lines: [
+      "Barry: Noah! You're finally here! Let's race to Sandgem Town!",
+      "Barry: Watch out for wild Pokemon in the tall grass!"
+    ]},
+    { x: 12, y: 14, sprite: '👨', name: "Hiker", lines: [
+      "Hiker: Route 201 is full of wild Pokemon! Perfect for catching."
+    ]},
+    { x: 16, y: 21, sprite: '👨‍🔬', name: "Prof. Rowan", lines: [
+      "Prof. Rowan: Welcome to Sandgem Town, Noah! Keep catching and battling!",
+      "Prof. Rowan: The Pokemon Center heals your team for free. Use it often!"
+    ]},
+    { x: 30, y: 19, sprite: '👧', name: "Jubilife Girl", lines: [
+      "Girl: Welcome to JUBILIFE CITY — the bustling heart of Sinnoh!",
+      "Girl: Have you been to the TV station yet?"
+    ]},
+    { x: 23, y: 26, sprite: '🧔', name: "Trainer", lines: [
+      "Trainer: This path leads to OREBURGH CITY and its Rock Gym!",
+    ]},
+    { x: 3, y: 16, sprite: '🧓', name: "Old Man", lines: [
+      "Old Man: LAKE VERITY is said to hide a legendary Pokemon..."
+    ]},
+  ];
+}
+
+function enterOverworld() {
+  state.screen = 'overworld';
+  if (!state.world) state.world = generateWorld();
+  if (state.npcs.length === 0) spawnNpcs();
+  renderOverworld();
+  updateLocation(true);
+  setMsg(`Arrow keys/WASD to move. Talk to people. Walk in tall grass to find Pokemon!`);
+  setActions([
+    { label: '👥 PARTY', onClick: () => openParty(false) },
+    { label: '💾 SAVE', onClick: () => { saveLocal(); setMsg('Game saved!' + (state.user ? ' (syncing to cloud)' : ' (stored in this browser)')); } },
+    { label: '💊 HEAL (anywhere)', onClick: healParty },
+    { label: '🏠 TITLE', onClick: () => { saveLocal(); renderTitle(); } },
+  ]);
+  updateHeader();
+}
+
+function locationOf(x, y) {
+  if (x < 10 && y < 10) return 'Twinleaf Town';
+  if (x < 10 && y >= 14 && y < 24) return 'Lake Verity';
+  if (x >= 9 && x < 22 && y >= 16 && y < 26) return 'Sandgem Town';
+  if (x >= 25 && y < 14) return 'Route 202';
+  if (x >= 25 && y >= 16) return 'Jubilife City';
+  if (y >= 25) return 'Route 203';
+  if (x >= 35 && y >= 27) return 'Oreburgh Gate';
+  return 'Route 201';
+}
+
+function updateLocation(force) {
+  const loc = locationOf(state.player.x, state.player.y);
+  state.location = loc;
+  if (force || loc !== state.lastLocation) {
+    state.lastLocation = loc;
+    showToast(`📍 ${loc}`);
+  }
+}
+
+function showToast(txt) {
+  const existing = document.querySelector('.location-toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'location-toast';
+  t.textContent = txt;
+  screen.appendChild(t);
+  setTimeout(() => t.remove(), 3100);
+}
+
+function renderOverworld() {
+  screen.innerHTML = `
+    <div id="viewport">
+      <div id="world"></div>
+      <div class="minimap-label">📍 ${state.location}</div>
+      <div class="hint">Arrow keys / WASD to move • Walk into an NPC to talk</div>
+    </div>
+  `;
+  const world = $('#world');
+  world.style.width  = (MAP_W * TILE_SIZE) + 'px';
+  world.style.height = (MAP_H * TILE_SIZE) + 'px';
+  world.style.gridTemplateColumns = `repeat(${MAP_W}, ${TILE_SIZE}px)`;
+
+  // Tiles
+  for (let y = 0; y < MAP_H; y++) {
+    for (let x = 0; x < MAP_W; x++) {
+      const c = state.world[y][x];
+      const d = document.createElement('div');
+      d.className = 'tile ' + (TILE_CLASS[c] || 'grass');
+      world.appendChild(d);
+    }
+  }
+
+  // NPCs
+  state.npcs.forEach((n, i) => {
+    const e = document.createElement('div');
+    e.className = 'entity npc';
+    e.textContent = n.sprite;
+    e.style.left = (n.x * TILE_SIZE) + 'px';
+    e.style.top  = (n.y * TILE_SIZE) + 'px';
+    e.dataset.npc = i;
+    world.appendChild(e);
+  });
+
+  // Player
+  const p = document.createElement('div');
+  p.className = 'entity';
+  p.id = 'player';
+  p.textContent = '🧑';
+  world.appendChild(p);
+
+  updatePlayerPos();
+  updateCamera();
+}
+
+function updatePlayerPos() {
+  const p = $('#player'); if (!p) return;
+  p.style.left = (state.player.x * TILE_SIZE) + 'px';
+  p.style.top  = (state.player.y * TILE_SIZE) + 'px';
+}
+
+function updateCamera() {
+  const world = $('#world'); if (!world) return;
+  const vpW = screen.clientWidth;
+  const vpH = screen.clientHeight;
+  // center on player
+  let camX = state.player.x * TILE_SIZE + TILE_SIZE/2 - vpW/2;
+  let camY = state.player.y * TILE_SIZE + TILE_SIZE/2 - vpH/2;
+  // clamp to map
+  camX = Math.max(0, Math.min(MAP_W * TILE_SIZE - vpW, camX));
+  camY = Math.max(0, Math.min(MAP_H * TILE_SIZE - vpH, camY));
+  world.style.transform = `translate(${-camX}px, ${-camY}px)`;
+}
+
+function canWalk(x, y) {
+  if (x < 0 || y < 0 || x >= MAP_W || y >= MAP_H) return false;
+  const c = state.world[y][x];
+  if (BLOCKING.has(c)) return false;
+  // block doors but count as interact; block NPCs
+  if (state.npcs.some(n => n.x === x && n.y === y)) return false;
+  return true;
+}
+
+function facingTile() {
+  const { x, y, dir } = state.player;
+  if (dir === 'up') return { x, y: y - 1 };
+  if (dir === 'down') return { x, y: y + 1 };
+  if (dir === 'left') return { x: x - 1, y };
+  if (dir === 'right') return { x: x + 1, y };
+  return { x, y };
+}
+
+document.addEventListener('keydown', (e) => {
+  if (state.screen !== 'overworld') return;
+  const k = e.key.toLowerCase();
+  let dx = 0, dy = 0, dir = state.player.dir;
+  if (k === 'arrowup' || k === 'w') { dy = -1; dir = 'up'; }
+  else if (k === 'arrowdown' || k === 's') { dy = 1; dir = 'down'; }
+  else if (k === 'arrowleft' || k === 'a') { dx = -1; dir = 'left'; }
+  else if (k === 'arrowright' || k === 'd') { dx = 1; dir = 'right'; }
+  else return;
+  e.preventDefault();
+
+  state.player.dir = dir;
+  const nx = state.player.x + dx, ny = state.player.y + dy;
+
+  // Check NPC interaction
+  const npc = state.npcs.find(n => n.x === nx && n.y === ny);
+  if (npc) { interactNpc(npc); return; }
+
+  // Check sign / door
+  if (ny >= 0 && ny < MAP_H && nx >= 0 && nx < MAP_W) {
+    const t = state.world[ny][nx];
+    if (t === '$') { showSign(nx, ny); return; }
+    if (t === 'D') { enterBuilding(nx, ny); return; }
+  }
+
+  if (canWalk(nx, ny)) {
+    state.player.x = nx; state.player.y = ny;
+    updatePlayerPos();
+    updateCamera();
+    updateLocation(false);
+    checkEncounter();
+  }
+});
+
+function interactNpc(npc) {
+  let i = 0;
+  setMsg(`${npc.name}: "${npc.lines[0].replace(/^[^:]+:\s*/, '')}"`);
+  setActions([{ label: i < npc.lines.length - 1 ? 'NEXT ▶' : 'OK', primary: true, onClick: () => {
+    i++;
+    if (i < npc.lines.length) {
+      setMsg(npc.lines[i]);
+      setActions([{ label: i < npc.lines.length - 1 ? 'NEXT ▶' : 'OK', primary: true, onClick: arguments.callee }]);
+    } else {
+      enterOverworld();
+    }
+  }}]);
+  // Simpler loop:
+  function advance() {
+    i++;
+    if (i < npc.lines.length) {
+      setMsg(npc.lines[i]);
+      setActions([{ label: i < npc.lines.length - 1 ? 'NEXT ▶' : 'OK', primary: true, onClick: advance }]);
+    } else {
+      enterOverworld();
+    }
+  }
+  setMsg(npc.lines[0]);
+  setActions([{ label: npc.lines.length > 1 ? 'NEXT ▶' : 'OK', primary: true, onClick: advance }]);
+}
+
+function showSign(x, y) {
+  const signs = {
+    '5,7': "TWINLEAF TOWN  —  Fresh and Free!",
+    '13,23': "SANDGEM TOWN  —  A Town of Sand. Prof. Rowan's Lab is here.",
+  };
+  const key = `${x},${y}`;
+  const txt = signs[key] || "ROUTE SIGN  —  Wild POKEMON appear in tall grass!";
+  setMsg(txt);
+  setActions([{ label: 'OK', primary: true, onClick: enterOverworld }]);
+}
+
+function enterBuilding(x, y) {
+  const isCenter = (state.world[y-1] && state.world[y-1][x] === 'R');
+  const isMart   = (state.world[y-1] && state.world[y-1][x] === 'M');
+  const isLab    = (state.world[y-1] && state.world[y-1][x] === 'L');
+  if (isCenter) {
+    setMsg(`NURSE JOY: "Welcome! Shall I restore your POKEMON to full health?"`);
+    setActions([
+      { label: 'YES', primary: true, onClick: () => { healParty(); enterOverworld(); } },
+      { label: 'NO', onClick: enterOverworld },
+    ]);
+  } else if (isMart) {
+    setMsg(`CLERK: "Hi! POKEBALLS are $100 each. Buy one?"`);
+    setActions([
+      { label: 'BUY 1 BALL ($100)', primary: true, disabled: state.money < 100, onClick: () => {
+        state.money -= 100; state.balls++; updateHeader(); saveLocal();
+        setMsg(`CLERK: "Thank you! Come again!"`);
+        setActions([{ label: 'LEAVE', primary: true, onClick: enterOverworld }]);
+      }},
+      { label: 'BUY 5 BALLS ($450)', disabled: state.money < 450, onClick: () => {
+        state.money -= 450; state.balls += 5; updateHeader(); saveLocal();
+        setMsg(`CLERK: "Bulk discount! Thank you!"`);
+        setActions([{ label: 'LEAVE', primary: true, onClick: enterOverworld }]);
+      }},
+      { label: 'LEAVE', back: true, onClick: enterOverworld },
+    ]);
+  } else if (isLab) {
+    setMsg(`PROF. ROWAN: "My lab is always open to you, Noah! Keep filling the Sinnoh Pokedex!"`);
+    setActions([{ label: 'LEAVE', primary: true, onClick: enterOverworld }]);
+  } else {
+    setMsg(`The door is locked.`);
+    setActions([{ label: 'OK', primary: true, onClick: enterOverworld }]);
+  }
+}
+
+function checkEncounter() {
+  const t = state.world[state.player.y][state.player.x];
+  if (t === 'g') {
+    state.stepsSinceEncounter++;
+    const chance = 0.22 + Math.min(0.28, state.stepsSinceEncounter * 0.04);
+    if (Math.random() < chance) {
+      state.stepsSinceEncounter = 0;
+      startWildBattle();
+    }
+  }
+}
+
+// =========================================================================
+// BATTLE
+// =========================================================================
+const WILD_COMMON = [396, 399, 401, 403, 406, 412, 418, 422, 427, 434, 41, 54, 74, 129, 453, 459, 420];
+const WILD_RARE   = [443, 447, 425, 436, 433, 133, 408];
+
+function pickWild() {
+  const pool = Math.random() < 0.12 ? WILD_RARE : WILD_COMMON;
+  const id = pool[Math.floor(Math.random() * pool.length)];
+  return makeMon(id, randLv());
+}
+
+async function startWildBattle() {
+  const wild = pickWild();
+  state.battle = { wild };
+  state.screen = 'battle';
+  renderBattle(true);
+  setMsg(`A wild ${wild.name.toUpperCase()} appeared!`);
+  await sleep(1100);
+  battleMainMenu();
+}
+
+function renderBattle(withTransition = false) {
+  const b = state.battle;
+  const mon = state.party[state.activeMon];
+  screen.innerHTML = `
+    <div class="battle fade-in" id="battleRoot">
+      ${withTransition ? '<div class="battle-scene-transition"></div>' : ''}
+      <div class="enemy-platform"></div>
+      <div class="player-platform"></div>
+      <div class="mon-info enemy-info">
+        <div class="nm"><span>${b.wild.name.toUpperCase()}</span><span>Lv${b.wild.level}</span></div>
+        <span class="hpbar-label">HP</span>
+        <div class="hpbar"><div class="hpbar-fill" id="enemyHp"></div></div>
+      </div>
+      <div class="enemy-area">
+        <img class="mon-sprite small appear" id="enemySprite"
+             src="${SPRITE_FRONT(b.wild.id)}" alt="${b.wild.name}">
+      </div>
+      <div class="player-area">
+        <img class="mon-sprite appear" id="playerSprite"
+             src="${SPRITE_BACK(mon.id)}" alt="${mon.name}"
+             onerror="this.onerror=null;this.src='${SPRITE_FRONT(mon.id)}'">
+      </div>
+      <div class="mon-info player-info">
+        <div class="nm"><span>${mon.name.toUpperCase()}</span><span>Lv${mon.level}</span></div>
+        <span class="hpbar-label">HP</span>
+        <div class="hpbar"><div class="hpbar-fill" id="playerHp"></div></div>
+        <div class="hp-text" id="playerHpText">${mon.hp}/${mon.maxHp}</div>
+        <div class="xpbar"><div class="xpbar-fill" id="playerXp"></div></div>
+      </div>
+    </div>
+  `;
+  updateBattleUI();
+}
+
+function updateBattleUI() {
+  const b = state.battle;
+  const mon = state.party[state.activeMon];
+  const eHp = $('#enemyHp');
+  if (eHp) { eHp.style.width = (b.wild.hp / b.wild.maxHp * 100) + '%'; eHp.style.background = hpColor(b.wild.hp / b.wild.maxHp); }
+  const pHp = $('#playerHp');
+  if (pHp) { pHp.style.width = (mon.hp / mon.maxHp * 100) + '%'; pHp.style.background = hpColor(mon.hp / mon.maxHp); }
+  const pText = $('#playerHpText'); if (pText) pText.textContent = `${mon.hp}/${mon.maxHp}`;
+  const xp = $('#playerXp'); if (xp) xp.style.width = Math.min(100, (mon.xp / (mon.level * 20)) * 100) + '%';
+}
+function hpColor(p) {
+  if (p > 0.5) return '#30c030';
+  if (p > 0.2) return '#f8b030';
+  return '#e04028';
+}
+
+function battleMainMenu() {
+  const mon = state.party[state.activeMon];
+  setMsg(`What will ${mon.name.toUpperCase()} do?`);
+  setActions([
+    { label: '⚔️ FIGHT', onClick: menuFight },
+    { label: '⚪ BALL', onClick: tryCatch, disabled: state.balls <= 0 },
+    { label: '👥 POKEMON', onClick: () => openParty(false) },
+    { label: '🏃 RUN', onClick: tryRun },
+  ]);
+}
+function menuFight() {
+  const mon = state.party[state.activeMon];
+  const btns = mon.moves.map(m => ({
+    label: m.toUpperCase(),
+    onClick: () => doPlayerMove(m),
+  }));
+  btns.push({ label: '⬅ BACK', back: true, onClick: battleMainMenu });
+  setActions(btns);
+  setMsgInstant('Choose a move:');
+}
+
+function typeMultiplier(moveType, targetTypes) {
+  let mult = 1;
+  targetTypes.forEach(t => {
+    const tc = TYPE_CHART[moveType];
+    if (tc && tc[t] !== undefined) mult *= tc[t];
+  });
+  return mult;
+}
+
+function calcDamage(attacker, defender, move) {
+  const m = MOVES[move];
+  if (!m || m.power <= 1) return { dmg: 0, eff: 1 };
+  const eff = typeMultiplier(m.type, defender.types);
+  const stab = attacker.types.includes(m.type) ? 1.5 : 1;
+  const base = ((2 * attacker.level / 5 + 2) * m.power * (attacker.atk / defender.def)) / 50 + 2;
+  const variance = 0.85 + Math.random() * 0.15;
+  const dmg = Math.max(eff > 0 ? 1 : 0, Math.floor(base * eff * stab * variance));
+  return { dmg, eff };
+}
+
+// =========================================================================
+// ATTACK ANIMATIONS
+// =========================================================================
+function getSpritePos(selector) {
+  const el = document.querySelector(selector);
+  if (!el) return { x: 0, y: 0, w: 0, h: 0 };
+  const rect = el.getBoundingClientRect();
+  const parent = $('#battleRoot').getBoundingClientRect();
+  return {
+    x: rect.left - parent.left,
+    y: rect.top - parent.top,
+    w: rect.width, h: rect.height,
+    cx: rect.left - parent.left + rect.width/2,
+    cy: rect.top - parent.top + rect.height/2,
+  };
+}
+
+async function playMoveAnimation(moveName, attackerIsPlayer) {
+  const mv = MOVES[moveName];
+  if (!mv) return;
+  const root = $('#battleRoot');
+  if (!root) return;
+
+  const attackerSel = attackerIsPlayer ? '#playerSprite' : '#enemySprite';
+  const targetSel   = attackerIsPlayer ? '#enemySprite' : '#playerSprite';
+  const attackerEl  = document.querySelector(attackerSel);
+  const targetEl    = document.querySelector(targetSel);
+  const aPos = getSpritePos(attackerSel);
+  const tPos = getSpritePos(targetSel);
+
+  // Small lunge from attacker
+  attackerEl.classList.add(attackerIsPlayer ? 'attack-forward' : 'attack-back');
+  setTimeout(() => attackerEl.classList.remove('attack-forward','attack-back'), 400);
+
+  const fx = mv.fx;
+  switch (fx) {
+    case 'fire':     await animateProjectiles(aPos, tPos, ['🔥','🔥','🔥','✨'], 6, '#ff6020'); break;
+    case 'water':    await animateProjectiles(aPos, tPos, ['💧','💦','💧'], 8, '#4090f0'); break;
+    case 'electric': await animateElectric(tPos); break;
+    case 'grass':    await animateProjectiles(aPos, tPos, ['🍃','🌿','🍃'], 7, '#60c840'); break;
+    case 'impact':   await animateImpact(tPos, '💥'); break;
+    case 'slash':    await animateSlash(tPos); break;
+    case 'dash':     await animateDash(attackerIsPlayer, aPos, tPos); break;
+    case 'bite':     await animateImpact(tPos, '🦷'); break;
+    case 'rock':     await animateProjectiles(aPos, tPos, ['🪨','🪨','⬛'], 5, '#888'); break;
+    case 'ground':   await animateGround(tPos); break;
+    case 'ghost':    await animateGhost(tPos); break;
+    case 'psychic':  await animatePsychic(tPos); break;
+    case 'dragon':   await animateDragon(aPos, tPos); break;
+    case 'fighting': await animateImpact(tPos, '👊'); break;
+    case 'ice':      await animateProjectiles(aPos, tPos, ['❄️','🌨','❄️'], 7, '#a0d8f0'); break;
+    case 'wind':     await animateProjectiles(aPos, tPos, ['💨','💨','🌬'], 5, '#c8c8e0'); break;
+    case 'stat':     await animateStat(attackerEl); break;
+    case 'splash':   await animateSplash(aPos); break;
+    default:         await animateImpact(tPos, '💥');
+  }
+}
+
+function spawnEl(html, parent) {
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  parent.appendChild(d.firstChild);
+  return parent.lastChild;
+}
+
+function animateProjectiles(aPos, tPos, emojis, count, glow) {
+  const root = $('#battleRoot');
+  return new Promise(resolve => {
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement('div');
+      p.className = 'move-particle';
+      p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      const startX = aPos.cx - 12 + (Math.random() * 30 - 15);
+      const startY = aPos.cy - 12 + (Math.random() * 30 - 15);
+      const endX = tPos.cx - 12 + (Math.random() * 40 - 20);
+      const endY = tPos.cy - 12 + (Math.random() * 40 - 20);
+      p.style.left = startX + 'px';
+      p.style.top = startY + 'px';
+      p.style.textShadow = glow ? `0 0 10px ${glow}` : 'none';
+      p.style.fontSize = (22 + Math.random() * 10) + 'px';
+      p.style.transition = `left 0.45s cubic-bezier(.3,.9,.6,1), top 0.45s cubic-bezier(.3,.9,.6,1), opacity 0.45s`;
+      root.appendChild(p);
+      setTimeout(() => {
+        p.style.left = endX + 'px';
+        p.style.top = endY + 'px';
+      }, 30 + i * 40);
+    }
+    setTimeout(() => {
+      root.querySelectorAll('.move-particle').forEach(e => e.remove());
+      resolve();
+    }, 700);
+  });
+}
+
+function animateImpact(tPos, emoji) {
+  const root = $('#battleRoot');
+  const d = document.createElement('div');
+  d.className = 'fx-impact';
+  d.textContent = emoji || '💥';
+  d.style.left = (tPos.cx - 24) + 'px';
+  d.style.top  = (tPos.cy - 24) + 'px';
+  root.appendChild(d);
+  root.classList.add('fx-shake-screen');
+  return new Promise(r => setTimeout(() => {
+    d.remove();
+    root.classList.remove('fx-shake-screen');
+    r();
+  }, 500));
+}
+
+function animateSlash(tPos) {
+  const root = $('#battleRoot');
+  const d = document.createElement('div');
+  d.className = 'fx-slash';
+  d.style.left = (tPos.cx - 90) + 'px';
+  d.style.top  = (tPos.cy - 90) + 'px';
+  root.appendChild(d);
+  return new Promise(r => setTimeout(() => { d.remove(); r(); }, 400));
+}
+
+function animateDash(attackerIsPlayer, aPos, tPos) {
+  const root = $('#battleRoot');
+  const streak = document.createElement('div');
+  streak.style.cssText = `
+    position:absolute; height:6px; width:300px;
+    background:linear-gradient(90deg, transparent, #fff, transparent);
+    top:${tPos.cy}px; left:${Math.min(aPos.cx,tPos.cx)}px;
+    z-index:14; opacity:0.9;
+    animation: dashFade 0.4s forwards;
+  `;
+  root.appendChild(streak);
+  return new Promise(r => setTimeout(() => { streak.remove(); r(); }, 400));
+}
+
+function animateElectric(tPos) {
+  const root = $('#battleRoot');
+  const bolts = ['⚡','⚡','⚡','⚡'];
+  bolts.forEach((e, i) => {
+    const d = document.createElement('div');
+    d.className = 'move-particle';
+    d.textContent = e;
+    d.style.cssText = `
+      left:${tPos.cx - 20 + (Math.random()*80-40)}px;
+      top:${tPos.cy - 20 + (Math.random()*80-40)}px;
+      font-size: 36px;
+      color: #ffd030;
+      text-shadow: 0 0 12px #ffff60;
+      animation: zap 0.45s forwards;
+    `;
+    root.appendChild(d);
+  });
+  // flash overlay
+  const fl = document.createElement('div');
+  fl.className = 'fx-flash';
+  root.appendChild(fl);
+  setTimeout(() => fl.remove(), 400);
+  return new Promise(r => setTimeout(() => {
+    root.querySelectorAll('.move-particle').forEach(e => e.remove());
+    r();
+  }, 600));
+}
+
+function animateGround(tPos) {
+  const root = $('#battleRoot');
+  for (let i = 0; i < 6; i++) {
+    const d = document.createElement('div');
+    d.className = 'move-particle';
+    d.textContent = '💢';
+    d.style.cssText = `
+      left:${tPos.cx - 16 + (i-3) * 20}px;
+      top:${tPos.cy + 40}px;
+      font-size: 24px;
+      opacity: 0;
+      animation: rise 0.5s ${i*0.05}s forwards;
+    `;
+    root.appendChild(d);
+  }
+  root.classList.add('fx-shake-screen');
+  return new Promise(r => setTimeout(() => {
+    root.querySelectorAll('.move-particle').forEach(e => e.remove());
+    root.classList.remove('fx-shake-screen');
+    r();
+  }, 700));
+}
+
+function animateGhost(tPos) {
+  const root = $('#battleRoot');
+  for (let i = 0; i < 5; i++) {
+    const d = document.createElement('div');
+    d.className = 'move-particle';
+    d.textContent = '👻';
+    d.style.cssText = `
+      left:${tPos.cx - 16 + (Math.random()*60-30)}px;
+      top:${tPos.cy - 16 + (Math.random()*60-30)}px;
+      font-size: 28px;
+      opacity: 0.8;
+      animation: ghostDrift 0.7s forwards;
+    `;
+    root.appendChild(d);
+  }
+  return new Promise(r => setTimeout(() => {
+    root.querySelectorAll('.move-particle').forEach(e => e.remove()); r();
+  }, 750));
+}
+
+function animatePsychic(tPos) {
+  const root = $('#battleRoot');
+  for (let i = 0; i < 8; i++) {
+    const d = document.createElement('div');
+    d.className = 'move-particle';
+    d.textContent = '🌀';
+    d.style.cssText = `
+      left:${tPos.cx - 16 + Math.cos(i) * 30}px;
+      top:${tPos.cy - 16 + Math.sin(i) * 30}px;
+      font-size: 26px;
+      animation: spin 0.6s forwards;
+    `;
+    root.appendChild(d);
+  }
+  return new Promise(r => setTimeout(() => {
+    root.querySelectorAll('.move-particle').forEach(e => e.remove()); r();
+  }, 650));
+}
+
+function animateDragon(aPos, tPos) {
+  const root = $('#battleRoot');
+  const d = document.createElement('div');
+  d.className = 'move-particle';
+  d.textContent = '🐉';
+  d.style.cssText = `
+    left:${aPos.cx - 16}px; top:${aPos.cy - 16}px;
+    font-size: 38px;
+    transition: left 0.5s, top 0.5s;
+  `;
+  root.appendChild(d);
+  setTimeout(() => {
+    d.style.left = (tPos.cx - 16) + 'px';
+    d.style.top = (tPos.cy - 16) + 'px';
+  }, 50);
+  return new Promise(r => setTimeout(() => { d.remove(); animateImpact(tPos, '💥'); r(); }, 550));
+}
+
+function animateStat(el) {
+  el.style.filter = 'drop-shadow(0 0 15px #ffd030) brightness(1.3)';
+  return new Promise(r => setTimeout(() => {
+    el.style.filter = '';
+    r();
+  }, 600));
+}
+
+function animateSplash(aPos) {
+  const root = $('#battleRoot');
+  const d = document.createElement('div');
+  d.className = 'move-particle';
+  d.textContent = '💦';
+  d.style.cssText = `
+    left:${aPos.cx - 16}px; top:${aPos.cy - 40}px;
+    font-size: 32px; animation: rise 0.5s forwards;
+  `;
+  root.appendChild(d);
+  return new Promise(r => setTimeout(() => { d.remove(); r(); }, 550));
+}
+
+// Inject extra keyframes
+const extraStyle = document.createElement('style');
+extraStyle.textContent = `
+  @keyframes zap {
+    0% { opacity: 0; transform: scale(0.3); }
+    50% { opacity: 1; transform: scale(1.3); }
+    100% { opacity: 0; transform: scale(1.8); }
+  }
+  @keyframes rise {
+    0% { opacity: 0; transform: translateY(0); }
+    50% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-60px); }
+  }
+  @keyframes ghostDrift {
+    0% { opacity: 0; transform: translateY(0) scale(0.5); }
+    50% { opacity: 0.9; transform: translateY(-20px) scale(1.1); }
+    100% { opacity: 0; transform: translateY(-50px) scale(0.8); }
+  }
+  @keyframes spin {
+    0% { opacity: 0; transform: rotate(0) scale(0.5); }
+    50% { opacity: 1; transform: rotate(180deg) scale(1.3); }
+    100% { opacity: 0; transform: rotate(360deg) scale(1.8); }
+  }
+  @keyframes dashFade {
+    0% { opacity: 0; transform: scaleX(0); }
+    50% { opacity: 1; transform: scaleX(1); }
+    100% { opacity: 0; transform: scaleX(1.3); }
+  }
+`;
+document.head.appendChild(extraStyle);
+
+// =========================================================================
+// BATTLE TURNS
+// =========================================================================
+async function doPlayerMove(moveName) {
+  const b = state.battle;
+  const mon = state.party[state.activeMon];
+  setActions([]);
+  setMsg(`${mon.name.toUpperCase()} used ${moveName.toUpperCase()}!`);
+  await sleep(700);
+
+  await playMoveAnimation(moveName, true);
+
+  const es = $('#enemySprite'); es.classList.add('hit');
+  await sleep(500);
+  es.classList.remove('hit');
+
+  const { dmg, eff } = calcDamage(mon, b.wild, moveName);
+  b.wild.hp = Math.max(0, b.wild.hp - dmg);
+  updateBattleUI();
+
+  if (moveName === 'Splash') setMsgInstant("But nothing happened...");
+  else if (MOVES[moveName].power === 0) setMsgInstant(`${mon.name.toUpperCase()}'s ${moveName.toUpperCase()} had an effect!`);
+  else if (eff > 1) setMsgInstant(`A critical hit! It's SUPER EFFECTIVE! (-${dmg} HP)`);
+  else if (eff < 1 && eff > 0) setMsgInstant(`It's not very effective... (-${dmg} HP)`);
+  else if (eff === 0) setMsgInstant(`It had no effect on ${b.wild.name.toUpperCase()}...`);
+  else setMsgInstant(`${b.wild.name.toUpperCase()} took ${dmg} damage.`);
+  await sleep(900);
+
+  if (b.wild.hp <= 0) { await faintEnemy(); return; }
+  await enemyTurn();
+}
+
+async function enemyTurn() {
+  const b = state.battle;
+  const mon = state.party[state.activeMon];
+  const move = b.wild.moves[Math.floor(Math.random() * b.wild.moves.length)];
+  setMsg(`Wild ${b.wild.name.toUpperCase()} used ${move.toUpperCase()}!`);
+  await sleep(700);
+
+  await playMoveAnimation(move, false);
+
+  const ps = $('#playerSprite'); ps.classList.add('hit');
+  await sleep(500);
+  ps.classList.remove('hit');
+
+  const { dmg, eff } = calcDamage(b.wild, mon, move);
+  mon.hp = Math.max(0, mon.hp - dmg);
+  updateBattleUI();
+
+  if (eff > 1) setMsgInstant(`It's SUPER EFFECTIVE! (-${dmg} HP)`);
+  else if (eff < 1 && eff > 0 && dmg > 0) setMsgInstant(`It's not very effective... (-${dmg} HP)`);
+  else if (dmg > 0) setMsgInstant(`${mon.name.toUpperCase()} took ${dmg} damage.`);
+  else setMsgInstant(`But it failed!`);
+  await sleep(900);
+
+  if (mon.hp <= 0) { await faintPlayer(); return; }
+  battleMainMenu();
+}
+
+async function faintEnemy() {
+  const b = state.battle;
+  const mon = state.party[state.activeMon];
+  $('#enemySprite').classList.add('faint');
+  setMsgInstant(`Wild ${b.wild.name.toUpperCase()} fainted!`);
+  const xpGain = 10 + b.wild.level * 5;
+  mon.xp += xpGain;
+  const cash = 20 + b.wild.level * 8;
+  state.money += cash;
+  updateHeader();
+  await sleep(1100);
+  setMsg(`${mon.name.toUpperCase()} gained ${xpGain} EXP! Got $${cash}.`);
+  let leveledUp = false;
+  while (mon.xp >= mon.level * 20) {
+    mon.xp -= mon.level * 20;
+    mon.level++;
+    mon.maxHp += 4; mon.hp += 4;
+    mon.atk += 2; mon.def += 2;
+    leveledUp = true;
+  }
+  updateBattleUI();
+  await sleep(900);
+  if (leveledUp) {
+    setMsg(`🌟 ${mon.name.toUpperCase()} grew to Lv${mon.level}!`);
+    await sleep(1300);
+  }
+  endBattle();
+}
+
+async function faintPlayer() {
+  const mon = state.party[state.activeMon];
+  $('#playerSprite').classList.add('faint');
+  setMsg(`${mon.name.toUpperCase()} fainted!`);
+  await sleep(1300);
+  const alive = state.party.findIndex(m => m.hp > 0);
+  if (alive === -1) {
+    setMsg(`Noah is out of usable POKEMON! You blacked out and returned to the Pokemon Center...`);
+    await sleep(1900);
+    state.party.forEach(m => m.hp = Math.max(1, Math.floor(m.maxHp / 2)));
+    state.money = Math.max(0, state.money - 100);
+    updateHeader();
+    endBattle();
+  } else {
+    setMsg('Choose another POKEMON!');
+    openParty(true);
+  }
+}
+
+async function tryCatch() {
+  if (state.balls <= 0) { setMsg('You have no POKEBALLS!'); return; }
+  const b = state.battle;
+  state.balls--;
+  updateHeader();
+  setActions([]);
+  setMsg(`Noah threw a POKEBALL!`);
+
+  const pb = document.createElement('div');
+  pb.className = 'pokeball-anim throw';
+  $('#battleRoot').appendChild(pb);
+  await sleep(900);
+  pb.classList.remove('throw');
+  pb.style.left = '520px'; pb.style.top = '160px';
+
+  const es = $('#enemySprite'); if (es) es.style.visibility = 'hidden';
+
+  const hpRatio = b.wild.hp / b.wild.maxHp;
+  const chance = Math.min(0.95, b.wild.catchRate * (1.8 - hpRatio));
+  const shakes = Math.min(3, Math.floor(chance * 4) + Math.floor(Math.random() * 2));
+
+  pb.classList.add('wiggle');
+  for (let i = 0; i < shakes; i++) { await sleep(600); setMsgInstant(`shake... (${i+1})`); }
+  pb.classList.remove('wiggle');
+  await sleep(400);
+
+  if (Math.random() < chance) {
+    setMsg(`Gotcha! ${b.wild.name.toUpperCase()} was caught!`);
+    state.caught++;
+    const captured = makeMon(b.wild.id, b.wild.level);
+    captured.hp = Math.max(1, b.wild.hp);
+    if (state.party.length < 6) state.party.push(captured);
+    else setMsg(`Gotcha! ${b.wild.name.toUpperCase()} caught! (Party full — sent to PC)`);
+    updateHeader();
+    saveLocal();
+    await sleep(1700);
+    pb.remove();
+    endBattle();
+  } else {
+    if (es) es.style.visibility = 'visible';
+    pb.remove();
+    setMsg(`Oh no! The POKEMON broke free!`);
+    await sleep(1100);
+    await enemyTurn();
+  }
+}
+
+async function tryRun() {
+  setActions([]);
+  setMsg(`Got away safely!`);
+  await sleep(900);
+  endBattle();
+}
+
+function endBattle() {
+  state.battle = null;
+  saveLocal();
+  enterOverworld();
+}
+
+// =========================================================================
+// PARTY
+// =========================================================================
+function openParty(forceSwitch) {
+  const prev = state.screen;
+  state.screen = 'party';
+  const body = state.party.map((m, i) => `
+    <div class="party-mon ${i === state.activeMon ? 'active' : ''} ${m.hp <= 0 ? 'fainted' : ''}" data-i="${i}">
+      <img src="${SPRITE_FRONT(m.id)}" alt="${m.name}">
+      <div class="info">
+        <div class="n">${m.name.toUpperCase()} Lv${m.level}</div>
+        <div>${m.types.map(t => `<span class="type-pill type-${t}">${t.toUpperCase()}</span>`).join('')}</div>
+        <div style="margin-top:3px">HP ${m.hp}/${m.maxHp}</div>
+        <div>A${m.atk} D${m.def}</div>
+      </div>
+    </div>
+  `).join('');
+  screen.innerHTML = `
+    <div class="party-screen fade-in">
+      <h2>NOAH'S TEAM (${state.party.length}/6)</h2>
+      <div class="party-list">${body}</div>
+    </div>
+  `;
+  setMsg(forceSwitch ? 'Send out which POKEMON?' : "Click a POKEMON to make it your active battler.");
+  setActions([{ label: '⬅ BACK', back: true, onClick: () => {
+    if (prev === 'battle') { renderBattle(); battleMainMenu(); }
+    else enterOverworld();
+  } }]);
+  document.querySelectorAll('.party-mon').forEach(el => {
+    el.onclick = async () => {
+      const i = parseInt(el.dataset.i);
+      if (state.party[i].hp <= 0) { setMsg(`${state.party[i].name.toUpperCase()} has fainted!`); return; }
+      state.activeMon = i;
+      setMsg(`Go! ${state.party[i].name.toUpperCase()}!`);
+      await sleep(700);
+      if (prev === 'battle') {
+        renderBattle();
+        if (forceSwitch) { await sleep(400); await enemyTurn(); }
+        else battleMainMenu();
+      } else { enterOverworld(); }
+    };
+  });
+}
+
+function healParty() {
+  state.party.forEach(m => m.hp = m.maxHp);
+  state.balls = Math.min(40, state.balls + 3);
+  updateHeader();
+  setMsg(`NURSE JOY: "Your POKEMON are fully restored! We also gave you 3 POKEBALLS. 💊"`);
+}
+
+// =========================================================================
+// BOOT
+// =========================================================================
+function boot() {
+  // Wait a tick so Firebase init module can run
+  renderTitle();
+  // Auto-sync: if user was previously signed in, Firebase will restore session
+  if (window.firebaseEnabled) {
+    const hook = () => {
+      if (window.fb) {
+        window.fb.onAuth(async (u) => {
+          if (u) {
+            state.user = { uid: u.uid, email: u.email };
+            updateAccountBadge();
+            // Pull cloud save automatically (merge: cloud wins if newer)
+            const localRaw = localStorage.getItem(SAVE_KEY);
+            let localAt = 0; try { localAt = JSON.parse(localRaw || '{}').savedAt || 0; } catch {}
+            try {
+              const cloud = await window.fb.loadDoc(state.user.uid);
+              if (cloud && (cloud.savedAt || 0) >= localAt) {
+                applySavePayload(cloud);
+                try { localStorage.setItem(SAVE_KEY, JSON.stringify(cloud)); } catch {}
+                flashCloudIndicator('☁️ Cloud save loaded', '#30a040');
+              } else if (hasLocalSave()) {
+                await doCloudSave();
+              }
+            } catch (e) { console.warn('auto-sync failed', e); }
+            if (state.screen === 'title') renderTitle();
+          } else {
+            state.user = null; updateAccountBadge();
+            if (state.screen === 'title') renderTitle();
+          }
+        });
+      }
+    };
+    if (window.fb) hook();
+    else window.addEventListener('firebase-ready', hook);
+  }
+  updateAccountBadge();
+}
+boot();
+
+// Autosave periodically too (every 30 sec while playing)
+setInterval(() => {
+  if (state.screen === 'overworld' || state.screen === 'battle') saveLocal();
+}, 30000);
+
+window.addEventListener('resize', () => {
+  if (state.screen === 'overworld') { updatePlayerPos(); updateCamera(); }
+});
+</script>
+</body>
+</html>
