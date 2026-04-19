@@ -853,49 +853,62 @@
   /* Mobile D-pad */
   #dpad {
     position: fixed;
-    bottom: 20px; left: 20px;
-    z-index: 500;
+    bottom: 16px; left: 16px;
+    z-index: 9999;
     display: none;
+    grid-template-columns: repeat(3, 64px);
+    grid-template-rows: repeat(3, 64px);
+    gap: 4px;
     user-select: none;
+    -webkit-user-select: none;
     touch-action: none;
+    pointer-events: auto;
   }
-  #dpad.visible { display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px); gap: 2px; }
   .dpad-btn {
-    background: rgba(0,0,0,0.55);
-    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(20,20,30,0.85);
+    border: 3px solid rgba(255,255,255,0.5);
     color: #fff;
-    font-size: 20px;
-    border-radius: 8px;
+    font-size: 26px;
+    font-weight: bold;
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.6), 0 6px 12px rgba(0,0,0,0.5);
   }
-  .dpad-btn:active { background: rgba(224,48,40,0.7); transform: scale(0.95); }
+  .dpad-btn:active { background: rgba(224,48,40,0.9); transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.6); }
   .dpad-up    { grid-column: 2; grid-row: 1; }
   .dpad-left  { grid-column: 1; grid-row: 2; }
-  .dpad-center{ grid-column: 2; grid-row: 2; background: rgba(255,208,48,0.3); font-size: 14px; }
+  .dpad-center{ grid-column: 2; grid-row: 2; background: rgba(255,208,48,0.5); font-size: 18px; border-style: dashed; }
   .dpad-right { grid-column: 3; grid-row: 2; }
   .dpad-down  { grid-column: 2; grid-row: 3; }
   #actionBtn {
     position: fixed;
-    bottom: 40px; right: 30px;
-    width: 70px; height: 70px;
+    bottom: 32px; right: 20px;
+    width: 84px; height: 84px;
     background: linear-gradient(180deg, #e03030, #a02020);
     color: #fff;
-    font-family: inherit; font-size: 14px; font-weight: bold;
-    border: 3px solid #401010;
+    font-family: inherit; font-size: 16px; font-weight: bold;
+    border: 4px solid #401010;
     border-radius: 50%;
     display: none;
     align-items: center; justify-content: center;
-    z-index: 500;
-    box-shadow: 0 4px 0 #401010, 0 8px 15px rgba(0,0,0,0.5);
+    z-index: 9999;
+    box-shadow: 0 5px 0 #401010, 0 8px 18px rgba(0,0,0,0.6);
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
-  #actionBtn.visible { display: flex; }
-  #actionBtn:active { transform: translateY(4px); box-shadow: 0 0 0 #401010, 0 4px 8px rgba(0,0,0,0.5); }
+  #actionBtn:active { transform: translateY(4px); box-shadow: 0 1px 0 #401010, 0 4px 8px rgba(0,0,0,0.5); }
+
+  /* ALWAYS show D-pad on touch devices OR small screens — no JS detection needed */
+  @media (pointer: coarse), (hover: none), (max-width: 900px) {
+    #dpad { display: grid !important; }
+    #actionBtn { display: flex !important; }
+  }
 
   /* MATH / QUIZ MODAL */
   .modal-overlay {
@@ -1015,7 +1028,7 @@
   @media (max-width: 720px) {
     body { padding: 0; }
     #game { width: 100vw; border-radius: 0; border: none; }
-    #screen { height: 60vh; min-height: 420px; }
+    #screen { height: 55vh; min-height: 380px; }
     #header { font-size: 8px; padding: 8px 10px; }
     #title { font-size: 8px; }
     #stats { font-size: 7px; }
@@ -1024,12 +1037,8 @@
     .math-question { font-size: 22px; }
     .choice-btn { font-size: 13px; padding: 12px 6px; }
     .title-screen h1 { font-size: 20px; }
-    #dpad, #actionBtn { display: none; }  /* shown via JS when touch detected */
-  }
-
-  @media (pointer: coarse) {
-    #dpad.visible { display: grid; }
-    #actionBtn.visible { display: flex; }
+    /* Make room at bottom for D-pad so it doesn't cover the UI */
+    #ui { padding-bottom: 100px; }
   }
 </style>
 </head>
@@ -1844,7 +1853,7 @@ const TYPE_CHART = {
 // =========================================================================
 // BIG SINNOH MAP (40 x 30 tiles, 48px each = 1920x1440 world)
 // =========================================================================
-const MAP_W = 60, MAP_H = 40;
+const MAP_W = 200, MAP_H = 150;   // 30x bigger than original 40x30
 const TILE_SIZE = 48;
 const VIEW_W = 16, VIEW_H = 10; // visible tiles at a time
 
@@ -2079,14 +2088,224 @@ function generateWorld() {
   // -------- ORIGINAL map border: rebuild bottom/right borders because size changed --------
   // (already done at top with original MAP_H/MAP_W, but now extended)
 
-  // -------- Decorative scatter: rocks, flowers, trees --------
-  const decor = [
-    [2,11,'f'],[3,11,'f'],[14,4,'f'],[18,4,'f'],[36,4,'f'],
-    [16,10,'r'],[24,13,'r'],[30,17,'r'],[6,25,'r'],
-    [2,9,'T'],[13,9,'T'],[28,14,'T'],[22,6,'T'],[38,14,'T'],
-    [44,25,'f'],[50,25,'f'],[54,36,'T'],[46,37,'T'],[57,30,'f'],[43,31,'f'],
+  // =====================================================================
+  // MASSIVE WORLD EXPANSION — 30+ more regions spanning x 60-200, y 0-150
+  // =====================================================================
+  // Rebuild border trees for new dimensions
+  for (let x = 0; x < MAP_W; x++) { g[0][x] = 'T'; g[MAP_H-1][x] = 'T'; }
+  for (let y = 0; y < MAP_H; y++) { g[y][0] = 'T'; g[y][MAP_W-1] = 'T'; }
+
+  // -------- VALLEY WINDWORKS (x 62-82, y 2-14) — electric/steel area --------
+  placeBuilding(g, 68, 5, 5, 4, 'B'); // big factory building
+  for (let x = 62; x < 82; x++) g[10][x] = 'p';
+  patch(g, 64, 3, 3, 2, 'g');
+  patch(g, 76, 12, 3, 2, 'g');
+  // Lightning rods (rocks as decoration)
+  [[74,6],[66,9],[80,4]].forEach(([x,y]) => { if (g[y][x] === '.') g[y][x] = 'r'; });
+
+  // -------- FUEGO IRONWORKS (x 85-105, y 2-18) — fire area --------
+  placeBuilding(g, 90, 5, 6, 4, 'B');
+  for (let x = 85; x < 105; x++) g[11][x] = 'p';
+  patch(g, 86, 3, 3, 2, 'g');
+  patch(g, 100, 14, 3, 2, 'g');
+
+  // -------- MT. CORONET (NORTH) (x 108-135, y 2-22) — snowy mountain --------
+  for (let y = 2; y < 22; y++)
+    for (let x = 108; x < 135; x++)
+      if (g[y][x] === '.') g[y][x] = 'r';
+  // Carve a pass
+  const northPass = [];
+  for (let x = 108; x < 135; x++) northPass.push([x, 12]);
+  for (let y = 2; y < 22; y++) { northPass.push([121, y]); }
+  northPass.forEach(([x,y]) => g[y][x] = 'p');
+  patch(g, 114, 14, 3, 2, 'g');
+  patch(g, 128, 8, 3, 2, 'g');
+
+  // -------- SNOWPOINT CITY (x 138-165, y 2-24) — ice area --------
+  placeBuilding(g, 142, 5, 4, 3, 'R');
+  placeBuilding(g, 148, 5, 4, 3, 'M');
+  placeBuilding(g, 155, 5, 4, 3, 'B');
+  placeBuilding(g, 142, 11, 4, 3, 'B');
+  placeBuilding(g, 148, 11, 4, 3, 'B');
+  placeBuilding(g, 155, 11, 4, 3, 'G'); // ICE GYM (extra gym!)
+  state.gymDoors['156,13'] = 'spark'; // reuse spark for now (extra battle)
+  for (let x = 138; x < 165; x++) { g[9][x] = 'p'; g[15][x] = 'p'; g[20][x] = 'p'; }
+  for (let y = 3; y < 22; y++) { g[y][146] = 'p'; g[y][152] = 'p'; g[y][160] = 'p'; }
+  patch(g, 138, 18, 4, 2, 'g');
+
+  // -------- ROUTE 217 (x 167-195, y 2-18) — icy route --------
+  patch(g, 170, 5, 4, 2, 'g');
+  patch(g, 180, 10, 4, 2, 'g');
+  patch(g, 190, 14, 4, 2, 'g');
+  for (let y = 3; y < 18; y++) g[y][185] = 'p';
+
+  // -------- CANALAVE CITY (x 2-25, y 42-62) — port city --------
+  placeBuilding(g, 4, 45, 4, 3, 'R');
+  placeBuilding(g, 10, 45, 4, 3, 'M');
+  placeBuilding(g, 16, 45, 4, 3, 'B');
+  placeBuilding(g, 4, 52, 4, 3, 'B');
+  placeBuilding(g, 10, 52, 4, 3, 'B');
+  placeBuilding(g, 16, 52, 4, 3, 'L'); // another lab
+  for (let x = 2; x < 25; x++) { g[50][x] = 'p'; g[58][x] = 'p'; }
+  for (let y = 42; y < 62; y++) g[y][22] = 'p';
+  // Connecting path to Lake Verity region
+  for (let y = 24; y < 42; y++) g[y][15] = 'p';
+
+  // -------- ETERNA CITY (x 65-95, y 42-62) — historic town with Bike Shop --------
+  placeBuilding(g, 68, 46, 4, 3, 'G'); // GYM
+  state.gymDoors['69,48'] = 'wildlife'; // reuse wildlife (bug gym)
+  placeBuilding(g, 74, 46, 4, 3, 'B');
+  placeBuilding(g, 80, 46, 4, 3, 'R');
+  placeBuilding(g, 86, 46, 4, 3, 'M');
+  placeBuilding(g, 68, 52, 4, 3, 'B');
+  placeBuilding(g, 74, 52, 4, 3, 'B');
+  placeBuilding(g, 80, 52, 4, 3, 'B');
+  placeBuilding(g, 86, 52, 4, 3, 'B');
+  for (let x = 65; x < 95; x++) { g[50][x] = 'p'; g[58][x] = 'p'; }
+  for (let y = 42; y < 62; y++) g[y][88] = 'p';
+
+  // -------- ROUTE 211 (x 100-135, y 40-60) — east-west between mountains --------
+  for (let x = 98; x < 138; x++) g[50][x] = 'p';
+  patch(g, 105, 45, 4, 2, 'g');
+  patch(g, 115, 52, 4, 2, 'g');
+  patch(g, 125, 47, 4, 2, 'g');
+
+  // -------- MT. CORONET (MIDDLE PASS) (x 138-160, y 40-70) --------
+  for (let y = 40; y < 70; y++)
+    for (let x = 138; x < 160; x++)
+      if (g[y][x] === '.') g[y][x] = 'r';
+  for (let x = 138; x < 160; x++) g[55][x] = 'p';
+  for (let y = 40; y < 70; y++) g[y][148] = 'p';
+
+  // -------- CELESTIC TOWN (x 163-195, y 42-62) — ancient town --------
+  placeBuilding(g, 165, 46, 4, 3, 'B');
+  placeBuilding(g, 171, 46, 4, 3, 'R');
+  placeBuilding(g, 177, 46, 4, 3, 'M');
+  placeBuilding(g, 183, 46, 4, 3, 'B');
+  placeBuilding(g, 189, 46, 4, 3, 'B');
+  for (let x = 163; x < 195; x++) { g[50][x] = 'p'; g[58][x] = 'p'; }
+
+  // -------- ROUTE 212 (x 62-95, y 70-90) — rainy route to Pastoria --------
+  for (let x = 62; x < 95; x++) g[80][x] = 'p';
+  patch(g, 65, 72, 5, 3, 'g');
+  patch(g, 75, 83, 5, 3, 'g');
+  patch(g, 85, 75, 5, 3, 'g');
+  // Small water ponds
+  for (let y = 77; y < 80; y++) for (let x = 70; x < 74; x++) g[y][x] = 'w';
+
+  // -------- PASTORIA CITY (x 2-35, y 75-95) — water city, big marsh --------
+  placeBuilding(g, 5, 78, 4, 3, 'R');
+  placeBuilding(g, 11, 78, 4, 3, 'M');
+  placeBuilding(g, 17, 78, 4, 3, 'G'); // GYM
+  state.gymDoors['18,80'] = 'cosmos';
+  placeBuilding(g, 23, 78, 4, 3, 'B');
+  placeBuilding(g, 29, 78, 4, 3, 'B');
+  for (let x = 2; x < 35; x++) { g[83][x] = 'p'; g[90][x] = 'p'; }
+  for (let y = 75; y < 95; y++) g[y][33] = 'p';
+
+  // -------- GREAT MARSH (x 38-60, y 75-100) — swampy bug/water area --------
+  for (let y = 80; y < 100; y++)
+    for (let x = 38; x < 60; x++) {
+      const r = (x * 7 + y * 3) % 10;
+      if (r < 3) g[y][x] = 'w';
+      else if (r < 6 && g[y][x] === '.') g[y][x] = 'g';
+    }
+  for (let x = 35; x < 62; x++) g[85][x] = 'p';
+
+  // -------- ROUTE 213 (x 98-130, y 80-100) — beach route --------
+  for (let y = 92; y < 100; y++)
+    for (let x = 98; x < 135; x++)
+      g[y][x] = y >= 95 ? 'w' : 's';
+  for (let x = 98; x < 130; x++) g[88][x] = 'p';
+  patch(g, 100, 83, 4, 3, 'g');
+  patch(g, 115, 83, 4, 3, 'g');
+
+  // -------- VEILSTONE CITY (x 135-165, y 75-98) — big modern city --------
+  placeBuilding(g, 138, 78, 4, 3, 'G'); // GYM
+  state.gymDoors['139,80'] = 'kindness';
+  placeBuilding(g, 144, 78, 4, 3, 'R');
+  placeBuilding(g, 150, 78, 4, 3, 'M');
+  placeBuilding(g, 156, 78, 4, 3, 'B');
+  placeBuilding(g, 138, 85, 4, 3, 'B');
+  placeBuilding(g, 144, 85, 4, 3, 'B');
+  placeBuilding(g, 150, 85, 4, 3, 'B');
+  placeBuilding(g, 156, 85, 4, 3, 'B');
+  for (let x = 135; x < 165; x++) { g[83][x] = 'p'; g[90][x] = 'p'; g[95][x] = 'p'; }
+
+  // -------- SOLACEON TOWN (x 168-195, y 75-95) + Solaceon Ruins (cave nearby) --------
+  placeBuilding(g, 170, 78, 4, 3, 'R');
+  placeBuilding(g, 176, 78, 4, 3, 'M');
+  placeBuilding(g, 182, 78, 4, 3, 'B');
+  placeBuilding(g, 188, 78, 4, 3, 'B');
+  for (let x = 168; x < 195; x++) { g[83][x] = 'p'; g[90][x] = 'p'; }
+  // Ruins (cave entrance)
+  for (let y = 87; y < 91; y++) for (let x = 180; x < 184; x++) g[y][x] = 'C';
+
+  // -------- SUNYSHORE CITY (x 25-60, y 103-125) — solar city --------
+  placeBuilding(g, 28, 105, 4, 3, 'R');
+  placeBuilding(g, 34, 105, 4, 3, 'M');
+  placeBuilding(g, 40, 105, 4, 3, 'G'); // GYM
+  state.gymDoors['41,107'] = 'spark';
+  placeBuilding(g, 46, 105, 4, 3, 'B');
+  placeBuilding(g, 52, 105, 4, 3, 'B');
+  placeBuilding(g, 28, 112, 4, 3, 'B');
+  placeBuilding(g, 34, 112, 4, 3, 'B');
+  placeBuilding(g, 40, 112, 4, 3, 'B');
+  placeBuilding(g, 46, 112, 4, 3, 'B');
+  for (let x = 25; x < 60; x++) { g[110][x] = 'p'; g[117][x] = 'p'; g[122][x] = 'p'; }
+
+  // -------- ROUTE 222 (x 65-100, y 110-130) — beach/ocean --------
+  for (let y = 118; y < 130; y++)
+    for (let x = 65; x < 105; x++)
+      g[y][x] = y >= 122 ? 'w' : 's';
+  for (let x = 65; x < 100; x++) g[115][x] = 'p';
+  patch(g, 70, 112, 4, 2, 'g');
+
+  // -------- POKEMON LEAGUE (x 110-145, y 105-130) — ultimate challenge --------
+  // Big ornate building
+  placeBuilding(g, 115, 110, 6, 5, 'G');
+  state.gymDoors['118,114'] = 'cosmos';
+  placeBuilding(g, 125, 110, 6, 5, 'G');
+  state.gymDoors['128,114'] = 'wildlife';
+  placeBuilding(g, 135, 110, 6, 5, 'G');
+  state.gymDoors['138,114'] = 'kindness';
+  for (let x = 110; x < 145; x++) { g[116][x] = 'p'; g[125][x] = 'p'; }
+
+  // -------- VICTORY ROAD (x 148-185, y 105-140) — final cave maze --------
+  for (let y = 108; y < 130; y++)
+    for (let x = 150; x < 185; x++)
+      if (g[y][x] === '.') g[y][x] = 'r';
+  // Carve path
+  for (let x = 148; x < 185; x++) g[118][x] = 'p';
+  for (let y = 108; y < 130; y++) g[y][165] = 'p';
+  patch(g, 155, 112, 3, 2, 'g');
+
+  // -------- FULLMOON ISLAND (x 180-195, y 128-145) — secret island --------
+  for (let y = 128; y < 145; y++)
+    for (let x = 175; x < 195; x++)
+      g[y][x] = 'w';
+  for (let y = 132; y < 140; y++)
+    for (let x = 183; x < 191; x++)
+      g[y][x] = 's';
+  for (let y = 134; y < 138; y++)
+    for (let x = 185; x < 189; x++)
+      g[y][x] = '.';
+
+  // -------- Connecting paths between major regions --------
+  // North-south main highway on col 40
+  for (let y = 22; y < 42; y++) g[y][40] = 'p';
+  for (let y = 62; y < 75; y++) g[y][40] = 'p';
+  for (let y = 98; y < 110; y++) g[y][40] = 'p';
+  // East-west near middle (between Jubilife and Eterna)
+  for (let x = 55; x < 68; x++) g[55][x] = 'p';
+  // Scatter decoration in new regions
+  const moreDecor = [
+    [72,12,'f'],[90,10,'f'],[130,25,'r'],[160,17,'f'],[180,20,'T'],
+    [20,55,'T'],[90,55,'f'],[125,55,'r'],[170,55,'T'],[180,60,'f'],
+    [10,85,'f'],[50,95,'T'],[115,95,'T'],[155,92,'T'],[180,85,'f'],
+    [55,110,'T'],[80,115,'f'],[135,105,'r'],[155,125,'r'],[190,135,'f'],
   ];
-  decor.forEach(([x,y,t]) => { if (g[y] && g[y][x] === '.') g[y][x] = t; });
+  moreDecor.forEach(([x,y,t]) => { if (g[y] && g[y][x] === '.') g[y][x] = t; });
 
   return g;
 }
@@ -2952,15 +3171,49 @@ function enterOverworld() {
 }
 
 function locationOf(x, y) {
+  // Northern tier (y 0-30)
   if (x < 10 && y < 10) return 'Twinleaf Town';
-  if (x < 10 && y >= 14 && y < 24) return 'Lake Verity';
-  if (x < 16 && y >= 33) return 'Pastoria Beach';
-  if (x >= 9 && x < 22 && y >= 16 && y < 26) return 'Sandgem Town';
-  if (x >= 40 && y < 16) return 'Eterna Forest';
-  if (x >= 42 && x < 56 && y >= 16 && y < 23) return 'Floaroma Town';
-  if (x >= 40 && y >= 24) return 'Hearthome City';
   if (x >= 25 && x < 40 && y < 14) return 'Route 202';
-  if (x >= 25 && x < 40 && y >= 16 && y < 28) return 'Jubilife City';
+  if (x >= 40 && x < 60 && y < 16) return 'Eterna Forest';
+  if (x >= 62 && x < 85 && y < 15) return 'Valley Windworks';
+  if (x >= 85 && x < 108 && y < 20) return 'Fuego Ironworks';
+  if (x >= 108 && x < 135 && y < 22) return 'Mt. Coronet North';
+  if (x >= 135 && x < 165 && y < 24) return 'Snowpoint City';
+  if (x >= 165 && y < 22) return 'Route 217 (Icy)';
+
+  // Middle-north (y 16-42)
+  if (x >= 42 && x < 56 && y >= 16 && y < 23) return 'Floaroma Town';
+  if (x < 10 && y >= 14 && y < 24) return 'Lake Verity';
+  if (x >= 9 && x < 22 && y >= 16 && y < 26) return 'Sandgem Town';
+  if (x >= 25 && x < 40 && y >= 16 && y < 30) return 'Jubilife City';
+  if (x >= 40 && x < 62 && y >= 24 && y < 42) return 'Hearthome City';
+
+  // Middle (y 40-70)
+  if (x < 30 && y >= 42 && y < 62) return 'Canalave City';
+  if (x >= 62 && x < 98 && y >= 42 && y < 62) return 'Eterna City';
+  if (x >= 98 && x < 138 && y >= 40 && y < 62) return 'Route 211';
+  if (x >= 138 && x < 160 && y >= 40 && y < 70) return 'Mt. Coronet Pass';
+  if (x >= 160 && y >= 42 && y < 62) return 'Celestic Town';
+
+  // Middle-south (y 60-90)
+  if (x >= 62 && x < 95 && y >= 70 && y < 90) return 'Route 212 (Rainy)';
+
+  // Southern tier (y 75-100)
+  if (x < 35 && y >= 33 && y < 40) return 'Pastoria Beach';
+  if (x < 35 && y >= 75 && y < 95) return 'Pastoria City';
+  if (x >= 35 && x < 62 && y >= 75 && y < 100) return 'Great Marsh';
+  if (x >= 98 && x < 135 && y >= 80 && y < 100) return 'Route 213 (Beach)';
+  if (x >= 135 && x < 168 && y >= 75 && y < 98) return 'Veilstone City';
+  if (x >= 168 && y >= 75 && y < 95) return 'Solaceon Town';
+
+  // Far south (y 100-150)
+  if (x >= 25 && x < 60 && y >= 103 && y < 125) return 'Sunyshore City';
+  if (x >= 65 && x < 105 && y >= 110 && y < 130) return 'Route 222 (Beach)';
+  if (x >= 110 && x < 145 && y >= 105 && y < 130) return 'Pokemon League';
+  if (x >= 148 && x < 185 && y >= 105 && y < 140) return 'Victory Road';
+  if (x >= 180 && y >= 128) return 'Fullmoon Island';
+
+  // Fallbacks
   if (y >= 30 && x < 26) return 'Route 205';
   if (y >= 30 && x >= 26 && x < 40) return 'Mt. Coronet Pass';
   if (y >= 25) return 'Route 203';
@@ -3026,30 +3279,31 @@ function playerSpriteSVG() {
   </svg>`;
 }
 
+// Cache of rendered tiles keyed by "x,y" — enables viewport culling
+const _renderedTiles = new Map();
+let _lastViewBounds = null;
+
 function renderOverworld() {
   screen.innerHTML = `
     <div id="viewport">
-      <div id="world"></div>
+      <div id="world" style="position:absolute;top:0;left:0;width:${MAP_W * TILE_SIZE}px;height:${MAP_H * TILE_SIZE}px;display:block;"></div>
       <div class="minimap-label">📍 ${state.location}</div>
-      <div class="hint">Arrow keys / WASD to move • Walk into an NPC to talk</div>
+      <div class="hint">Arrow keys / WASD / tap to move • Walk into an NPC to talk</div>
     </div>
   `;
+  _renderedTiles.clear();
+  _lastViewBounds = null;
+
   const world = $('#world');
-  world.style.width  = (MAP_W * TILE_SIZE) + 'px';
-  world.style.height = (MAP_H * TILE_SIZE) + 'px';
-  world.style.gridTemplateColumns = `repeat(${MAP_W}, ${TILE_SIZE}px)`;
 
-  // Tiles
-  for (let y = 0; y < MAP_H; y++) {
-    for (let x = 0; x < MAP_W; x++) {
-      const c = state.world[y][x];
-      const d = document.createElement('div');
-      d.className = 'tile ' + (TILE_CLASS[c] || 'grass');
-      world.appendChild(d);
-    }
-  }
+  // Player
+  const p = document.createElement('div');
+  p.className = 'entity';
+  p.id = 'player';
+  p.innerHTML = playerSpriteSVG();
+  world.appendChild(p);
 
-  // NPCs — show as caricature portrait
+  // NPCs — render all (they're lightweight compared to tiles and count is low)
   state.npcs.forEach((n, i) => {
     const e = document.createElement('div');
     e.className = 'entity npc';
@@ -3066,15 +3320,50 @@ function renderOverworld() {
     world.appendChild(e);
   });
 
-  // Player — inline SVG pixel art trainer (Fire Red style)
-  const p = document.createElement('div');
-  p.className = 'entity';
-  p.id = 'player';
-  p.innerHTML = playerSpriteSVG();
-  world.appendChild(p);
-
+  renderVisibleTiles();
   updatePlayerPos();
   updateCamera();
+}
+
+// Viewport culling: only keep tile divs that are visible (plus small buffer)
+function renderVisibleTiles() {
+  const world = $('#world');
+  if (!world) return;
+  const vpW = screen.clientWidth;
+  const vpH = screen.clientHeight;
+  const buffer = 4; // tiles of buffer around visible area
+  const tilesAcross = Math.ceil(vpW / TILE_SIZE) + buffer * 2;
+  const tilesDown   = Math.ceil(vpH / TILE_SIZE) + buffer * 2;
+  const startX = Math.max(0, state.player.x - Math.floor(tilesAcross / 2));
+  const startY = Math.max(0, state.player.y - Math.floor(tilesDown / 2));
+  const endX = Math.min(MAP_W, startX + tilesAcross);
+  const endY = Math.min(MAP_H, startY + tilesDown);
+
+  const newBounds = `${startX},${startY},${endX},${endY}`;
+  if (_lastViewBounds === newBounds) return;
+  _lastViewBounds = newBounds;
+
+  // Which tile coords should be visible now
+  const needed = new Set();
+  for (let y = startY; y < endY; y++)
+    for (let x = startX; x < endX; x++)
+      needed.add(`${x},${y}`);
+
+  // Remove tiles that are no longer needed
+  for (const [key, div] of _renderedTiles) {
+    if (!needed.has(key)) { div.remove(); _renderedTiles.delete(key); }
+  }
+  // Add tiles that are newly needed
+  for (const key of needed) {
+    if (_renderedTiles.has(key)) continue;
+    const [x, y] = key.split(',').map(Number);
+    const c = state.world[y][x];
+    const div = document.createElement('div');
+    div.className = 'tile ' + (TILE_CLASS[c] || 'grass');
+    div.style.cssText = `position:absolute;left:${x * TILE_SIZE}px;top:${y * TILE_SIZE}px;width:${TILE_SIZE}px;height:${TILE_SIZE}px;`;
+    world.appendChild(div);
+    _renderedTiles.set(key, div);
+  }
 }
 
 function updatePlayerPos() {
@@ -3141,6 +3430,7 @@ function tryMove(dir) {
     state.player.x = nx; state.player.y = ny;
     updatePlayerPos();
     updateCamera();
+    renderVisibleTiles();
     updateLocation(false);
     checkEncounter();
   }
@@ -3159,37 +3449,50 @@ document.addEventListener('keydown', (e) => {
   tryMove(dir);
 });
 
-// Touch / D-pad handling
+// Touch / D-pad handling — always try to wire up, CSS decides visibility
 function setupMobileControls() {
-  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || matchMedia('(pointer: coarse)').matches;
   const dpad = document.getElementById('dpad');
   const ab = document.getElementById('actionBtn');
-  if (!isTouch) return;
-  dpad.classList.add('visible');
-  ab.classList.add('visible');
+  if (!dpad || !ab) return;
+
   // Hold-to-repeat movement
   let moveInterval = null, activeDir = null;
   const startMove = (dir) => {
     if (state.screen !== 'overworld' && state.screen !== 'interior') return;
     activeDir = dir; tryMove(dir);
     if (moveInterval) clearInterval(moveInterval);
-    moveInterval = setInterval(() => { if (activeDir) tryMove(activeDir); }, 180);
+    moveInterval = setInterval(() => { if (activeDir) tryMove(activeDir); }, 200);
   };
   const stopMove = () => {
     if (moveInterval) { clearInterval(moveInterval); moveInterval = null; }
     activeDir = null;
   };
+
+  // Use pointer events where available (works for both touch and mouse)
   dpad.querySelectorAll('.dpad-btn[data-dir]').forEach(btn => {
     const dir = btn.dataset.dir;
-    btn.addEventListener('touchstart', e => { e.preventDefault(); startMove(dir); }, {passive:false});
-    btn.addEventListener('touchend',   e => { e.preventDefault(); stopMove(); }, {passive:false});
-    btn.addEventListener('touchcancel',e => { e.preventDefault(); stopMove(); }, {passive:false});
-    btn.addEventListener('mousedown',  e => { e.preventDefault(); startMove(dir); });
-    btn.addEventListener('mouseup',    e => { e.preventDefault(); stopMove(); });
-    btn.addEventListener('mouseleave', e => { e.preventDefault(); stopMove(); });
+    const down = (e) => { e.preventDefault(); e.stopPropagation(); startMove(dir); };
+    const up   = (e) => { e.preventDefault(); e.stopPropagation(); stopMove(); };
+    btn.addEventListener('pointerdown', down);
+    btn.addEventListener('pointerup', up);
+    btn.addEventListener('pointercancel', up);
+    btn.addEventListener('pointerleave', up);
+    // Fallbacks for older browsers
+    btn.addEventListener('touchstart', down, { passive: false });
+    btn.addEventListener('touchend', up, { passive: false });
+    btn.addEventListener('touchcancel', up, { passive: false });
+    btn.addEventListener('mousedown', down);
+    btn.addEventListener('mouseup', up);
+    btn.addEventListener('mouseleave', up);
   });
-  // Action button: interact with the tile player is facing (if NPC/sign/door)
-  const doAction = () => {
+
+  // Action button: interact with the tile player is facing
+  const doAction = (e) => {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    if (state.screen === 'interior') {
+      // In interior: interact with adjacent tiles (like overworld but interior map)
+      return;
+    }
     if (state.screen !== 'overworld') return;
     const f = facingTile();
     const npc = state.npcs.find(n => n.x === f.x && n.y === f.y);
@@ -3198,10 +3501,38 @@ function setupMobileControls() {
       const t = state.world[f.y][f.x];
       if (t === '$') { showSign(f.x, f.y); return; }
       if (t === 'D') { enterBuilding(f.x, f.y); return; }
+      if (t === 'C' && `${f.x},${f.y}` === state.caveEntry) { enterCave(); return; }
     }
   };
-  ab.addEventListener('touchstart', e => { e.preventDefault(); doAction(); }, {passive:false});
+  ab.addEventListener('pointerdown', doAction);
+  ab.addEventListener('touchstart', doAction, { passive: false });
   ab.addEventListener('click', doAction);
+
+  // Tap-to-move on the map — alternative to D-pad
+  // Listen on the screen container, map taps to direction from player
+  const handleMapTap = (clientX, clientY) => {
+    if (state.screen !== 'overworld' && state.screen !== 'interior') return;
+    const player = document.getElementById('player');
+    if (!player) return;
+    const rect = player.getBoundingClientRect();
+    const px = rect.left + rect.width / 2;
+    const py = rect.top + rect.height / 2;
+    const dx = clientX - px;
+    const dy = clientY - py;
+    // Ignore taps near the player to prevent spam
+    if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
+    const dir = Math.abs(dx) > Math.abs(dy)
+      ? (dx > 0 ? 'right' : 'left')
+      : (dy > 0 ? 'down' : 'up');
+    tryMove(dir);
+  };
+  const viewport = document.getElementById('screen');
+  viewport.addEventListener('click', e => {
+    // Only handle taps when we're in overworld/interior and not on the D-pad
+    if (e.target.closest('#dpad') || e.target.closest('#actionBtn')) return;
+    if (e.target.closest('.modal-overlay')) return;
+    handleMapTap(e.clientX, e.clientY);
+  });
 }
 
 async function interactNpc(npc) {
