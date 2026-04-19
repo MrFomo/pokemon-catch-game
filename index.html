@@ -262,12 +262,24 @@
     background-image: radial-gradient(circle at 50% 50%, #1a1a2a 0 50%, #000 100%);
     color: #aaa; font-size: 10px;
   }
-  .tile.pokecenter-roof { background: linear-gradient(180deg, #e04040 0%, #a02020 100%); border: 2px solid #401010; }
+  .tile.pokecenter-roof { background: linear-gradient(180deg, #e04040 0%, #a02020 100%); border: 2px solid #401010; box-shadow: inset 0 0 12px #ffaa00, 0 0 8px rgba(255,160,0,0.5); animation: gentleGlow 2.5s ease-in-out infinite; }
   .tile.pokecenter-roof::after { content: 'P'; color: #fff; font-weight: bold; font-size: 16px; text-shadow: 1px 1px 0 #000; }
-  .tile.pokemart-roof { background: linear-gradient(180deg, #4080c8 0%, #2060a0 100%); border: 2px solid #102040; }
+  .tile.pokemart-roof { background: linear-gradient(180deg, #4080c8 0%, #2060a0 100%); border: 2px solid #102040; box-shadow: inset 0 0 12px #60e8ff, 0 0 6px rgba(96,232,255,0.4); animation: gentleGlow 2.5s ease-in-out infinite; }
   .tile.pokemart-roof::after { content: '🛒'; font-size: 16px; }
-  .tile.lab-roof { background: linear-gradient(180deg, #6090c0 0%, #406080 100%); border: 2px solid #102030; }
+  .tile.lab-roof { background: linear-gradient(180deg, #6090c0 0%, #406080 100%); border: 2px solid #102030; box-shadow: inset 0 0 12px #ffd030, 0 0 6px rgba(255,208,48,0.5); animation: gentleGlow 2.5s ease-in-out infinite; }
   .tile.lab-roof::after { content: '🔬'; font-size: 14px; }
+  .tile.gym-roof { background: linear-gradient(180deg, #806040 0%, #604028 100%); border: 2px solid #2a1a10; box-shadow: inset 0 0 10px #ffd030, 0 0 8px rgba(255,208,48,0.6); animation: gentleGlow 2.5s ease-in-out infinite; }
+  .tile.gym-roof::after { content: '🏛️'; font-size: 14px; }
+  .tile.floor { background: #c8b090; background-image: repeating-linear-gradient(90deg, #c8b090 0 10px, #b89878 10px 12px); }
+  .tile.wall { background: #7a5030; border: 1px solid #4a3018; }
+  .tile.carpet { background: #d04040; background-image: repeating-linear-gradient(90deg, #d04040 0 8px, #b83030 8px 10px); }
+  .tile.counter { background: #a87048; border-top: 3px solid #6a4028; }
+  .tile.exit-mat { background: #2a6030; color: #fff; font-size: 10px; }
+  .tile.exit-mat::after { content: '⬆'; color: #fff; font-size: 14px; }
+  @keyframes gentleGlow {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.2); }
+  }
   .tile.fence {
     background: #58a048;
     background-image: linear-gradient(90deg, transparent 40%, #8b6838 40% 60%, transparent 60%),
@@ -286,6 +298,8 @@
     filter: drop-shadow(2px 3px 2px rgba(0,0,0,0.6));
     transition: left 0.14s linear, top 0.14s linear;
   }
+  #player svg { width: 40px; height: 44px; }
+  .entity.npc > div { animation: bob-slow 2.5s ease-in-out infinite; }
   .entity.npc { z-index: 5; animation: bob-slow 3s ease-in-out infinite; }
   @keyframes bob-slow { 50% { transform: translateY(-3px); } }
 
@@ -723,6 +737,300 @@
     pointer-events: none;
   }
   .cloud-indicator.show { opacity: 1; }
+
+  /* Evolution screen */
+  .evo-screen {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, #1a1a2a 0%, #000 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #fff;
+    overflow: hidden;
+  }
+  .evo-stars {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(circle at 10% 20%, #fff 1px, transparent 2px),
+      radial-gradient(circle at 80% 30%, #fff 1px, transparent 2px),
+      radial-gradient(circle at 40% 70%, #fff 1px, transparent 2px),
+      radial-gradient(circle at 70% 80%, #fff 1px, transparent 2px),
+      radial-gradient(circle at 25% 85%, #fff 1px, transparent 2px),
+      radial-gradient(circle at 90% 10%, #fff 1px, transparent 2px);
+    opacity: 0.7;
+    animation: twinkle 2s infinite alternate;
+  }
+  @keyframes twinkle { to { opacity: 0.3; } }
+
+  .evo-wrap {
+    position: relative;
+    width: 220px; height: 220px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .evo-sprite {
+    position: absolute;
+    width: 180px; height: 180px;
+    filter: drop-shadow(3px 5px 4px rgba(0,0,0,0.6));
+    transition: transform 0.3s;
+  }
+  .evo-sprite.white-out {
+    animation: whiteOut 2s infinite;
+  }
+  @keyframes whiteOut {
+    0%,100% { filter: brightness(1) drop-shadow(0 0 0 transparent); transform: scale(1); }
+    50% { filter: brightness(20) drop-shadow(0 0 30px #fff); transform: scale(1.1); }
+  }
+  .evo-sprite.morph {
+    animation: morphStretch 0.6s infinite alternate;
+  }
+  @keyframes morphStretch {
+    0% { transform: scaleY(1); }
+    100% { transform: scaleY(0.85) scaleX(1.08); }
+  }
+  .evo-sprite.hidden { opacity: 0; }
+
+  .evo-flash-full {
+    position: absolute; inset: 0;
+    background: #fff;
+    animation: evoFlashFull 0.6s forwards;
+    z-index: 50;
+  }
+  @keyframes evoFlashFull {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .evo-title {
+    font-size: 14px;
+    color: #ffd030;
+    text-shadow: 2px 2px 0 #401010;
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+  }
+  .evo-caption {
+    font-size: 10px;
+    margin-top: 20px;
+    line-height: 1.8;
+    text-align: center;
+    max-width: 480px;
+    padding: 0 20px;
+  }
+
+  .speak-btn, .mic-btn {
+    background: #4080c8; color: #fff;
+    border: 2px solid #204080;
+    border-radius: 50%;
+    width: 36px; height: 36px;
+    font-size: 16px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.15s, background 0.15s;
+    box-shadow: 0 2px 0 #204080;
+  }
+  .speak-btn:hover, .mic-btn:hover { background: #60a0e0; transform: translateY(-1px); }
+  .speak-btn:active, .mic-btn:active { transform: translateY(1px); box-shadow: 0 0 0 #204080; }
+  .speak-btn.speaking { background: #60c060; animation: pulseSpeak 0.6s ease-in-out infinite; }
+  .mic-btn { background: #c04060; border-color: #801030; box-shadow: 0 2px 0 #801030; }
+  .mic-btn:hover { background: #e06080; }
+  .mic-btn.listening { background: #c04060; animation: pulseSpeak 0.4s ease-in-out infinite; }
+  @keyframes pulseSpeak {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(96,192,96,0.5); }
+    50% { transform: scale(1.1); box-shadow: 0 0 12px rgba(96,192,96,0.8); }
+  }
+
+  .sparkle {
+    position: absolute;
+    font-size: 18px;
+    pointer-events: none;
+    animation: sparkFly 1.2s forwards;
+  }
+  @keyframes sparkFly {
+    0% { opacity: 0; transform: translate(0,0) scale(0.3); }
+    30% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--dx,40px), var(--dy,-40px)) scale(1.2); }
+  }
+
+  /* Mobile D-pad */
+  #dpad {
+    position: fixed;
+    bottom: 20px; left: 20px;
+    z-index: 500;
+    display: none;
+    user-select: none;
+    touch-action: none;
+  }
+  #dpad.visible { display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 56px); gap: 2px; }
+  .dpad-btn {
+    background: rgba(0,0,0,0.55);
+    border: 2px solid rgba(255,255,255,0.3);
+    color: #fff;
+    font-size: 20px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dpad-btn:active { background: rgba(224,48,40,0.7); transform: scale(0.95); }
+  .dpad-up    { grid-column: 2; grid-row: 1; }
+  .dpad-left  { grid-column: 1; grid-row: 2; }
+  .dpad-center{ grid-column: 2; grid-row: 2; background: rgba(255,208,48,0.3); font-size: 14px; }
+  .dpad-right { grid-column: 3; grid-row: 2; }
+  .dpad-down  { grid-column: 2; grid-row: 3; }
+  #actionBtn {
+    position: fixed;
+    bottom: 40px; right: 30px;
+    width: 70px; height: 70px;
+    background: linear-gradient(180deg, #e03030, #a02020);
+    color: #fff;
+    font-family: inherit; font-size: 14px; font-weight: bold;
+    border: 3px solid #401010;
+    border-radius: 50%;
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 500;
+    box-shadow: 0 4px 0 #401010, 0 8px 15px rgba(0,0,0,0.5);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #actionBtn.visible { display: flex; }
+  #actionBtn:active { transform: translateY(4px); box-shadow: 0 0 0 #401010, 0 4px 8px rgba(0,0,0,0.5); }
+
+  /* MATH / QUIZ MODAL */
+  .modal-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 400;
+    padding: 16px;
+  }
+  .modal {
+    background: #fff;
+    border: 4px solid #401010;
+    border-radius: 14px;
+    padding: 18px;
+    width: 100%; max-width: 520px;
+    color: #222;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    animation: popIn 0.3s ease-out;
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .modal h3 {
+    font-size: 12px;
+    color: #e03028;
+    margin-bottom: 8px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .modal .subtitle {
+    font-size: 9px;
+    color: #666;
+    margin-bottom: 14px;
+    text-align: center;
+    line-height: 1.7;
+  }
+  .math-question {
+    font-size: 26px;
+    text-align: center;
+    padding: 14px;
+    background: #fff8e0;
+    border: 3px dashed #f0a030;
+    border-radius: 10px;
+    margin-bottom: 14px;
+    color: #402818;
+    letter-spacing: 3px;
+    font-weight: bold;
+  }
+  .choices {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .choice-btn {
+    background: #fff;
+    border: 3px solid var(--fr-brown);
+    color: var(--fr-dark);
+    padding: 14px 8px;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.12s;
+    box-shadow: 2px 2px 0 #401818;
+    font-weight: bold;
+  }
+  .choice-btn:hover:not(:disabled) {
+    background: #ffd030; transform: translate(1px, 1px);
+    box-shadow: 1px 1px 0 #401818;
+  }
+  .choice-btn.correct {
+    background: #60c040; color: #fff; border-color: #205020;
+  }
+  .choice-btn.wrong {
+    background: #e04040; color: #fff; border-color: #601010;
+  }
+  .choice-btn:disabled { cursor: default; }
+  .modal-result {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 10px;
+    line-height: 1.7;
+    text-align: center;
+    min-height: 18px;
+  }
+  .modal-result.good { background: #e0ffe0; color: #205020; }
+  .modal-result.bad { background: #ffe0e0; color: #801010; }
+
+  /* Trainer portrait */
+  .trainer-intro {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #2a1a4a 0%, #0a0a1a 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 16px; color: #fff; text-align: center;
+  }
+  .trainer-portrait {
+    width: 140px; height: 140px;
+    border: 4px solid #ffd030;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #333;
+    box-shadow: 0 0 30px rgba(255,208,48,0.5);
+    margin-bottom: 10px;
+  }
+  .trainer-name { font-size: 14px; color: #ffd030; text-shadow: 2px 2px 0 #401010; margin-bottom: 4px; }
+  .trainer-role { font-size: 8px; color: #b8b8d0; margin-bottom: 16px; }
+  .trainer-fact {
+    font-size: 9px; line-height: 1.8;
+    max-width: 540px; background: rgba(255,255,255,0.1);
+    padding: 12px 16px; border-radius: 8px;
+    border-left: 4px solid #ffd030;
+  }
+
+  @media (max-width: 720px) {
+    body { padding: 0; }
+    #game { width: 100vw; border-radius: 0; border: none; }
+    #screen { height: 60vh; min-height: 420px; }
+    #header { font-size: 8px; padding: 8px 10px; }
+    #title { font-size: 8px; }
+    #stats { font-size: 7px; }
+    .btn { font-size: 9px; padding: 10px 4px; }
+    #message { font-size: 10px; }
+    .math-question { font-size: 22px; }
+    .choice-btn { font-size: 13px; padding: 12px 6px; }
+    .title-screen h1 { font-size: 20px; }
+    #dpad, #actionBtn { display: none; }  /* shown via JS when touch detected */
+  }
+
+  @media (pointer: coarse) {
+    #dpad.visible { display: grid; }
+    #actionBtn.visible { display: flex; }
+  }
 </style>
 </head>
 <body>
@@ -734,6 +1042,7 @@
       💰<span id="money">500</span>
       ⚪<span id="ballCount">10</span>
       📕<span id="caughtCount">0</span>
+      <button id="headerSave" title="Save your game" style="background:#ffd030;color:#402000;border:2px solid #604020;border-radius:4px;padding:3px 6px;font-family:inherit;font-size:8px;margin-left:6px;cursor:pointer;">💾 SAVE</button>
     </div>
   </div>
   <div id="screen"></div>
@@ -742,6 +1051,16 @@
     <div id="actions"></div>
   </div>
 </div>
+
+<!-- Mobile touch controls (auto-show on touch devices) -->
+<div id="dpad">
+  <div class="dpad-btn dpad-up"    data-dir="up">▲</div>
+  <div class="dpad-btn dpad-left"  data-dir="left">◀</div>
+  <div class="dpad-btn dpad-center">🧭</div>
+  <div class="dpad-btn dpad-right" data-dir="right">▶</div>
+  <div class="dpad-btn dpad-down"  data-dir="down">▼</div>
+</div>
+<button id="actionBtn">A</button>
 
 <script>
 // =========================================================================
@@ -778,6 +1097,108 @@ const POKEDEX = {
   459: { name: 'Snover',     types: ['grass','ice'],        hp: 60, atk: 62, def: 50, moves: ['Powder Snow','Leer'],                  catchRate: 0.40 },
   408: { name: 'Cranidos',   types: ['rock'],               hp: 67, atk: 85, def: 40, moves: ['Headbutt','Rock Throw'],               catchRate: 0.25 },
   420: { name: 'Cherubi',    types: ['grass'],              hp: 45, atk: 35, def: 45, moves: ['Tackle','Absorb'],                     catchRate: 0.60 },
+
+  // === Evolved forms (reached via level-up evolution) ===
+  388: { name: 'Grotle',     types: ['grass'],              hp: 75, atk: 89, def: 85, moves: ['Razor Leaf','Bite','Tackle'],           catchRate: 0.20 },
+  389: { name: 'Torterra',   types: ['grass','ground'],     hp: 95, atk:109, def:105, moves: ['Razor Leaf','Bite','Rock Throw'],       catchRate: 0.10 },
+  391: { name: 'Monferno',   types: ['fire','fighting'],    hp: 64, atk: 78, def: 52, moves: ['Ember','Force Palm','Scratch'],         catchRate: 0.20 },
+  392: { name: 'Infernape',  types: ['fire','fighting'],    hp: 76, atk:104, def: 71, moves: ['Ember','Force Palm','Quick Attack'],    catchRate: 0.10 },
+  394: { name: 'Prinplup',   types: ['water'],              hp: 64, atk: 66, def: 68, moves: ['Bubble','Pound','Water Gun'],           catchRate: 0.20 },
+  395: { name: 'Empoleon',   types: ['water','steel'],      hp: 84, atk: 86, def: 88, moves: ['Water Gun','Bubble','Tackle'],          catchRate: 0.10 },
+  397: { name: 'Staravia',   types: ['normal','flying'],    hp: 55, atk: 75, def: 50, moves: ['Gust','Quick Attack','Tackle'],         catchRate: 0.35 },
+  398: { name: 'Staraptor',  types: ['normal','flying'],    hp: 85, atk:120, def: 70, moves: ['Gust','Quick Attack','Headbutt'],       catchRate: 0.15 },
+  400: { name: 'Bibarel',    types: ['normal','water'],     hp: 79, atk: 85, def: 60, moves: ['Tackle','Water Gun','Quick Attack'],    catchRate: 0.50 },
+  402: { name: 'Kricketune', types: ['bug'],                hp: 77, atk: 85, def: 51, moves: ['Bug Bite','Tackle','Leer'],             catchRate: 0.40 },
+  404: { name: 'Luxio',      types: ['electric'],           hp: 60, atk: 85, def: 49, moves: ['Thunder Shock','Bite','Tackle'],        catchRate: 0.25 },
+  405: { name: 'Luxray',     types: ['electric'],           hp: 80, atk:120, def: 79, moves: ['Thunder Shock','Bite','Leer'],          catchRate: 0.10 },
+  419: { name: 'Floatzel',   types: ['water'],              hp: 85, atk:105, def: 55, moves: ['Water Gun','Quick Attack','Bite'],      catchRate: 0.20 },
+  423: { name: 'Gastrodon',  types: ['water','ground'],     hp:111, atk: 83, def: 68, moves: ['Water Gun','Mud-Slap','Tackle'],        catchRate: 0.35 },
+  426: { name: 'Drifblim',   types: ['ghost','flying'],     hp:150, atk: 80, def: 44, moves: ['Astonish','Gust','Bite'],               catchRate: 0.15 },
+  435: { name: 'Skuntank',   types: ['poison','dark'],      hp:103, atk: 93, def: 67, moves: ['Bite','Scratch','Leer'],                catchRate: 0.20 },
+  437: { name: 'Bronzong',   types: ['steel','psychic'],    hp: 67, atk: 89, def:116, moves: ['Confusion','Tackle','Leer'],            catchRate: 0.15 },
+  42:  { name: 'Golbat',     types: ['poison','flying'],    hp: 75, atk: 80, def: 70, moves: ['Bite','Leech Life','Gust'],             catchRate: 0.30 },
+  55:  { name: 'Golduck',    types: ['water'],              hp: 80, atk: 82, def: 78, moves: ['Water Gun','Confusion','Scratch'],      catchRate: 0.25 },
+  75:  { name: 'Graveler',   types: ['rock','ground'],      hp: 55, atk: 95, def:115, moves: ['Tackle','Rock Throw','Mud-Slap'],       catchRate: 0.25 },
+  130: { name: 'Gyarados',   types: ['water','flying'],     hp: 95, atk:125, def: 79, moves: ['Bite','Water Gun','Tackle'],            catchRate: 0.10 },
+  444: { name: 'Gabite',     types: ['dragon','ground'],    hp: 68, atk: 90, def: 65, moves: ['Dragon Rage','Bite','Mud-Slap'],        catchRate: 0.10 },
+  445: { name: 'Garchomp',   types: ['dragon','ground'],    hp:108, atk:130, def: 95, moves: ['Dragon Rage','Bite','Quick Attack'],    catchRate: 0.05 },
+  448: { name: 'Lucario',    types: ['fighting','steel'],   hp: 70, atk:110, def: 70, moves: ['Force Palm','Quick Attack','Bite'],     catchRate: 0.10 },
+  454: { name: 'Toxicroak',  types: ['poison','fighting'],  hp: 83, atk:106, def: 65, moves: ['Force Palm','Mud-Slap','Astonish'],     catchRate: 0.25 },
+  460: { name: 'Abomasnow',  types: ['grass','ice'],        hp: 90, atk: 92, def: 75, moves: ['Powder Snow','Tackle','Leer'],          catchRate: 0.20 },
+  409: { name: 'Rampardos',  types: ['rock'],               hp: 97, atk:165, def: 60, moves: ['Headbutt','Rock Throw','Tackle'],       catchRate: 0.10 },
+  421: { name: 'Cherrim',    types: ['grass'],              hp: 70, atk: 60, def: 70, moves: ['Absorb','Tackle','Leer'],               catchRate: 0.35 },
+};
+
+// Short Pokedex entries (species info, 3rd-grade friendly)
+const POKEDEX_ENTRIES = {
+  387: { category: 'Tiny Leaf', height: "1'04\"", weight: '22.5 lb', entry: "The shell on its back is made of soil. On a very healthy Turtwig, the shell is a little wet." },
+  388: { category: 'Grove',     height: "3'07\"", weight: '213.8 lb', entry: "Grotle knows where pure water wells up. It carries fellow Pokemon there on its back." },
+  389: { category: 'Continent', height: "7'03\"", weight: '683.4 lb', entry: "Ancient people believed that beneath the ground, a gigantic Torterra dwelled." },
+  390: { category: 'Chimp',     height: "1'08\"", weight: '13.7 lb',  entry: "It agilely scales sheer cliffs. Its flame goes out when it sleeps." },
+  391: { category: 'Playful',   height: "2'11\"", weight: '48.5 lb',  entry: "It uses the flame on its tail to intimidate foes. A lively, mischievous Pokemon." },
+  392: { category: 'Flame',     height: "3'11\"", weight: '121.3 lb', entry: "Its crown of fire is evidence of its fiery nature. It is beaten by none in terms of quickness." },
+  393: { category: 'Penguin',   height: "1'04\"", weight: '11.5 lb',  entry: "A poor walker. Because it can't walk well, it often falls down. But its pride won't let it give up." },
+  394: { category: 'Penguin',   height: "2'07\"", weight: '50.7 lb',  entry: "It lives in cold seas. It keeps its head up proudly while swimming." },
+  395: { category: 'Emperor',   height: "5'07\"", weight: '186.3 lb', entry: "The three horns on its beak attest to its power. Leaders have the biggest horns." },
+  396: { category: 'Starling',  height: "1'00\"", weight: '4.4 lb',   entry: "They flock in great numbers. Though small, they flap their wings with great power." },
+  399: { category: 'Plump Mouse',height:"1'08\"", weight: '44.1 lb',  entry: "A comparison revealed that its front teeth grow steadily throughout its life." },
+  401: { category: 'Cricket',   height: "1'00\"", weight: '4.9 lb',   entry: "Its antennae are bigger than its body. Tapping them together makes a xylophone-like melody." },
+  403: { category: 'Flash',     height: "1'08\"", weight: '20.9 lb',  entry: "The extension and contraction of its muscles generates electricity." },
+  406: { category: 'Bud',       height: "0'08\"", weight: '2.6 lb',   entry: "It protects itself from the cold by curling up. It releases poison as it blooms." },
+  412: { category: 'Bagworm',   height: "0'08\"", weight: '7.5 lb',   entry: "To shelter itself from cold, wintry winds, it covers itself with a cloak of twigs and leaves." },
+  418: { category: 'Sea Weasel',height: "2'04\"", weight: '65.9 lb',  entry: "Buizel inflates a flotation sac around its neck and pokes its head out of water." },
+  422: { category: 'Sea Slug',  height: "1'00\"", weight: '13.9 lb',  entry: "Its soft body has no bones. If part of its body is bitten off, the lost part is soon regenerated." },
+  425: { category: 'Balloon',   height: "1'04\"", weight: '2.6 lb',   entry: "They carry people and Pokemon, but get startled if they grip too tightly." },
+  427: { category: 'Rabbit',    height: "1'04\"", weight: '12.1 lb',  entry: "It usually keeps one of its ears rolled up. When it senses danger, it uncurls both ears." },
+  434: { category: 'Skunk',     height: "1'04\"", weight: '42.3 lb',  entry: "It attacks with its foul-smelling fluid. The stink lingers for 24 hours." },
+  436: { category: 'Bronze',    height: "1'08\"", weight: '133.4 lb', entry: "Ancient people thought that Bronzor were tools for seeing into the future." },
+  41:  { category: 'Bat',       height: "2'07\"", weight: '16.5 lb',  entry: "Zubat lives in caves. It uses ultrasonic waves to detect obstacles." },
+  54:  { category: 'Duck',      height: "2'07\"", weight: '43.2 lb',  entry: "Psyduck has constant headaches. Its psychic powers come from the pain." },
+  74:  { category: 'Rock',      height: "1'04\"", weight: '44.1 lb',  entry: "Geodude is often mistaken for a regular rock. People step on it by accident!" },
+  129: { category: 'Fish',      height: "2'11\"", weight: '22.0 lb',  entry: "Known for being weak — but it can evolve into the mighty Gyarados!" },
+  133: { category: 'Evolution', height: "1'00\"", weight: '14.3 lb',  entry: "Eevee has an unstable genetic code that lets it evolve into many different forms." },
+  443: { category: 'Land Shark',height: "2'04\"", weight: '45.2 lb',  entry: "Gible lives in warm caves. It ambushes enemies with surprising speed." },
+  447: { category: 'Emanation', height: "2'04\"", weight: '44.5 lb',  entry: "Riolu can sense aura — an energy felt by all living things. Friendly and eager to train." },
+  453: { category: 'Toxic Mouth',height:"2'04\"", weight: '50.7 lb',  entry: "Its cheek pouches contain a deadly poison. It croaks when it's excited." },
+  433: { category: 'Bell',      height: "0'08\"", weight: '1.3 lb',   entry: "Chingling bounces around to make a ringing sound from the orb in its mouth." },
+  459: { category: 'Frost Tree',height: "3'03\"", weight: '111.3 lb', entry: "Snover lives in snowy mountains. Its footprints are shaped like little trees." },
+  408: { category: 'Head Butt', height: "2'11\"", weight: '69.4 lb',  entry: "A Pokemon from 100 million years ago. Its skull is hard as iron." },
+  420: { category: 'Cherry',    height: "1'04\"", weight: '7.3 lb',   entry: "The small ball holds the nutrients needed for evolution." },
+  445: { category: 'Mach',      height: "6'03\"", weight: '209.4 lb', entry: "When it folds its body and extends its wings, it can fly at sonic speeds." },
+  448: { category: 'Aura',      height: "3'11\"", weight: '119.0 lb', entry: "It's said that no foe can remain invisible to Lucario, since it can detect auras." },
+  130: { category: 'Atrocious', height: "21'04\"", weight: '518.1 lb', entry: "Known for its rage. Once it begins its rampage, it won't calm down easily." },
+};
+
+// Evolution map: id -> { to: newId, level: requiredLevel }
+const EVOLUTIONS = {
+  387: { to: 388, level: 18 },  // Turtwig -> Grotle
+  388: { to: 389, level: 32 },  // Grotle -> Torterra
+  390: { to: 391, level: 14 },  // Chimchar -> Monferno
+  391: { to: 392, level: 36 },  // Monferno -> Infernape
+  393: { to: 394, level: 16 },  // Piplup -> Prinplup
+  394: { to: 395, level: 36 },  // Prinplup -> Empoleon
+  396: { to: 397, level: 14 },  // Starly -> Staravia
+  397: { to: 398, level: 34 },  // Staravia -> Staraptor
+  399: { to: 400, level: 15 },  // Bidoof -> Bibarel
+  401: { to: 402, level: 10 },  // Kricketot -> Kricketune
+  403: { to: 404, level: 15 },  // Shinx -> Luxio
+  404: { to: 405, level: 30 },  // Luxio -> Luxray
+  418: { to: 419, level: 26 },  // Buizel -> Floatzel
+  422: { to: 423, level: 30 },  // Shellos -> Gastrodon
+  425: { to: 426, level: 28 },  // Drifloon -> Drifblim
+  434: { to: 435, level: 34 },  // Stunky -> Skuntank
+  436: { to: 437, level: 33 },  // Bronzor -> Bronzong
+  41:  { to: 42,  level: 22 },  // Zubat -> Golbat
+  54:  { to: 55,  level: 33 },  // Psyduck -> Golduck
+  74:  { to: 75,  level: 25 },  // Geodude -> Graveler
+  129: { to: 130, level: 20 },  // Magikarp -> Gyarados
+  443: { to: 444, level: 24 },  // Gible -> Gabite
+  444: { to: 445, level: 48 },  // Gabite -> Garchomp
+  447: { to: 448, level: 20 },  // Riolu -> Lucario (simplified)
+  453: { to: 454, level: 37 },  // Croagunk -> Toxicroak
+  459: { to: 460, level: 40 },  // Snover -> Abomasnow
+  408: { to: 409, level: 30 },  // Cranidos -> Rampardos
+  420: { to: 421, level: 25 },  // Cherubi -> Cherrim
 };
 
 const MOVES = {
@@ -810,6 +1231,596 @@ const MOVES = {
   'Splash':        { power: 1,  type: 'normal',  fx: 'splash' },
 };
 
+// =========================================================================
+// HISTORICAL TRAINERS (real figures, real portraits, educational trivia)
+// Portraits are public-domain / free-use images from Wikimedia Commons.
+// =========================================================================
+const TRAINERS = [
+  {
+    id: 'lincoln', initials: 'AL', color: '664422',
+    name: 'Abraham Lincoln',
+    role: '16th U.S. President (1809–1865)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/a/ab/Abraham_Lincoln_O-77_matte_collodion_print.jpg',
+    fact: "I led the United States through the Civil War and signed the Emancipation Proclamation in 1863, which helped free enslaved people. I also made the Gettysburg Address, one of the most famous speeches in American history.",
+    quiz: { q: "What famous document did Lincoln sign in 1863 to help free enslaved people?",
+            choices: ["Emancipation Proclamation", "Declaration of Independence", "Bill of Rights", "Constitution"], answer: 0 },
+    team: [{ id: 399, level: 7 }, { id: 396, level: 8 }],
+  },
+  {
+    id: 'einstein', initials: 'AE', color: '6a88a6',
+    name: 'Albert Einstein',
+    role: 'Physicist (1879–1955)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/d/d3/Albert_Einstein_Head.jpg',
+    fact: "I came up with the famous equation E = mc², which shows that energy and mass are connected. I won the Nobel Prize in Physics in 1921, but not for relativity — it was for explaining the photoelectric effect!",
+    quiz: { q: "What is Einstein's most famous equation?",
+            choices: ["E = mc²", "a² + b² = c²", "F = ma", "2 + 2 = 4"], answer: 0 },
+    team: [{ id: 403, level: 9 }, { id: 436, level: 10 }],
+  },
+  {
+    id: 'curie', initials: 'MC', color: '7a6a86',
+    name: 'Marie Curie',
+    role: 'Scientist (1867–1934)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Marie_Curie_c._1920s.jpg',
+    fact: "I was the first woman to win a Nobel Prize, and the only person ever to win Nobel Prizes in TWO different sciences — Physics and Chemistry. I discovered two new elements: polonium and radium.",
+    quiz: { q: "How many Nobel Prizes did Marie Curie win?",
+            choices: ["2", "1", "3", "5"], answer: 0 },
+    team: [{ id: 436, level: 10 }, { id: 425, level: 11 }],
+  },
+  {
+    id: 'tubman', initials: 'HT', color: '5a4030',
+    name: 'Harriet Tubman',
+    role: 'Freedom Fighter (1822–1913)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Harriet_Tubman_c1868-69.jpg',
+    fact: "I was born into slavery, but I escaped and then risked my life to free about 70 other enslaved people through a secret network called the Underground Railroad. I made about 13 dangerous rescue trips.",
+    quiz: { q: "What was the secret network Harriet Tubman used to free people called?",
+            choices: ["Underground Railroad", "Freedom Train", "Liberty Road", "Secret Highway"], answer: 0 },
+    team: [{ id: 418, level: 8 }, { id: 396, level: 9 }],
+  },
+  {
+    id: 'armstrong', initials: 'NA', color: '4060a0',
+    name: 'Neil Armstrong',
+    role: 'Astronaut (1930–2012)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Neil_Armstrong_pose.jpg',
+    fact: "On July 20, 1969, I became the first person ever to walk on the Moon! When I stepped onto the lunar surface I said: 'That's one small step for man, one giant leap for mankind.'",
+    quiz: { q: "In what year did Neil Armstrong first walk on the Moon?",
+            choices: ["1969", "1959", "1979", "1989"], answer: 0 },
+    team: [{ id: 425, level: 11 }, { id: 436, level: 12 }],
+  },
+  {
+    id: 'earhart', initials: 'AE', color: '8a5a40',
+    name: 'Amelia Earhart',
+    role: 'Aviator (1897–1937)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Amelia_Earhart_-_GPN-2002-000211.jpg',
+    fact: "I was the first woman to fly a plane all by myself across the Atlantic Ocean, in 1932! I set many flying records and showed that women could be amazing pilots too.",
+    quiz: { q: "What was Amelia Earhart famous for?",
+            choices: ["Flying airplanes", "Driving race cars", "Painting", "Writing books"], answer: 0 },
+    team: [{ id: 396, level: 7 }, { id: 425, level: 8 }],
+  },
+  {
+    id: 'mlk', initials: 'MK', color: '402a1a',
+    name: 'Martin Luther King Jr.',
+    role: 'Civil Rights Leader (1929–1968)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/0/05/Martin_Luther_King%2C_Jr..jpg',
+    fact: "I gave my famous 'I Have a Dream' speech in 1963 in Washington D.C., where I spoke about my dream of a fair world where kids are judged by who they are, not the color of their skin. I won the Nobel Peace Prize in 1964.",
+    quiz: { q: "What was Dr. King's most famous speech called?",
+            choices: ["I Have a Dream", "Four Score and Seven", "Give Me Liberty", "Ask Not What"], answer: 0 },
+    team: [{ id: 133, level: 10 }, { id: 427, level: 11 }],
+  },
+  {
+    id: 'franklin', initials: 'BF', color: '886644',
+    name: 'Benjamin Franklin',
+    role: 'Inventor & Founding Father (1706–1790)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/e/ec/Benjamin_Franklin_by_Joseph_Siffred_Duplessis.jpg',
+    fact: "I flew a kite in a thunderstorm to prove that lightning is electricity! I also invented bifocal glasses and the lightning rod, and I helped write the Declaration of Independence.",
+    quiz: { q: "What did Ben Franklin use to prove lightning is electricity?",
+            choices: ["A kite", "A boat", "A balloon", "A wagon"], answer: 0 },
+    team: [{ id: 403, level: 8 }, { id: 129, level: 6 }],
+  },
+  {
+    id: 'parks', initials: 'RP', color: '6a4a3a',
+    name: 'Rosa Parks',
+    role: 'Civil Rights Activist (1913–2005)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/0/0f/Rosaparks.jpg',
+    fact: "In 1955 I refused to give up my seat on a bus in Alabama to a white passenger. My brave act started the Montgomery Bus Boycott and became a big moment in the Civil Rights Movement.",
+    quiz: { q: "What did Rosa Parks refuse to give up on the bus?",
+            choices: ["Her seat", "Her book", "Her lunch", "Her hat"], answer: 0 },
+    team: [{ id: 427, level: 9 }, { id: 54, level: 10 }],
+  },
+  {
+    id: 'newton', initials: 'IN', color: '7a6020',
+    name: 'Isaac Newton',
+    role: 'Scientist & Mathematician (1643–1727)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/3/39/GodfreyKneller-IsaacNewton-1689.jpg',
+    fact: "A story says I discovered GRAVITY when I saw an apple fall from a tree! I figured out the laws of motion that explain how things move, and I also invented a type of math called calculus.",
+    quiz: { q: "What famous force did Isaac Newton discover?",
+            choices: ["Gravity", "Electricity", "Magnetism", "Sound"], answer: 0 },
+    team: [{ id: 74, level: 10 }, { id: 129, level: 8 }],
+  },
+  // === PERSIAN / IRANIAN TEACHERS (Farsi lessons) ===
+  {
+    id: 'cyrus', initials: 'کو', color: '8a4020', farsi: true,
+    name: 'Cyrus the Great',
+    role: 'کوروش بزرگ — Persian Emperor (c. 600–530 BCE)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/f/f7/%D8%A2%D8%B1%D8%A7%D9%85%DA%AF%D8%A7%D9%87_%DA%A9%D9%88%D8%B1%D9%88%D8%B4_%D8%A8%D8%B2%D8%B1%DA%AF_%D8%AF%D8%B1_%D8%AC%D9%86%D9%88%D8%A8_%D8%A7%DB%8C%D8%B1%D8%A7%D9%86.jpg',
+    fact: "I founded the Persian Empire and wrote one of the first human rights charters — the Cyrus Cylinder — letting people practice any religion and freeing slaves. سلام means 'hello' in Farsi!",
+    farsiLesson: [
+      { farsi: 'سلام', pronounce: 'sa-LĀM', english: 'Hello' },
+      { farsi: 'ممنون', pronounce: 'mam-NOON', english: 'Thank you' },
+      { farsi: 'دوست', pronounce: 'DOOST', english: 'Friend' },
+    ],
+    team: [{ id: 74, level: 8 }, { id: 408, level: 10 }],
+  },
+  {
+    id: 'rumi', initials: 'ر', color: '6a4a80', farsi: true,
+    name: 'Rumi',
+    role: 'مولانا — Persian Poet (1207–1273)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/e/ec/Molana.jpg',
+    fact: "I was one of the most beloved poets in history! People still read my poems about love and friendship today. My name in Farsi is مولانا (Molana).",
+    farsiLesson: [
+      { farsi: 'عشق', pronounce: 'ESHQ', english: 'Love' },
+      { farsi: 'قلب', pronounce: 'GHALB', english: 'Heart' },
+      { farsi: 'شعر', pronounce: 'SHE\'R', english: 'Poem' },
+    ],
+    team: [{ id: 427, level: 9 }, { id: 425, level: 11 }],
+  },
+  {
+    id: 'khayyam', initials: 'خ', color: '4a6a80', farsi: true,
+    name: 'Omar Khayyam',
+    role: 'عمر خیام — Poet & Mathematician (1048–1131)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/1/1c/Omar_Khayyam2.JPG',
+    fact: "I was a Persian poet AND a mathematician! I solved cubic equations and wrote a super-accurate calendar. I also wrote short poems called رباعی (Rubaiyat).",
+    farsiLesson: [
+      { farsi: 'یک', pronounce: 'YEK', english: 'One (1)' },
+      { farsi: 'دو', pronounce: 'DO', english: 'Two (2)' },
+      { farsi: 'سه', pronounce: 'SEH', english: 'Three (3)' },
+    ],
+    team: [{ id: 436, level: 10 }, { id: 403, level: 11 }],
+  },
+  {
+    id: 'ferdowsi', initials: 'ف', color: '70502a', farsi: true,
+    name: 'Ferdowsi',
+    role: 'فردوسی — Epic Poet (940–1020)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Ferdowsi_Tusi.jpg',
+    fact: "I spent 30 years writing the SHAHNAMEH (شاهنامه) — 'Book of Kings' — a giant epic about Persian heroes. It's why the Persian language survived through the centuries!",
+    farsiLesson: [
+      { farsi: 'کتاب', pronounce: 'ke-TĀB', english: 'Book' },
+      { farsi: 'شاه', pronounce: 'SHĀH', english: 'King' },
+      { farsi: 'ایران', pronounce: 'ee-RĀN', english: 'Iran' },
+    ],
+    team: [{ id: 418, level: 10 }, { id: 443, level: 12 }],
+  },
+  // === MORE GLOBAL FIGURES ===
+  {
+    id: 'gandhi', initials: 'MG', color: '905030',
+    name: 'Mahatma Gandhi',
+    role: 'Peace Leader, India (1869–1948)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/b/bc/MKGandhi.jpg',
+    fact: "I led India to freedom using NON-VIOLENCE instead of fighting. I believed kindness and peaceful protest could change the world — and it did.",
+    quiz: { q: "Gandhi helped free which country using peaceful protest?",
+            choices: ["India", "China", "England", "Brazil"], answer: 0 },
+    team: [{ id: 399, level: 10 }, { id: 427, level: 12 }],
+  },
+  {
+    id: 'mandela', initials: 'NM', color: '405028',
+    name: 'Nelson Mandela',
+    role: 'Freedom Fighter, South Africa (1918–2013)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/0/02/Nelson_Mandela_1994.jpg',
+    fact: "I spent 27 years in prison fighting against unfair laws called apartheid. When I got out, I became the first Black president of South Africa and helped heal my country.",
+    quiz: { q: "Nelson Mandela became the first Black president of which country?",
+            choices: ["South Africa", "Kenya", "Egypt", "Morocco"], answer: 0 },
+    team: [{ id: 447, level: 12 }, { id: 133, level: 11 }],
+  },
+  {
+    id: 'robinson', initials: 'JR', color: '2040a0',
+    name: 'Jackie Robinson',
+    role: 'Baseball Pioneer (1919–1972)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/0/02/Jackierobinson.jpg',
+    fact: "In 1947 I became the first Black player in Major League Baseball, breaking the color barrier. I played second base for the Brooklyn Dodgers and my number 42 is retired across all of baseball.",
+    quiz: { q: "What sport did Jackie Robinson break the color barrier in?",
+            choices: ["Baseball", "Basketball", "Soccer", "Football"], answer: 0 },
+    team: [{ id: 418, level: 10 }, { id: 396, level: 11 }],
+  },
+  {
+    id: 'malala', initials: 'MY', color: 'a04060',
+    name: 'Malala Yousafzai',
+    role: 'Education Activist (born 1997)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/0/04/Malala_Yousafzai_at_Girl_Summit_2014.jpg',
+    fact: "I fought for girls' right to go to school in Pakistan. I was attacked for speaking up, but I survived and kept fighting. I became the youngest person ever to win the Nobel Peace Prize at age 17!",
+    quiz: { q: "What was Malala's most famous fight about?",
+            choices: ["Education for girls", "Clean water", "Free music", "Space travel"], answer: 0 },
+    team: [{ id: 406, level: 10 }, { id: 420, level: 11 }],
+  },
+  {
+    id: 'douglass', initials: 'FD', color: '504030',
+    name: 'Frederick Douglass',
+    role: 'Abolitionist & Writer (1818–1895)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/e/e9/Frederick_Douglass_portrait.jpg',
+    fact: "I was born into slavery but taught myself to READ and WRITE in secret. I escaped to freedom and became one of the most powerful speakers and writers in America, helping to end slavery.",
+    quiz: { q: "What did Frederick Douglass secretly teach himself to do?",
+            choices: ["Read and write", "Play music", "Paint", "Swim"], answer: 0 },
+    team: [{ id: 399, level: 11 }, { id: 396, level: 10 }],
+  },
+  {
+    id: 'sacagawea', initials: 'SA', color: '6a4020',
+    name: 'Sacagawea',
+    role: 'Lewis & Clark Guide (c. 1788–1812)',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/5/5d/Sacajawea-Cooper.jpg',
+    fact: "I was a Shoshone girl who guided explorers Lewis and Clark across 4,000 miles of America — while carrying my baby on my back! I helped them speak to Native tribes and find food.",
+    quiz: { q: "Sacagawea helped which two explorers cross America?",
+            choices: ["Lewis and Clark", "Pike and Parker", "Boone and Crockett", "Columbus and Cook"], answer: 0 },
+    team: [{ id: 418, level: 10 }, { id: 427, level: 11 }],
+  },
+];
+
+// =========================================================================
+// CARICATURE PORTRAIT GENERATOR — draws a recognizable cartoon portrait from features
+// =========================================================================
+const TRAINER_FEATURES = {
+  lincoln:   { skin:'#f0d4a8', hair:'#1a0f08', hairStyle:'short', hat:'tophat', beard:'chin', outfit:'#1a1a1a', outfitTrim:'#fff', bg:'#5a3820' },
+  einstein:  { skin:'#f5d5a8', hair:'#f0f0f0', hairStyle:'wild', mustache:true, outfit:'#666', bg:'#406a88' },
+  curie:     { skin:'#f0d4a8', hair:'#2a1810', hairStyle:'bun', outfit:'#4a3a4a', outfitTrim:'#fff', bg:'#7a6a86' },
+  tubman:    { skin:'#7a5030', hair:'#1a0f08', hairStyle:'hidden', hat:'scarf', hatColor:'#d87030', outfit:'#604030', bg:'#5a4030' },
+  armstrong: { skin:'#f0d4a8', hair:'#b88038', hairStyle:'crew', outfit:'#fff', outfitTrim:'#d02020', bg:'#202846' },
+  earhart:   { skin:'#f5d5a8', hair:'#c8a060', hairStyle:'short', hat:'aviator', hatColor:'#604030', outfit:'#604030', bg:'#8a5a40' },
+  mlk:       { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short', mustache:true, outfit:'#1a1a1a', outfitTrim:'#fff', bg:'#5a3018' },
+  franklin:  { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'long', glasses:'round', outfit:'#604030', bg:'#886644' },
+  parks:     { skin:'#7a5030', hair:'#1a1008', hairStyle:'short', glasses:'cateye', outfit:'#4a3028', bg:'#6a4a3a' },
+  newton:    { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'long-curly', outfit:'#604a3a', outfitTrim:'#d8a060', bg:'#7a6020' },
+  cyrus:     { skin:'#d0a070', hair:'#1a0f08', hairStyle:'short', hat:'crown', beard:'pointed', outfit:'#a02020', outfitTrim:'#ffd030', bg:'#8a4020' },
+  rumi:      { skin:'#d0a070', hair:'#2a1810', hairStyle:'hidden', hat:'turban', hatColor:'#e0e0e0', beard:'full', outfit:'#4a2040', bg:'#6a4a80' },
+  khayyam:   { skin:'#d0a070', hair:'#2a1810', hairStyle:'hidden', hat:'turban', hatColor:'#4070a0', beard:'full', outfit:'#304060', bg:'#4a6a80' },
+  ferdowsi:  { skin:'#d0a070', hair:'#2a1810', hairStyle:'hidden', hat:'turban', hatColor:'#c0a060', beard:'long', beardColor:'#d0c0b0', outfit:'#604020', bg:'#70502a' },
+  gandhi:    { skin:'#a87040', hair:'#ffffff', hairStyle:'bald', glasses:'round', outfit:'#f0f0f0', bg:'#905030' },
+  mandela:   { skin:'#6a4530', hair:'#d0d0d0', hairStyle:'short', outfit:'#a07040', outfitTrim:'#d8a060', bg:'#405028' },
+  robinson:  { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short', hat:'cap', hatColor:'#2040a0', outfit:'#e0e0e0', outfitTrim:'#2040a0', bg:'#2040a0' },
+  malala:    { skin:'#c89070', hair:'#1a0f08', hairStyle:'hidden', hat:'scarf', hatColor:'#a04060', outfit:'#703050', bg:'#a04060' },
+  douglass:  { skin:'#7a5030', hair:'#d0d0c0', hairStyle:'afro', outfit:'#2a2a2a', outfitTrim:'#fff', bg:'#504030' },
+  sacagawea: { skin:'#a87848', hair:'#1a0a08', hairStyle:'braids', hat:'headband', hatColor:'#d0a060', outfit:'#8a6040', bg:'#6a4020' },
+  // Gym leaders
+  kindness:  { skin:'#f0d4a8', hair:'#a87040', hairStyle:'short', outfit:'#c02850', outfitTrim:'#fff', bg:'#f090c8' },
+  spark:     { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'short', mustache:true, outfit:'#303030', bg:'#6a5020' },
+  wildlife:  { skin:'#f5d5a8', hair:'#c8a060', hairStyle:'ponytail', outfit:'#5a7030', bg:'#405028' },
+  cosmos:    { skin:'#7a5030', hair:'#1a0a08', hairStyle:'updo', glasses:'cateye', outfit:'#7050a0', outfitTrim:'#e0e0e0', bg:'#404080' },
+};
+
+function caricatureSVG(f) {
+  f = Object.assign({ skin:'#f0d4a8', hair:'#2a1810', hairStyle:'short', outfit:'#4070b8', bg:'#4a80c8' }, f);
+  const hair = f.hair;
+  const hairParts = {
+    short:  `<path d="M36,55 Q36,32 70,28 Q104,32 104,55 L104,52 Q104,40 70,38 Q36,40 36,52 Z" fill="${hair}"/>`,
+    long:   `<path d="M32,60 Q32,30 70,26 Q108,30 108,60 L112,110 L96,100 L96,56 Q96,42 70,40 Q44,42 44,56 L44,100 L28,110 Z" fill="${hair}"/>`,
+    'long-curly': `<path d="M30,60 Q30,28 70,24 Q110,28 110,60 L115,108 Q108,100 95,104 L95,50 Q70,36 45,50 L45,104 Q32,100 25,108 Z" fill="${hair}"/>
+                   <circle cx="35" cy="68" r="10" fill="${hair}"/><circle cx="105" cy="68" r="10" fill="${hair}"/>
+                   <circle cx="32" cy="88" r="12" fill="${hair}"/><circle cx="108" cy="88" r="12" fill="${hair}"/>`,
+    wild:   `<path d="M25,55 Q30,28 55,30 Q45,15 65,22 Q75,10 85,25 Q95,18 100,30 Q120,32 115,56 L108,48 Q108,38 70,38 Q32,38 32,48 Z" fill="${hair}"/>
+             <path d="M30,35 Q20,40 22,50" stroke="${hair}" stroke-width="6" fill="none" stroke-linecap="round"/>
+             <path d="M110,35 Q120,40 118,50" stroke="${hair}" stroke-width="6" fill="none" stroke-linecap="round"/>`,
+    crew:   `<path d="M44,48 Q50,40 70,40 Q90,40 96,48 L96,42 Q90,34 70,34 Q50,34 44,42 Z" fill="${hair}"/>`,
+    bun:    `<circle cx="70" cy="24" r="10" fill="${hair}"/>
+             <path d="M40,55 Q40,34 70,32 Q100,34 100,55 L100,50 Q100,42 70,42 Q40,42 40,50 Z" fill="${hair}"/>`,
+    ponytail: `<path d="M38,55 Q38,30 70,28 Q102,30 102,55 L102,48 Q102,38 70,38 Q38,38 38,48 Z" fill="${hair}"/>
+               <path d="M100,45 Q118,60 110,90 Q104,78 96,62 Z" fill="${hair}"/>`,
+    updo:   `<path d="M40,55 Q40,34 70,32 Q100,34 100,55 L100,50 Q100,42 70,42 Q40,42 40,50 Z" fill="${hair}"/>
+             <ellipse cx="70" cy="22" rx="18" ry="12" fill="${hair}"/>`,
+    braids: `<path d="M36,55 Q36,30 70,28 Q104,30 104,55 L104,50 Q104,38 70,38 Q36,38 36,50 Z" fill="${hair}"/>
+             <path d="M30,55 L26,108 L38,108 L36,55 Z" fill="${hair}"/>
+             <path d="M110,55 L114,108 L102,108 L104,55 Z" fill="${hair}"/>`,
+    afro:   `<ellipse cx="70" cy="45" rx="45" ry="32" fill="${hair}"/>
+             <circle cx="36" cy="50" r="12" fill="${hair}"/><circle cx="104" cy="50" r="12" fill="${hair}"/>
+             <circle cx="50" cy="28" r="14" fill="${hair}"/><circle cx="90" cy="28" r="14" fill="${hair}"/>`,
+    bald:   ``,
+    hidden: ``,
+  };
+  const hatParts = {
+    tophat:  `<rect x="42" y="5" width="56" height="30" fill="${f.hatColor || '#111'}"/>
+              <rect x="34" y="30" width="72" height="8" fill="${f.hatColor || '#111'}"/>
+              <rect x="42" y="22" width="56" height="3" fill="#4a2020"/>`,
+    crown:   `<path d="M40,28 L48,12 L58,22 L70,8 L82,22 L92,12 L100,28 L100,38 L40,38 Z" fill="${f.hatColor || '#ffd030'}" stroke="#a07020" stroke-width="1.5"/>
+              <circle cx="70" cy="20" r="3" fill="#e02828"/>`,
+    turban:  `<path d="M30,42 Q30,22 70,18 Q110,22 110,42 L108,48 Q104,30 70,28 Q36,30 32,48 Z" fill="${f.hatColor || '#fff'}"/>
+              <path d="M35,40 Q50,34 70,36 Q90,34 105,40" stroke="${darken(f.hatColor || '#fff', 0.2)}" stroke-width="2" fill="none"/>
+              <circle cx="70" cy="28" r="4" fill="#ffd030"/>`,
+    scarf:   `<path d="M28,42 Q28,20 70,18 Q112,20 112,42 L112,72 Q100,60 70,60 Q40,60 28,72 Z" fill="${f.hatColor || '#d04050'}"/>
+              <path d="M35,45 Q70,35 105,45" stroke="${darken(f.hatColor || '#d04050', 0.2)}" stroke-width="2" fill="none"/>`,
+    cap:     `<path d="M38,52 Q38,34 70,32 Q102,34 102,52 L102,46 Q102,36 70,36 Q38,36 38,46 Z" fill="${f.hatColor || '#2040a0'}"/>
+              <path d="M92,50 L122,52 L122,58 L92,56 Z" fill="${f.hatColor || '#2040a0'}"/>`,
+    aviator: `<path d="M34,50 Q34,24 70,22 Q106,24 106,50 L106,56 Q100,44 70,44 Q40,44 34,56 Z" fill="${f.hatColor || '#604030'}"/>
+              <ellipse cx="58" cy="58" rx="10" ry="8" fill="none" stroke="${darken(f.hatColor || '#604030', 0.3)}" stroke-width="2"/>
+              <ellipse cx="82" cy="58" rx="10" ry="8" fill="none" stroke="${darken(f.hatColor || '#604030', 0.3)}" stroke-width="2"/>`,
+    headband:`<rect x="32" y="42" width="76" height="8" fill="${f.hatColor || '#d0a060'}"/>
+              <circle cx="70" cy="46" r="4" fill="#a04030"/>`,
+  };
+  const beardParts = {
+    chin:    `<path d="M55,88 Q70,100 85,88 Q80,102 70,106 Q60,102 55,88 Z" fill="${f.beardColor || f.hair}"/>`,
+    pointed: `<path d="M55,85 Q70,98 85,85 Q78,115 70,122 Q62,115 55,85 Z" fill="${f.beardColor || f.hair}"/>`,
+    full:    `<path d="M45,80 Q45,95 60,100 Q70,104 80,100 Q95,95 95,80 Q95,92 85,98 Q70,104 55,98 Q45,92 45,80 Z" fill="${f.beardColor || f.hair}"/>
+              <path d="M50,85 Q70,110 90,85 L90,95 Q70,115 50,95 Z" fill="${f.beardColor || f.hair}"/>`,
+    long:    `<path d="M48,80 Q48,100 60,110 Q70,120 80,110 Q92,100 92,80 L95,110 Q85,125 70,128 Q55,125 45,110 Z" fill="${f.beardColor || f.hair}"/>`,
+  };
+  const glassesParts = {
+    round:   `<circle cx="56" cy="66" r="9" fill="none" stroke="#222" stroke-width="2"/>
+              <circle cx="84" cy="66" r="9" fill="none" stroke="#222" stroke-width="2"/>
+              <path d="M65,66 L75,66" stroke="#222" stroke-width="2"/>`,
+    cateye:  `<path d="M46,60 L66,60 L70,72 L50,70 Z" fill="none" stroke="#222" stroke-width="2"/>
+              <path d="M74,60 L94,60 L90,70 L70,72 Z" fill="none" stroke="#222" stroke-width="2"/>
+              <path d="M66,65 L74,65" stroke="#222" stroke-width="2"/>`,
+  };
+  const outfit = `
+    <ellipse cx="70" cy="145" rx="55" ry="26" fill="${f.outfit}"/>
+    ${f.outfitTrim ? `<path d="M40,125 Q70,112 100,125 L100,132 Q70,120 40,132 Z" fill="${f.outfitTrim}"/>` : ''}
+  `;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140">
+    <rect width="140" height="140" fill="${f.bg}"/>
+    <!-- shoulders -->
+    ${outfit}
+    <!-- neck -->
+    <rect x="60" y="95" width="20" height="14" fill="${f.skin}"/>
+    <path d="M60,109 Q70,113 80,109 Q75,104 70,105 Q65,104 60,109" fill="${darken(f.skin,0.1)}"/>
+    <!-- head -->
+    <ellipse cx="70" cy="67" rx="30" ry="34" fill="${f.skin}"/>
+    <!-- ears -->
+    <ellipse cx="40" cy="70" rx="5" ry="7" fill="${f.skin}"/>
+    <ellipse cx="100" cy="70" rx="5" ry="7" fill="${f.skin}"/>
+    <!-- hair behind -->
+    ${hairParts[f.hairStyle] || hairParts.short}
+    <!-- face features -->
+    <!-- eyes -->
+    <ellipse cx="58" cy="66" rx="2.5" ry="3.2" fill="#202020"/>
+    <ellipse cx="82" cy="66" rx="2.5" ry="3.2" fill="#202020"/>
+    <circle cx="58.5" cy="65" r="0.8" fill="#fff"/>
+    <circle cx="82.5" cy="65" r="0.8" fill="#fff"/>
+    <!-- eyebrows -->
+    <path d="M52,60 L64,58" stroke="${hair === '#ffffff' ? '#888' : hair}" stroke-width="2" stroke-linecap="round"/>
+    <path d="M76,58 L88,60" stroke="${hair === '#ffffff' ? '#888' : hair}" stroke-width="2" stroke-linecap="round"/>
+    <!-- nose -->
+    <path d="M70,72 Q66,82 70,86 Q74,82 70,72" fill="${darken(f.skin,0.15)}" opacity="0.5"/>
+    <!-- mouth -->
+    <path d="M62,90 Q70,94 78,90" stroke="#703020" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- mustache -->
+    ${f.mustache ? `<path d="M54,86 Q64,88 70,86 Q76,88 86,86 Q80,91 70,90 Q60,91 54,86 Z" fill="${f.mustacheColor || hair}"/>` : ''}
+    <!-- beard -->
+    ${f.beard ? (beardParts[f.beard] || '') : ''}
+    <!-- glasses on top -->
+    ${f.glasses ? (glassesParts[f.glasses] || '') : ''}
+    <!-- hat on top -->
+    ${f.hat ? (hatParts[f.hat] || '') : ''}
+  </svg>`;
+}
+
+function darken(hex, pct = 0.2) {
+  const h = hex.replace('#','');
+  const r = Math.max(0, Math.floor(parseInt(h.substr(0,2), 16) * (1 - pct)));
+  const g = Math.max(0, Math.floor(parseInt(h.substr(2,2), 16) * (1 - pct)));
+  const b = Math.max(0, Math.floor(parseInt(h.substr(4,2), 16) * (1 - pct)));
+  return '#' + r.toString(16).padStart(2, '0') + g.toString(16).padStart(2, '0') + b.toString(16).padStart(2, '0');
+}
+
+function caricatureDataUri(featureKey) {
+  const f = TRAINER_FEATURES[featureKey] || {};
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(caricatureSVG(f));
+}
+
+// =========================================================================
+// FARSI LANGUAGE — expanded vocabulary + Web Speech API
+// =========================================================================
+const FARSI_DICT = {
+  greetings: {
+    label: 'Greetings & Politeness',
+    emoji: '👋',
+    words: [
+      { farsi: 'سلام',    pronounce: 'sa-LĀM',       english: 'Hello' },
+      { farsi: 'خداحافظ', pronounce: 'kho-dā-HĀ-fez', english: 'Goodbye' },
+      { farsi: 'ممنون',   pronounce: 'mam-NOON',     english: 'Thank you' },
+      { farsi: 'خواهش می‌کنم', pronounce: 'khāh-esh MEE-ko-nam', english: "You're welcome" },
+      { farsi: 'بله',     pronounce: 'ba-LEH',       english: 'Yes' },
+      { farsi: 'نه',      pronounce: 'NA',           english: 'No' },
+      { farsi: 'ببخشید',  pronounce: 'be-bakh-SHEED', english: 'Excuse me / Sorry' },
+    ],
+  },
+  numbers: {
+    label: 'Numbers 1–10',
+    emoji: '🔢',
+    words: [
+      { farsi: 'یک',  pronounce: 'YEK',    english: 'One (1)' },
+      { farsi: 'دو',  pronounce: 'DO',     english: 'Two (2)' },
+      { farsi: 'سه',  pronounce: 'SEH',    english: 'Three (3)' },
+      { farsi: 'چهار', pronounce: 'cha-HĀR', english: 'Four (4)' },
+      { farsi: 'پنج', pronounce: 'PANJ',   english: 'Five (5)' },
+      { farsi: 'شش',  pronounce: 'SHESH',  english: 'Six (6)' },
+      { farsi: 'هفت', pronounce: 'HAFT',   english: 'Seven (7)' },
+      { farsi: 'هشت', pronounce: 'HASHT',  english: 'Eight (8)' },
+      { farsi: 'نه',  pronounce: 'NOH',    english: 'Nine (9)' },
+      { farsi: 'ده',  pronounce: 'DAH',    english: 'Ten (10)' },
+    ],
+  },
+  family: {
+    label: 'Family',
+    emoji: '👨‍👩‍👧',
+    words: [
+      { farsi: 'مادر',     pronounce: 'mā-DAR',    english: 'Mother' },
+      { farsi: 'پدر',      pronounce: 'pe-DAR',    english: 'Father' },
+      { farsi: 'خواهر',    pronounce: 'khā-HAR',   english: 'Sister' },
+      { farsi: 'برادر',    pronounce: 'ba-rā-DAR', english: 'Brother' },
+      { farsi: 'مامان',    pronounce: 'mā-MĀN',    english: 'Mom' },
+      { farsi: 'بابا',     pronounce: 'bā-BĀ',     english: 'Dad' },
+      { farsi: 'خانواده',  pronounce: 'khā-nu-vā-DEH', english: 'Family' },
+    ],
+  },
+  colors: {
+    label: 'Colors',
+    emoji: '🎨',
+    words: [
+      { farsi: 'قرمز', pronounce: 'ghe-MEZ',  english: 'Red' },
+      { farsi: 'آبی',  pronounce: 'Ā-bee',    english: 'Blue' },
+      { farsi: 'سبز',  pronounce: 'SABZ',     english: 'Green' },
+      { farsi: 'زرد',  pronounce: 'ZARD',     english: 'Yellow' },
+      { farsi: 'سیاه', pronounce: 'see-YĀH',  english: 'Black' },
+      { farsi: 'سفید', pronounce: 'se-FEED',  english: 'White' },
+      { farsi: 'بنفش', pronounce: 'ba-NAFSH', english: 'Purple' },
+    ],
+  },
+  food: {
+    label: 'Food',
+    emoji: '🍎',
+    words: [
+      { farsi: 'نان',   pronounce: 'NĀN',     english: 'Bread' },
+      { farsi: 'آب',    pronounce: 'ĀB',      english: 'Water' },
+      { farsi: 'سیب',   pronounce: 'SEEB',    english: 'Apple' },
+      { farsi: 'برنج',  pronounce: 'be-RENJ', english: 'Rice' },
+      { farsi: 'شیر',   pronounce: 'SHEER',   english: 'Milk' },
+      { farsi: 'چای',   pronounce: 'CHĀY',    english: 'Tea' },
+      { farsi: 'شیرینی', pronounce: 'shee-ree-NEE', english: 'Sweet / candy' },
+    ],
+  },
+  animals: {
+    label: 'Animals',
+    emoji: '🦊',
+    words: [
+      { farsi: 'گربه',  pronounce: 'gor-BEH', english: 'Cat' },
+      { farsi: 'سگ',    pronounce: 'SAG',     english: 'Dog' },
+      { farsi: 'پرنده', pronounce: 'pa-ran-DEH', english: 'Bird' },
+      { farsi: 'ماهی',  pronounce: 'MĀ-hee',  english: 'Fish' },
+      { farsi: 'اسب',   pronounce: 'ASB',     english: 'Horse' },
+      { farsi: 'شیر',   pronounce: 'SHEER',   english: 'Lion' },
+    ],
+  },
+  special: {
+    label: 'Words from Rumi, Khayyam & Ferdowsi',
+    emoji: '📜',
+    words: [
+      { farsi: 'عشق',  pronounce: 'ESHQ',    english: 'Love' },
+      { farsi: 'قلب',  pronounce: 'GHALB',   english: 'Heart' },
+      { farsi: 'شعر',  pronounce: "SHE'R",   english: 'Poem' },
+      { farsi: 'کتاب', pronounce: 'ke-TĀB',  english: 'Book' },
+      { farsi: 'شاه',  pronounce: 'SHĀH',    english: 'King' },
+      { farsi: 'ایران', pronounce: 'ee-RĀN', english: 'Iran' },
+      { farsi: 'دوست', pronounce: 'DOOST',   english: 'Friend' },
+      { farsi: 'آفرین', pronounce: 'ā-fa-REEN', english: 'Well done!' },
+    ],
+  },
+};
+
+// Web Speech API — text-to-speech
+let _persianVoice = null;
+let _voicesLoaded = false;
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
+  const voices = window.speechSynthesis.getVoices();
+  if (!voices.length) return;
+  _voicesLoaded = true;
+  // Prefer fa-IR, then any fa-*, then any Persian voice
+  _persianVoice = voices.find(v => v.lang === 'fa-IR')
+               || voices.find(v => v.lang && v.lang.startsWith('fa'))
+               || voices.find(v => v.name && v.name.toLowerCase().includes('persian'));
+}
+if ('speechSynthesis' in window) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function speakFarsi(text, button) {
+  if (!('speechSynthesis' in window)) {
+    flashCloudIndicator('🔇 Speech not supported on this device', '#888');
+    return;
+  }
+  if (!_voicesLoaded) loadVoices();
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'fa-IR';
+  if (_persianVoice) u.voice = _persianVoice;
+  u.rate = 0.85;
+  u.pitch = 1.0;
+  if (button) {
+    button.classList.add('speaking');
+    u.onend = () => button.classList.remove('speaking');
+    u.onerror = () => button.classList.remove('speaking');
+  }
+  window.speechSynthesis.speak(u);
+}
+
+// Web Speech API — speech recognition (for "say it back" mode, Chrome/Edge)
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+function speechRecSupported() { return !!SpeechRec; }
+
+async function listenFarsi(expectedWord) {
+  if (!speechRecSupported()) return { supported: false };
+  return new Promise((resolve) => {
+    const rec = new SpeechRec();
+    rec.lang = 'fa-IR';
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.maxAlternatives = 5;
+    let done = false;
+    rec.onresult = (e) => {
+      done = true;
+      const alternatives = [];
+      for (let i = 0; i < e.results[0].length; i++) {
+        alternatives.push(e.results[0][i].transcript.trim());
+      }
+      // Check if any alternative matches (loose match)
+      const normalized = s => s.replace(/\s+/g,'').toLowerCase();
+      const matches = alternatives.some(a => normalized(a) === normalized(expectedWord)
+                                          || normalized(a).includes(normalized(expectedWord))
+                                          || normalized(expectedWord).includes(normalized(a)));
+      resolve({ supported: true, matched: matches, heard: alternatives[0] || '' });
+    };
+    rec.onerror = () => { if (!done) resolve({ supported: true, matched: false, heard: '', error: true }); };
+    rec.onend = () => { if (!done) resolve({ supported: true, matched: false, heard: '' }); };
+    try { rec.start(); } catch (e) { resolve({ supported: true, matched: false, error: true }); }
+  });
+}
+
+// =========================================================================
+// GYMS — inspirational leaders who award badges for victory
+// =========================================================================
+const GYMS = [
+  {
+    id: 'kindness', order: 1, badge: 'KINDNESS BADGE', emoji: '💖', color: '#f090c8',
+    leader: 'Fred Rogers', initials: 'FR', leaderColor: '8a3050',
+    location: 'Sandgem Town',
+    portrait: 'https://upload.wikimedia.org/wikipedia/en/6/6f/Mister_Rogers_Neighborhood_Title_Screen.jpg',
+    fallbackInitials: 'FR',
+    theme: "Kindness & Friendship",
+    backstory: "For 33 years, Fred Rogers hosted 'Mister Rogers' Neighborhood' on TV. He taught millions of children that they were special just the way they were, that feelings are okay, and that a kind word can change someone's whole day. His most famous lesson: 'Look for the helpers' when scary things happen.",
+    challenge: "Before we battle, I want you to remember: 'Won't you be my neighbor?' Let's have a friendly match!",
+    team: [{ id: 427, level: 10 }, { id: 133, level: 12 }],
+    reward: { money: 300, balls: 2, superPotion: 1 },
+  },
+  {
+    id: 'spark', order: 2, badge: 'SPARK BADGE', emoji: '⚡', color: '#f8d030',
+    leader: 'Thomas Edison', initials: 'TE', leaderColor: '6a5020',
+    location: 'Jubilife City',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/3/3b/Thomas_Edison2.jpg',
+    theme: "Invention & Electric Type",
+    backstory: "Thomas Edison held over 1,000 patents! He invented the light bulb, the phonograph (first music player), and the movie camera. He famously said 'Genius is 1% inspiration and 99% perspiration' — meaning hard work matters more than being smart. He failed thousands of times before succeeding.",
+    challenge: "I failed 1,000 times before inventing the lightbulb. Let's see if you can light up the scoreboard against me!",
+    team: [{ id: 403, level: 14 }, { id: 404, level: 15 }],
+    reward: { money: 500, balls: 3, superPotion: 1 },
+  },
+  {
+    id: 'wildlife', order: 3, badge: 'WILDLIFE BADGE', emoji: '🌿', color: '#60b840',
+    leader: 'Jane Goodall', initials: 'JG', leaderColor: '405028',
+    location: 'Route 202',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/Jane_Goodall_2015.jpg',
+    theme: "Respect for all life",
+    backstory: "Jane Goodall spent over 60 years studying chimpanzees in Africa. She discovered that animals have feelings, use tools, and each have unique personalities — something nobody believed before her. She taught the world to respect all living creatures, big and small.",
+    challenge: "Every creature deserves respect, including the Pokemon you battle. Fight with heart!",
+    team: [{ id: 406, level: 16 }, { id: 412, level: 17 }, { id: 420, level: 15 }],
+    reward: { money: 700, balls: 3, revive: 1 },
+  },
+  {
+    id: 'cosmos', order: 4, badge: 'COSMOS BADGE', emoji: '🌌', color: '#6060f0',
+    leader: 'Katherine Johnson', initials: 'KJ', leaderColor: '404080',
+    location: 'Oreburgh Gate',
+    portrait: 'https://upload.wikimedia.org/wikipedia/commons/7/76/Katherine_Johnson_at_NASA%2C_in_1966.jpg',
+    theme: "Math & Space",
+    backstory: "Katherine Johnson was a NASA mathematician. Her calculations made the first American spaceflight possible, and later the Apollo 11 moon landing. Astronaut John Glenn refused to fly until SHE personally checked the computer's numbers. She broke barriers as a Black woman in science — all with pencil, paper, and brilliance.",
+    challenge: "Space flight requires PERFECT math. Ready to calculate your way to victory?",
+    team: [{ id: 436, level: 18 }, { id: 437, level: 20 }, { id: 425, level: 17 }],
+    reward: { money: 1000, balls: 5, superPotion: 2, revive: 1 },
+  },
+];
+
 const TYPE_CHART = {
   fire:     { grass:2, bug:2, ice:2, steel:2, water:0.5, rock:0.5, fire:0.5, dragon:0.5 },
   water:    { fire:2, rock:2, ground:2, water:0.5, grass:0.5, dragon:0.5 },
@@ -833,7 +1844,7 @@ const TYPE_CHART = {
 // =========================================================================
 // BIG SINNOH MAP (40 x 30 tiles, 48px each = 1920x1440 world)
 // =========================================================================
-const MAP_W = 40, MAP_H = 30;
+const MAP_W = 60, MAP_H = 40;
 const TILE_SIZE = 48;
 const VIEW_W = 16, VIEW_H = 10; // visible tiles at a time
 
@@ -920,6 +1931,10 @@ function generateWorld() {
   placeBuilding(g, 12, 23, 3, 2, 'L');
   // Sign
   g[22][13] = '$';
+  // KINDNESS GYM (Fred Rogers) — first gym in Sandgem
+  placeBuilding(g, 6, 21, 3, 2, 'G');
+  state.gymDoors = state.gymDoors || {};
+  state.gymDoors['7,22'] = 'kindness';   // door x,y -> gym id
 
   // Paths through Sandgem
   for (let x = 9; x < 20; x++) { g[18][x] = 'p'; g[25][x] = 'p'; }
@@ -939,11 +1954,16 @@ function generateWorld() {
   // Several larger buildings
   placeBuilding(g, 27, 17, 4, 3, 'B');
   placeBuilding(g, 33, 17, 4, 3, 'B');
-  placeBuilding(g, 27, 22, 4, 3, 'B');
+  // SPARK GYM (Thomas Edison) — in Jubilife
+  placeBuilding(g, 27, 22, 3, 2, 'G');
+  state.gymDoors['28,23'] = 'spark';
   placeBuilding(g, 33, 22, 4, 3, 'B');
   // Pokecenter + mart
   placeBuilding(g, 29, 27, 3, 2, 'R');
   placeBuilding(g, 34, 27, 3, 2, 'M');
+  // WILDLIFE GYM (Jane Goodall) — in Route 202 area, forested
+  placeBuilding(g, 30, 6, 3, 2, 'G');
+  state.gymDoors['31,7'] = 'wildlife';
   // Paths in city
   for (let x = 26; x < 39; x++) { g[20][x] = 'p'; g[26][x] = 'p'; }
   for (let y = 17; y < 28; y++) { g[y][26] = 'p'; g[y][32] = 'p'; g[y][38] = 'p'; }
@@ -954,18 +1974,117 @@ function generateWorld() {
   patch(g, 21, 26, 4, 2, 'g');
   patch(g, 22, 28, 3, 1, 'g');
 
-  // -------- OREBURGH GATE (cave tiles, bottom right) --------
+  // -------- OREBURGH GATE (cave entrance, bottom right) --------
   for (let y = 27; y < 29; y++)
     for (let x = 36; x < 39; x++)
       g[y][x] = 'C';
+  state.caveEntry = '37,28'; // mark one tile as the cave entrance
   // approach path
   for (let x = 32; x < 37; x++) g[28][x] = 'p';
+  // COSMOS GYM (Katherine Johnson) — past the cave
+  placeBuilding(g, 32, 4, 3, 2, 'G');
+  state.gymDoors['33,5'] = 'cosmos';
+
+  // =====================================================================
+  // EXPANDED REGIONS (map is now 60x40)
+  // =====================================================================
+
+  // -------- ETERNA FOREST (top-right, tree maze) col 40-58, row 2-15 --------
+  // Dense forest with winding paths and tall grass patches
+  for (let y = 2; y < 16; y++)
+    for (let x = 40; x < 58; x++)
+      if (g[y][x] === '.') g[y][x] = 'T';
+  // Carve winding path
+  const forestPath = [
+    [40,8],[41,8],[42,8],[42,7],[42,6],[43,6],[44,6],[45,6],[45,7],[45,8],
+    [46,8],[47,8],[48,8],[48,9],[48,10],[49,10],[50,10],[51,10],[51,9],[51,8],
+    [52,8],[53,8],[54,8],[55,8],[56,8],[56,9],[56,10],[56,11],[56,12],
+    [55,12],[54,12],[53,12],[52,12],[51,12],[50,12],[50,13],[50,14],[51,14],[52,14],
+  ];
+  forestPath.forEach(([x,y]) => g[y][x] = 'p');
+  // Forest tall grass
+  patch(g, 43, 9, 3, 2, 'g');
+  patch(g, 49, 6, 3, 2, 'g');
+  patch(g, 53, 10, 2, 2, 'g');
+  // Connect Eterna Forest to Route 202
+  for (let x = 38; x < 42; x++) g[8][x] = 'p';
+  // Flowers
+  [[44,11],[47,7],[53,9],[54,14],[41,7]].forEach(([x,y]) => { if (g[y] && g[y][x] === '.') g[y][x] = 'f'; });
+
+  // -------- FLOAROMA TOWN (far top, flowery meadow) col 42-55, row 16-22 --------
+  // Meadow of flowers with a small village
+  for (let y = 16; y < 22; y++)
+    for (let x = 42; x < 56; x++)
+      if (g[y][x] === '.') g[y][x] = 'f';
+  // Replace some flowers with grass and make a path
+  for (let x = 42; x < 56; x++) g[18][x] = 'p';
+  for (let y = 16; y < 22; y++) g[y][48] = 'p';
+  // Houses
+  placeBuilding(g, 43, 17, 3, 2, 'B');
+  placeBuilding(g, 51, 17, 3, 2, 'B');
+  placeBuilding(g, 44, 20, 3, 2, 'R'); // Pokemon center here
+  // Sign
+  g[18][46] = '$';
+  // Tall grass patches nearby
+  patch(g, 40, 22, 3, 2, 'g');
+  patch(g, 55, 22, 3, 2, 'g');
+  // connect Floaroma to Eterna Forest
+  for (let y = 14; y < 18; y++) g[y][48] = 'p';
+
+  // -------- HEARTHOME CITY (big city, bottom-right) col 40-58, row 24-36 --------
+  // Grand city with multiple buildings
+  // Paths
+  for (let x = 40; x < 58; x++) { g[26][x] = 'p'; g[32][x] = 'p'; }
+  for (let y = 24; y < 38; y++) { g[y][44] = 'p'; g[y][54] = 'p'; }
+  // Buildings (residential blocks)
+  placeBuilding(g, 40, 27, 4, 3, 'B');
+  placeBuilding(g, 45, 27, 4, 3, 'B');
+  placeBuilding(g, 50, 27, 4, 3, 'B');
+  placeBuilding(g, 55, 27, 3, 3, 'B');
+  placeBuilding(g, 40, 33, 4, 3, 'B');
+  placeBuilding(g, 45, 33, 4, 3, 'B');
+  // Pokemon Center + Poke Mart + Lab
+  placeBuilding(g, 50, 34, 3, 2, 'R');
+  placeBuilding(g, 55, 34, 3, 2, 'M');
+  // Hearthome sign
+  g[26][46] = '$';
+  // Connect Hearthome to Jubilife
+  for (let x = 38; x < 41; x++) g[26][x] = 'p';
+
+  // -------- ROUTE 205 (north-south corridor west of Jubilife, row 24-35) --------
+  for (let y = 29; y < 38; y++) g[y][24] = 'p';
+  patch(g, 20, 30, 3, 2, 'g');
+  patch(g, 18, 34, 4, 2, 'g');
+  // Extra trees and scenery
+  [[15,30],[21,33],[25,35],[10,33]].forEach(([x,y]) => { if (g[y] && g[y][x] === '.') g[y][x] = 'T'; });
+
+  // -------- PASTORIA BEACH (far bottom-left, sand + water) col 0-15 row 33-38 --------
+  for (let y = 34; y < 38; y++)
+    for (let x = 1; x < 16; x++)
+      g[y][x] = 'w';
+  for (let x = 1; x < 18; x++) g[33][x] = 's';
+  g[33][18] = 's';
+  // Beach connects via path
+  for (let x = 5; x < 10; x++) g[32][x] = 'p';
+  for (let y = 29; y < 33; y++) g[5][y] = 'p';
+
+  // -------- MT. CORONET PASS (row 24-36 in middle columns) --------
+  // Few scattered rocks + a ring of tall grass
+  patch(g, 28, 32, 4, 2, 'g');
+  patch(g, 33, 30, 3, 2, 'g');
+  for (let x = 28; x < 36; x++) g[34][x] = 'p';
+  for (let y = 30; y < 36; y++) g[y][30] = 'p';
+  [[30,32,'r'],[34,31,'r'],[27,34,'r']].forEach(([x,y,t]) => { if (g[y][x] === '.') g[y][x] = t; });
+
+  // -------- ORIGINAL map border: rebuild bottom/right borders because size changed --------
+  // (already done at top with original MAP_H/MAP_W, but now extended)
 
   // -------- Decorative scatter: rocks, flowers, trees --------
   const decor = [
     [2,11,'f'],[3,11,'f'],[14,4,'f'],[18,4,'f'],[36,4,'f'],
     [16,10,'r'],[24,13,'r'],[30,17,'r'],[6,25,'r'],
     [2,9,'T'],[13,9,'T'],[28,14,'T'],[22,6,'T'],[38,14,'T'],
+    [44,25,'f'],[50,25,'f'],[54,36,'T'],[46,37,'T'],[57,30,'f'],[43,31,'f'],
   ];
   decor.forEach(([x,y,t]) => { if (g[y] && g[y][x] === '.') g[y][x] = t; });
 
@@ -996,9 +2115,10 @@ const TILE_CLASS = {
   'T': 'tree', 'r': 'rock', 'f': 'flower', 's': 'sand',
   '#': 'building-wall', 'D': 'door', '$': 'sign',
   'R': 'pokecenter-roof', 'M': 'pokemart-roof', 'L': 'lab-roof',
-  'B': 'building-roof', 'C': 'cave', 'F': 'fence',
+  'B': 'building-roof', 'C': 'cave', 'F': 'fence', 'G': 'gym-roof',
+  '_': 'floor', '|': 'wall', 'c': 'carpet', 'k': 'counter', 'E': 'exit-mat',
 };
-const BLOCKING = new Set(['T','r','w','#','R','M','L','B','C']);
+const BLOCKING = new Set(['T','r','w','#','R','M','L','B','C','G','|']);
 
 // =========================================================================
 // STATE
@@ -1022,6 +2142,14 @@ const state = {
   lastLocation: '',
   user: null,          // { uid, email } when signed in
   cloudSyncing: false, // prevents overlapping cloud writes
+  defeatedTrainers: {},
+  items: { potion: 2, superPotion: 0, revive: 0 },
+  streak: 0,
+  bestStreak: 0,
+  shinyBoostCharges: 0,
+  badges: {},            // { gym_id: true }
+  interior: null,        // active interior map info
+  returnPos: null,       // overworld position to return to
 };
 
 // =========================================================================
@@ -1031,7 +2159,7 @@ const SAVE_KEY = 'pokemon-noah-sinnoh-save-v1';
 
 function buildSavePayload() {
   return {
-    v: 1,
+    v: 2,
     savedAt: Date.now(),
     playerName: state.playerName,
     location: state.location,
@@ -1041,6 +2169,12 @@ function buildSavePayload() {
     balls: state.balls,
     money: state.money,
     caught: state.caught,
+    defeatedTrainers: state.defeatedTrainers || {},
+    items: state.items || { potion: 2, superPotion: 0, revive: 0 },
+    streak: state.streak || 0,
+    bestStreak: state.bestStreak || 0,
+    shinyBoostCharges: state.shinyBoostCharges || 0,
+    badges: state.badges || {},
   };
 }
 
@@ -1049,11 +2183,17 @@ function applySavePayload(s) {
   state.playerName = s.playerName || 'Noah';
   state.location   = s.location   || 'Twinleaf Town';
   state.player     = s.player     || { x: 5, y: 4, dir: 'down' };
-  state.party      = s.party      || [];
+  state.party      = (s.party || []).map(normalizeMon);
   state.activeMon  = Math.min(s.activeMon || 0, state.party.length - 1);
   state.balls      = s.balls      ?? 10;
   state.money      = s.money      ?? 500;
   state.caught     = s.caught     ?? state.party.length;
+  state.defeatedTrainers = s.defeatedTrainers || {};
+  state.items      = s.items      || { potion: 2, superPotion: 0, revive: 0 };
+  state.streak     = s.streak     || 0;
+  state.bestStreak = s.bestStreak || 0;
+  state.shinyBoostCharges = s.shinyBoostCharges || 0;
+  state.badges     = s.badges     || {};
   return true;
 }
 
@@ -1142,6 +2282,292 @@ function updateAccountBadge() {
 }
 
 // =========================================================================
+// MATH PROBLEM SYSTEM (3rd grade Common Core, with hints)
+// =========================================================================
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+const PEOPLE = [
+  { name: 'Noah', he: 'he',  him: 'him',  his: 'his' },
+  { name: 'Sam',  he: 'she', him: 'her',  his: 'her' },
+  { name: 'Ava',  he: 'she', him: 'her',  his: 'her' },
+  { name: 'Leo',  he: 'he',  him: 'him',  his: 'his' },
+  { name: 'Maya', he: 'she', him: 'her',  his: 'her' },
+  { name: 'Ben',  he: 'he',  him: 'him',  his: 'his' },
+  { name: 'Zoe',  he: 'she', him: 'her',  his: 'her' },
+  { name: 'Kai',  he: 'he',  him: 'him',  his: 'his' },
+];
+const OBJECTS = ['Pokeballs', 'berries', 'apples', 'stickers', 'marbles', 'coins', 'trading cards'];
+const pick = arr => arr[randInt(0, arr.length - 1)];
+
+function generateMathProblem(difficulty) {
+  // Returns { q, answer, choices, correctIndex, hint, subject }
+  let problem;
+  if (difficulty === 'easy') {
+    const kinds = ['add1','sub1','add2digit','count'];
+    problem = ({
+      add1:    () => { const a=randInt(3,19),b=randInt(2,9); return mk(`${a} + ${b}`, a+b, `Start at ${a} and count up ${b} more.`); },
+      sub1:    () => { const a=randInt(8,19),b=randInt(2,Math.min(a-1,9)); return mk(`${a} − ${b}`, a-b, `Start at ${a}. Count backwards ${b} times.`); },
+      add2digit: () => { const a=randInt(10,50),b=randInt(10,40); return mk(`${a} + ${b}`, a+b, `Add the ones digits first (${a%10}+${b%10}=${(a%10)+(b%10)}), then the tens.`); },
+      count:   () => { const s=randInt(2,5), n=randInt(3,5); return mk(`${s} + ${s} + ${s}${n>3?' + '+s:''}${n>4?' + '+s:''}`, s*n, `This is ${s} added ${n} times. That's the same as ${s} × ${n}!`); },
+    })[pick(kinds)]();
+  }
+  else if (difficulty === 'medium') {
+    const kinds = ['mult5','sub2digit','add3digit','word1','perimeter'];
+    problem = ({
+      mult5: () => { const a=randInt(2,5),b=randInt(2,10); return mk(`${a} × ${b}`, a*b, `${a}×${b} means ${a} groups of ${b}. Count: ${Array(a).fill(b).join(' + ')} = ?`); },
+      sub2digit: () => { const a=randInt(30,80), b=randInt(10,a-5); return mk(`${a} − ${b}`, a-b, `Subtract the tens (${Math.floor(a/10)*10}-${Math.floor(b/10)*10}) then the ones.`); },
+      add3digit: () => { const a=randInt(100,400), b=randInt(50,300); return mk(`${a} + ${b}`, a+b, `Line up the numbers by place value: ones, tens, hundreds.`); },
+      word1: () => {
+        const p=pick(PEOPLE), o=pick(OBJECTS), a=randInt(4,9), b=randInt(3,8);
+        return mk(`${p.name} has ${a} ${o} and gets ${b} more. How many ${o} does ${p.he} have now?`, a+b, `Add the two amounts: ${a} + ${b}.`, true);
+      },
+      perimeter: () => {
+        const s=randInt(3,9);
+        return mk(`A square has sides ${s} feet long. What is its perimeter?`, s*4, `Perimeter is the distance around. A square has 4 equal sides. Add: ${s}+${s}+${s}+${s}.`, true);
+      },
+    })[pick(kinds)]();
+  }
+  else if (difficulty === 'hard') {
+    const kinds = ['mult10','mult12','div','word2','fraction'];
+    problem = ({
+      mult10: () => { const a=randInt(3,10),b=randInt(3,10); return mk(`${a} × ${b}`, a*b, `Think of the times table! ${a} × ${b}. If stuck, try ${a} × 10 = ${a*10}, then subtract ${a}×${10-b}.`); },
+      mult12: () => { const a=randInt(6,12),b=randInt(3,9); return mk(`${a} × ${b}`, a*b, `Break it up: ${a} × ${b} = (${a} × ${Math.floor(b/2)}) + (${a} × ${Math.ceil(b/2)}).`); },
+      div: () => { const b=randInt(2,9), q=randInt(3,9); const a=b*q; return mk(`${a} ÷ ${b}`, q, `Ask yourself: what number times ${b} equals ${a}?`); },
+      word2: () => {
+        const p=pick(PEOPLE), o=pick(OBJECTS), a=randInt(4,9), b=randInt(2,5);
+        return mk(`${p.name} has ${a} bags. Each bag holds ${b} ${o}. How many ${o} does ${p.he} have in all?`, a*b, `${a} bags × ${b} per bag. That's multiplication!`, true);
+      },
+      fraction: () => {
+        const whole=randInt(6,12), denom=2+randInt(0,1), choiceWhole=whole*denom;
+        return mk(`What is one ${denom === 2 ? 'half' : 'third'} (1/${denom}) of ${choiceWhole}?`, whole, `Split ${choiceWhole} into ${denom} equal groups. Each group is the answer.`, true);
+      },
+    })[pick(kinds)]();
+  } else { // tough
+    const kinds = ['mult15','longadd','word3','div2'];
+    problem = ({
+      mult15: () => { const a=randInt(11,15),b=randInt(3,9); return mk(`${a} × ${b}`, a*b, `Break ${a} into (10 + ${a-10}). Then (10 × ${b}) + (${a-10} × ${b}).`); },
+      longadd: () => { const a=randInt(200,800), b=randInt(200,600); return mk(`${a} + ${b}`, a+b, `Add ones, then tens, then hundreds. Don't forget to carry!`); },
+      word3: () => {
+        const p=pick(PEOPLE), a=randInt(3,6), b=randInt(4,8), given=randInt(2,a-1);
+        return mk(`${p.name} caught ${a*b} Pokemon and split them evenly into ${a} groups. Then ${p.he} gave ${given} groups away. How many Pokemon does ${p.he} have left?`, (a-given)*b, `Each group has ${a*b}÷${a}=${b}. ${p.name} kept ${a-given} groups. Multiply (${a}-${given}) × ${b}.`, true);
+      },
+      div2: () => { const q=randInt(12,30), b=randInt(2,6); return mk(`${q*b} ÷ ${b}`, q, `Think: ${b} × ? = ${q*b}. Try counting by ${b}s.`); },
+    })[pick(kinds)]();
+  }
+
+  // Build 4 answer choices around the correct one
+  const answer = problem.answer;
+  const pool = new Set([answer]);
+  const spread = Math.max(2, Math.floor(Math.abs(answer) * 0.3));
+  let attempts = 0;
+  while (pool.size < 4 && attempts++ < 30) {
+    const wobble = randInt(-spread, spread) || 1;
+    const c = Math.max(0, answer + wobble);
+    if (c !== answer) pool.add(c);
+  }
+  // backup: just add answer+N
+  let n = 1;
+  while (pool.size < 4) { pool.add(answer + n++); pool.add(Math.max(0, answer - n)); }
+  const arr = Array.from(pool).slice(0, 4).sort(() => Math.random() - 0.5);
+  return { q: problem.q, answer, choices: arr, correctIndex: arr.indexOf(answer), hint: problem.hint, isWord: problem.isWord };
+}
+
+function mk(q, answer, hint, isWord=false) {
+  return { q, answer, hint, isWord };
+}
+
+function difficultyFor(pokemonId) {
+  const base = POKEDEX[pokemonId];
+  if (!base) return 'easy';
+  if (base.catchRate >= 0.75) return 'easy';
+  if (base.catchRate >= 0.45) return 'medium';
+  if (base.catchRate >= 0.25) return 'hard';
+  return 'tough';
+}
+
+function showModal({ title, subtitle, questionHTML, choices, correctIndex, hint, resultOnRight, resultOnWrong, extraTop, allowSkip }) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <h3>${title}</h3>
+        <div class="subtitle">${subtitle || ''}</div>
+        ${extraTop || ''}
+        <div class="math-question">${questionHTML}</div>
+        <div class="choices">
+          ${choices.map((c, i) => `<button class="choice-btn" data-i="${i}">${c}</button>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:${hint ? '1fr 1fr' : '1fr'};gap:6px;margin-top:8px;">
+          ${hint ? `<button class="btn" id="hintBtn" style="font-size:9px;">💡 HINT</button>` : ''}
+          ${allowSkip ? `<button class="btn" id="skipBtn" style="font-size:9px;background:#d8d8d8;">⏭ SKIP (no boost)</button>` : ''}
+        </div>
+        <div class="modal-result" id="hintBox" style="display:none;background:#fff8e0;color:#604020;border:2px dashed #f0a030;"></div>
+        <div class="modal-result" id="mResult"></div>
+      </div>
+    `;
+    screen.appendChild(overlay);
+    const result = overlay.querySelector('#mResult');
+    const btns = overlay.querySelectorAll('.choice-btn');
+    let usedHint = false;
+    if (hint) {
+      overlay.querySelector('#hintBtn').onclick = () => {
+        usedHint = true;
+        const box = overlay.querySelector('#hintBox');
+        box.style.display = 'block';
+        box.textContent = '💡 HINT: ' + hint;
+        overlay.querySelector('#hintBtn').style.display = 'none';
+      };
+    }
+    if (allowSkip) {
+      overlay.querySelector('#skipBtn').onclick = () => {
+        overlay.remove();
+        resolve({ correct: false, usedHint: false, skipped: true });
+      };
+    }
+    btns.forEach(btn => {
+      btn.onclick = () => {
+        const i = parseInt(btn.dataset.i);
+        const correct = i === correctIndex;
+        btns.forEach((b, idx) => {
+          b.disabled = true;
+          if (idx === correctIndex) b.classList.add('correct');
+          else if (idx === i && !correct) b.classList.add('wrong');
+        });
+        result.classList.add(correct ? 'good' : 'bad');
+        let txt = correct
+          ? (resultOnRight || '✓ Amazing! Correct!') + (usedHint ? ' (used a hint — still great!)' : '')
+          : (resultOnWrong || `Nice try! The correct answer is highlighted in green.`);
+        result.textContent = txt;
+        setTimeout(() => { overlay.remove(); resolve({ correct, usedHint, skipped: false }); }, correct ? 1500 : 2600);
+      };
+    });
+  });
+}
+
+function fractionApprox(p) {
+  // Return a simple fraction approx of probability p (e.g. 0.45 -> "about 9/20 or 45%")
+  const denominators = [2, 3, 4, 5, 10, 20];
+  let best = { d: 10, n: Math.round(p * 10), err: Infinity };
+  denominators.forEach(d => {
+    const n = Math.round(p * d);
+    const err = Math.abs(p - n/d);
+    if (err < best.err) best = { d, n, err };
+  });
+  return `${best.n}/${best.d}`;
+}
+
+async function askMathBoost(purpose, pokemonId) {
+  const diff = difficultyFor(pokemonId);
+  const prob = generateMathProblem(diff);
+  const diffLabel = { easy: 'Warm-Up', medium: 'Tricky', hard: 'Tough', tough: 'Champion' }[diff];
+
+  // For CATCH, also show the probability mini-lesson
+  let extraTop = '';
+  if (purpose === 'catch' && state.battle?.wild) {
+    const wild = state.battle.wild;
+    const hpRatio = wild.hp / wild.maxHp;
+    const baseChance = Math.min(0.97, wild.catchRate * (1.8 - hpRatio));
+    const pct = Math.round(baseChance * 100);
+    extraTop = `
+      <div style="background:#e8f4ff;border:2px solid #6890d0;border-radius:8px;padding:8px;margin-bottom:12px;font-size:8px;line-height:1.6;color:#203050;">
+        <b>📊 ODDS LESSON:</b> Your chance to catch this ${wild.name.toUpperCase()} right now is <b>${pct}%</b>
+        (about <b>${fractionApprox(baseChance)}</b>). The Pokemon's HP is lower, so the chance goes <b>up</b>! Solve the math to <b>boost</b> it even more.
+      </div>`;
+  }
+
+  const res = await showModal({
+    title: purpose === 'catch' ? '🧠 SOLVE TO BOOST YOUR CATCH' : '🧠 SOLVE TO POWER UP YOUR ATTACK',
+    subtitle: `${diffLabel} problem! Tap 💡 NEED A HINT? if stuck, or ⏭ SKIP to just go. ${state.streak > 0 ? `🔥 ${state.streak} streak!` : ''}`,
+    extraTop,
+    questionHTML: prob.isWord ? prob.q : `What is <b>${prob.q}</b> = ?`,
+    choices: prob.choices,
+    correctIndex: prob.correctIndex,
+    hint: prob.hint,
+    allowSkip: true,
+    resultOnRight: purpose === 'catch'
+      ? '✓ Correct! Your POKEBALL gets a BIG boost!'
+      : '✓ Correct! Your attack will hit MUCH harder!',
+    resultOnWrong: `Nice try! Answer was ${prob.answer}. You still get a small boost — keep practicing!`,
+  });
+  if (res.skipped) return false; // skipped = no boost, no streak change
+  registerStreakResult(res.correct);
+  return res.correct;
+}
+
+async function askTriviaBoost(trainer) {
+  const q = trainer.quiz;
+  const indexed = q.choices.map((c, i) => ({ c, correct: i === q.answer }));
+  indexed.sort(() => Math.random() - 0.5);
+  const correctIndex = indexed.findIndex(x => x.correct);
+  const res = await showModal({
+    title: '📚 HISTORY QUIZ TIME',
+    subtitle: `Based on what ${trainer.name} just told you!`,
+    questionHTML: q.q,
+    choices: indexed.map(x => x.c),
+    correctIndex,
+    resultOnRight: '✓ Yes! You\'ve been paying attention! Battle advantage earned!',
+    resultOnWrong: `The answer was "${q.choices[q.answer]}". You'll still battle — just a little tougher!`,
+  });
+  return res.correct;
+}
+
+// =========================================================================
+// HOT STREAK — consecutive correct answers with rewards at milestones
+// =========================================================================
+function registerStreakResult(correct) {
+  if (!state.streak) state.streak = 0;
+  if (!state.bestStreak) state.bestStreak = 0;
+  if (correct) {
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    handleStreakReward(state.streak);
+  } else {
+    if (state.streak >= 3) flashCloudIndicator(`🔥 Streak ended at ${state.streak}!`, '#d06020');
+    state.streak = 0;
+  }
+  updateStreakBadge();
+  saveLocal();
+}
+
+function handleStreakReward(n) {
+  const rewards = {
+    3:  { msg: '🔥 3-in-a-row! +$50',                             money: 50 },
+    5:  { msg: '🔥🔥 5-STREAK! +1 POKEBALL!',                     balls: 1 },
+    10: { msg: '🔥🔥🔥 10-STREAK! +1 SUPER POTION!',              superPotion: 1 },
+    15: { msg: '🔥x4 15-STREAK! +2 POKEBALLS, +$200!',            balls: 2, money: 200 },
+    20: { msg: '🌟 20-STREAK! Shiny luck DOUBLED for next catches!', shinyBoost: true },
+    30: { msg: '🏆 30-STREAK! +1 REVIVE! You\'re a champion!',     revive: 1 },
+    50: { msg: '🎉 50-STREAK! +5 BALLS + $1000 + LEGENDARY LUCK!', balls: 5, money: 1000, shinyBoost: true },
+  };
+  const r = rewards[n];
+  if (!r) return;
+  if (r.money) state.money += r.money;
+  if (r.balls) state.balls += r.balls;
+  if (r.superPotion) state.items.superPotion = (state.items.superPotion||0) + r.superPotion;
+  if (r.revive) state.items.revive = (state.items.revive||0) + r.revive;
+  if (r.shinyBoost) state.shinyBoostCharges = (state.shinyBoostCharges||0) + 10;
+  updateHeader();
+  flashCloudIndicator(r.msg, '#f08020');
+}
+
+function updateStreakBadge() {
+  let el = document.getElementById('streakBadge');
+  if (!el) {
+    el = document.createElement('span');
+    el.id = 'streakBadge';
+    el.style.cssText = 'background:#f08020;color:#fff;padding:3px 6px;border-radius:4px;margin-right:6px;font-size:8px;';
+    const stats = document.getElementById('stats');
+    if (stats) stats.insertBefore(el, stats.firstChild);
+  }
+  if (state.streak > 0) {
+    el.style.display = 'inline-block';
+    el.textContent = `🔥 ${state.streak}`;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// =========================================================================
 // UTIL
 // =========================================================================
 const $ = sel => document.querySelector(sel);
@@ -1189,18 +2615,47 @@ function updateHeader() {
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-function makeMon(id, level = 5) {
+const GENDERLESS_IDS = new Set([129, 132, 436, 437, 425, 426, 433]); // Magikarp/Ditto/Bronzor etc. — keep simple
+const NATURES = [
+  { name: 'Hardy', desc: 'Balanced' }, { name: 'Brave', desc: 'Loves to fight' },
+  { name: 'Timid', desc: 'A little shy' }, { name: 'Jolly', desc: 'Super cheerful' },
+  { name: 'Calm', desc: 'Stays cool' }, { name: 'Bold', desc: 'Not afraid' },
+  { name: 'Gentle', desc: 'Very kind' }, { name: 'Quirky', desc: 'A bit odd' },
+];
+
+function makeMon(id, level = 5, catchInfo = null) {
   const base = POKEDEX[id];
   const maxHp = Math.floor(base.hp * (1 + level * 0.1));
+  const shinyRate = (state.shinyBoostCharges || 0) > 0 ? 0.002 : 0.0001; // 20x boost during streak reward
+  if (state.shinyBoostCharges > 0) state.shinyBoostCharges--;
+  const isShiny = Math.random() < shinyRate;
+  const gender = GENDERLESS_IDS.has(id) ? 'none' : (Math.random() < 0.5 ? 'male' : 'female');
+  const nature = NATURES[Math.floor(Math.random() * NATURES.length)];
   return {
     id, level, name: base.name, types: base.types,
     maxHp, hp: maxHp,
     atk: Math.floor(base.atk * (1 + level * 0.08)),
     def: Math.floor(base.def * (1 + level * 0.08)),
     moves: [...base.moves], catchRate: base.catchRate, xp: 0,
+    gender, shiny: isShiny, nature: nature.name, natureDesc: nature.desc,
+    caughtLocation: catchInfo?.location || 'Trainer gift',
+    caughtDate: catchInfo?.date || new Date().toLocaleDateString(),
+    caughtLevel: level,
+    nickname: null,
   };
 }
 const randLv = () => 3 + Math.floor(Math.random() * 6);
+
+// Backward-compatibility patcher — add missing fields to legacy saves
+function normalizeMon(m) {
+  if (m.shiny === undefined) m.shiny = false;
+  if (!m.gender) m.gender = GENDERLESS_IDS.has(m.id) ? 'none' : (Math.random() < 0.5 ? 'male' : 'female');
+  if (!m.nature) { const n = NATURES[Math.floor(Math.random() * NATURES.length)]; m.nature = n.name; m.natureDesc = n.desc; }
+  if (!m.caughtLocation) m.caughtLocation = 'Unknown';
+  if (!m.caughtDate) m.caughtDate = 'Long ago';
+  if (!m.caughtLevel) m.caughtLevel = Math.max(1, m.level - 2);
+  return m;
+}
 
 // =========================================================================
 // TITLE
@@ -1367,15 +2822,17 @@ function renderIntro() {
   ];
   let i = 0;
   const el = $('#introText');
+  let introTimer = null;
   function showLine() {
     const txt = lines[i];
     let c = 0;
-    if (state.typewriterTimer) clearInterval(state.typewriterTimer);
-    state.typewriterTimer = setInterval(() => {
-      el.textContent = txt.slice(0, ++c);
-      if (c >= txt.length) { clearInterval(state.typewriterTimer); state.typewriterTimer = null; }
-    }, 28);
+    if (introTimer) clearInterval(introTimer);
     setMsgInstant(`PROF. ROWAN  (${i+1}/${lines.length})   Press NEXT to continue...`);
+    el.textContent = '';
+    introTimer = setInterval(() => {
+      el.textContent = txt.slice(0, ++c);
+      if (c >= txt.length) { clearInterval(introTimer); introTimer = null; }
+    }, 28);
     setActions([{
       label: i < lines.length - 1 ? 'NEXT ▶' : 'CHOOSE STARTER ▶',
       primary: true,
@@ -1435,33 +2892,45 @@ function renderStarters() {
 // OVERWORLD
 // =========================================================================
 function spawnNpcs() {
-  state.npcs = [
-    { x: 6, y: 5, sprite: '👩', name: "Noah's Mom", lines: [
-      "Mom: Oh Noah! You're all ready to go! Be careful in the tall grass.",
-      "Mom: Professor Rowan is waiting at his lab in SANDGEM TOWN!"
-    ]},
-    { x: 9, y: 5, sprite: '👦', name: "Barry", lines: [
-      "Barry: Noah! You're finally here! Let's race to Sandgem Town!",
-      "Barry: Watch out for wild Pokemon in the tall grass!"
-    ]},
-    { x: 12, y: 14, sprite: '👨', name: "Hiker", lines: [
-      "Hiker: Route 201 is full of wild Pokemon! Perfect for catching."
-    ]},
-    { x: 16, y: 21, sprite: '👨‍🔬', name: "Prof. Rowan", lines: [
-      "Prof. Rowan: Welcome to Sandgem Town, Noah! Keep catching and battling!",
-      "Prof. Rowan: The Pokemon Center heals your team for free. Use it often!"
-    ]},
-    { x: 30, y: 19, sprite: '👧', name: "Jubilife Girl", lines: [
-      "Girl: Welcome to JUBILIFE CITY — the bustling heart of Sinnoh!",
-      "Girl: Have you been to the TV station yet?"
-    ]},
-    { x: 23, y: 26, sprite: '🧔', name: "Trainer", lines: [
-      "Trainer: This path leads to OREBURGH CITY and its Rock Gym!",
-    ]},
-    { x: 3, y: 16, sprite: '🧓', name: "Old Man", lines: [
-      "Old Man: LAKE VERITY is said to hide a legendary Pokemon..."
-    ]},
+  // Place historical trainers on the map (kept away from blocked tiles)
+  // Each trainer is battleable once per save — we track defeated status.
+  if (!state.defeatedTrainers) state.defeatedTrainers = {};
+  const pos = [
+    ['lincoln',   6, 5 ],
+    ['franklin',  9, 5 ],
+    ['tubman',    3, 16],
+    ['einstein',  12, 14],
+    ['curie',     16, 21],
+    ['armstrong', 30, 19],
+    ['earhart',   27, 10],
+    ['mlk',       20, 16],
+    ['parks',     30, 22],
+    ['newton',    23, 26],
+    // Persian / Farsi trainers
+    ['cyrus',     13, 5 ],
+    ['rumi',      15, 13],
+    ['khayyam',   22, 9 ],
+    ['ferdowsi',  5,  19],
+    // More global figures
+    ['gandhi',    27, 24],
+    ['mandela',   34, 15],
+    ['robinson',  31, 26],
+    ['malala',    10, 25],
+    ['douglass',  18, 26],
+    ['sacagawea', 7,  12],
   ];
+  state.npcs = pos.map(([id, x, y]) => {
+    const t = TRAINERS.find(tr => tr.id === id);
+    return {
+      x, y,
+      sprite: '🎓',
+      trainerId: id,
+      name: t.name,
+      role: t.role,
+      portrait: t.portrait,
+      fact: t.fact,
+    };
+  });
 }
 
 function enterOverworld() {
@@ -1470,11 +2939,13 @@ function enterOverworld() {
   if (state.npcs.length === 0) spawnNpcs();
   renderOverworld();
   updateLocation(true);
-  setMsg(`Arrow keys/WASD to move. Talk to people. Walk in tall grass to find Pokemon!`);
+  setMsg(`Arrow keys/WASD to move. Red-roof = Pokemon Center. Brown-roof = GYM (battle for badges)!`);
   setActions([
     { label: '👥 PARTY', onClick: () => openParty(false) },
+    { label: '🏆 BADGES', onClick: showBadgeCase },
+    { label: '📚 FARSI', onClick: showFarsiDictionary },
     { label: '💾 SAVE', onClick: () => { saveLocal(); setMsg('Game saved!' + (state.user ? ' (syncing to cloud)' : ' (stored in this browser)')); } },
-    { label: '💊 HEAL (anywhere)', onClick: healParty },
+    { label: '💊 HEAL', onClick: healParty },
     { label: '🏠 TITLE', onClick: () => { saveLocal(); renderTitle(); } },
   ]);
   updateHeader();
@@ -1483,9 +2954,15 @@ function enterOverworld() {
 function locationOf(x, y) {
   if (x < 10 && y < 10) return 'Twinleaf Town';
   if (x < 10 && y >= 14 && y < 24) return 'Lake Verity';
+  if (x < 16 && y >= 33) return 'Pastoria Beach';
   if (x >= 9 && x < 22 && y >= 16 && y < 26) return 'Sandgem Town';
-  if (x >= 25 && y < 14) return 'Route 202';
-  if (x >= 25 && y >= 16) return 'Jubilife City';
+  if (x >= 40 && y < 16) return 'Eterna Forest';
+  if (x >= 42 && x < 56 && y >= 16 && y < 23) return 'Floaroma Town';
+  if (x >= 40 && y >= 24) return 'Hearthome City';
+  if (x >= 25 && x < 40 && y < 14) return 'Route 202';
+  if (x >= 25 && x < 40 && y >= 16 && y < 28) return 'Jubilife City';
+  if (y >= 30 && x < 26) return 'Route 205';
+  if (y >= 30 && x >= 26 && x < 40) return 'Mt. Coronet Pass';
   if (y >= 25) return 'Route 203';
   if (x >= 35 && y >= 27) return 'Oreburgh Gate';
   return 'Route 201';
@@ -1508,6 +2985,45 @@ function showToast(txt) {
   t.textContent = txt;
   screen.appendChild(t);
   setTimeout(() => t.remove(), 3100);
+}
+
+function playerSpriteSVG() {
+  // Fire Red-style trainer boy — red hat, blue shorts, yellow backpack strap
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="44" viewBox="0 0 16 18" shape-rendering="crispEdges" style="image-rendering:pixelated;">
+    <!-- Hat -->
+    <rect x="3" y="0" width="10" height="1" fill="#a81818"/>
+    <rect x="2" y="1" width="12" height="2" fill="#e03028"/>
+    <rect x="5" y="2" width="6" height="1" fill="#f85040"/>
+    <!-- Hat brim -->
+    <rect x="1" y="3" width="14" height="1" fill="#801010"/>
+    <rect x="2" y="4" width="12" height="1" fill="#401010"/>
+    <!-- Face / hair -->
+    <rect x="4" y="3" width="8" height="1" fill="#2a1808"/>
+    <rect x="4" y="4" width="8" height="2" fill="#f8d8a8"/>
+    <rect x="5" y="5" width="1" height="1" fill="#000"/>
+    <rect x="10" y="5" width="1" height="1" fill="#000"/>
+    <rect x="7" y="5" width="2" height="1" fill="#f8d8a8"/>
+    <!-- Neck -->
+    <rect x="6" y="6" width="4" height="1" fill="#e0bc90"/>
+    <!-- Shirt -->
+    <rect x="3" y="7" width="10" height="1" fill="#205090"/>
+    <rect x="3" y="8" width="10" height="3" fill="#4070b8"/>
+    <rect x="7" y="8" width="2" height="3" fill="#ffe040"/>   <!-- Backpack strap -->
+    <!-- Arms -->
+    <rect x="2" y="7" width="1" height="4" fill="#f8d8a8"/>
+    <rect x="13" y="7" width="1" height="4" fill="#f8d8a8"/>
+    <!-- Shorts -->
+    <rect x="4" y="11" width="8" height="3" fill="#202830"/>
+    <rect x="7" y="11" width="2" height="3" fill="#404850"/>  <!-- pant seam -->
+    <!-- Legs -->
+    <rect x="4" y="14" width="3" height="2" fill="#f8d8a8"/>
+    <rect x="9" y="14" width="3" height="2" fill="#f8d8a8"/>
+    <!-- Shoes -->
+    <rect x="3" y="16" width="4" height="2" fill="#d8302c"/>
+    <rect x="9" y="16" width="4" height="2" fill="#d8302c"/>
+    <rect x="3" y="17" width="4" height="1" fill="#fff"/>
+    <rect x="9" y="17" width="4" height="1" fill="#fff"/>
+  </svg>`;
 }
 
 function renderOverworld() {
@@ -1533,22 +3049,28 @@ function renderOverworld() {
     }
   }
 
-  // NPCs
+  // NPCs — show as caricature portrait
   state.npcs.forEach((n, i) => {
     const e = document.createElement('div');
     e.className = 'entity npc';
-    e.textContent = n.sprite;
+    const trainer = n.trainerId ? TRAINERS.find(t => t.id === n.trainerId) : null;
+    if (trainer) {
+      const uri = caricatureDataUri(trainer.id);
+      e.innerHTML = `<img src="${uri}" style="width:40px;height:40px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,0.5);">`;
+    } else {
+      e.textContent = n.sprite || '●';
+    }
     e.style.left = (n.x * TILE_SIZE) + 'px';
     e.style.top  = (n.y * TILE_SIZE) + 'px';
     e.dataset.npc = i;
     world.appendChild(e);
   });
 
-  // Player
+  // Player — inline SVG pixel art trainer (Fire Red style)
   const p = document.createElement('div');
   p.className = 'entity';
   p.id = 'player';
-  p.textContent = '🧑';
+  p.innerHTML = playerSpriteSVG();
   world.appendChild(p);
 
   updatePlayerPos();
@@ -1592,29 +3114,27 @@ function facingTile() {
   return { x, y };
 }
 
-document.addEventListener('keydown', (e) => {
+// Unified movement handler (shared between keyboard and D-pad)
+function tryMove(dir) {
+  if (state.screen === 'interior') { tryMoveInterior(dir); return; }
   if (state.screen !== 'overworld') return;
-  const k = e.key.toLowerCase();
-  let dx = 0, dy = 0, dir = state.player.dir;
-  if (k === 'arrowup' || k === 'w') { dy = -1; dir = 'up'; }
-  else if (k === 'arrowdown' || k === 's') { dy = 1; dir = 'down'; }
-  else if (k === 'arrowleft' || k === 'a') { dx = -1; dir = 'left'; }
-  else if (k === 'arrowright' || k === 'd') { dx = 1; dir = 'right'; }
-  else return;
-  e.preventDefault();
-
   state.player.dir = dir;
+  let dx = 0, dy = 0;
+  if (dir === 'up') dy = -1;
+  else if (dir === 'down') dy = 1;
+  else if (dir === 'left') dx = -1;
+  else if (dir === 'right') dx = 1;
   const nx = state.player.x + dx, ny = state.player.y + dy;
 
   // Check NPC interaction
   const npc = state.npcs.find(n => n.x === nx && n.y === ny);
   if (npc) { interactNpc(npc); return; }
 
-  // Check sign / door
   if (ny >= 0 && ny < MAP_H && nx >= 0 && nx < MAP_W) {
     const t = state.world[ny][nx];
     if (t === '$') { showSign(nx, ny); return; }
     if (t === 'D') { enterBuilding(nx, ny); return; }
+    if (t === 'C' && `${nx},${ny}` === state.caveEntry) { enterCave(); return; }
   }
 
   if (canWalk(nx, ny)) {
@@ -1624,32 +3144,236 @@ document.addEventListener('keydown', (e) => {
     updateLocation(false);
     checkEncounter();
   }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (state.screen !== 'overworld' && state.screen !== 'interior') return;
+  const k = e.key.toLowerCase();
+  let dir = null;
+  if (k === 'arrowup' || k === 'w') dir = 'up';
+  else if (k === 'arrowdown' || k === 's') dir = 'down';
+  else if (k === 'arrowleft' || k === 'a') dir = 'left';
+  else if (k === 'arrowright' || k === 'd') dir = 'right';
+  else return;
+  e.preventDefault();
+  tryMove(dir);
 });
 
-function interactNpc(npc) {
-  let i = 0;
-  setMsg(`${npc.name}: "${npc.lines[0].replace(/^[^:]+:\s*/, '')}"`);
-  setActions([{ label: i < npc.lines.length - 1 ? 'NEXT ▶' : 'OK', primary: true, onClick: () => {
-    i++;
-    if (i < npc.lines.length) {
-      setMsg(npc.lines[i]);
-      setActions([{ label: i < npc.lines.length - 1 ? 'NEXT ▶' : 'OK', primary: true, onClick: arguments.callee }]);
-    } else {
-      enterOverworld();
+// Touch / D-pad handling
+function setupMobileControls() {
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || matchMedia('(pointer: coarse)').matches;
+  const dpad = document.getElementById('dpad');
+  const ab = document.getElementById('actionBtn');
+  if (!isTouch) return;
+  dpad.classList.add('visible');
+  ab.classList.add('visible');
+  // Hold-to-repeat movement
+  let moveInterval = null, activeDir = null;
+  const startMove = (dir) => {
+    if (state.screen !== 'overworld' && state.screen !== 'interior') return;
+    activeDir = dir; tryMove(dir);
+    if (moveInterval) clearInterval(moveInterval);
+    moveInterval = setInterval(() => { if (activeDir) tryMove(activeDir); }, 180);
+  };
+  const stopMove = () => {
+    if (moveInterval) { clearInterval(moveInterval); moveInterval = null; }
+    activeDir = null;
+  };
+  dpad.querySelectorAll('.dpad-btn[data-dir]').forEach(btn => {
+    const dir = btn.dataset.dir;
+    btn.addEventListener('touchstart', e => { e.preventDefault(); startMove(dir); }, {passive:false});
+    btn.addEventListener('touchend',   e => { e.preventDefault(); stopMove(); }, {passive:false});
+    btn.addEventListener('touchcancel',e => { e.preventDefault(); stopMove(); }, {passive:false});
+    btn.addEventListener('mousedown',  e => { e.preventDefault(); startMove(dir); });
+    btn.addEventListener('mouseup',    e => { e.preventDefault(); stopMove(); });
+    btn.addEventListener('mouseleave', e => { e.preventDefault(); stopMove(); });
+  });
+  // Action button: interact with the tile player is facing (if NPC/sign/door)
+  const doAction = () => {
+    if (state.screen !== 'overworld') return;
+    const f = facingTile();
+    const npc = state.npcs.find(n => n.x === f.x && n.y === f.y);
+    if (npc) { interactNpc(npc); return; }
+    if (f.y >= 0 && f.y < MAP_H && f.x >= 0 && f.x < MAP_W) {
+      const t = state.world[f.y][f.x];
+      if (t === '$') { showSign(f.x, f.y); return; }
+      if (t === 'D') { enterBuilding(f.x, f.y); return; }
     }
-  }}]);
-  // Simpler loop:
-  function advance() {
-    i++;
-    if (i < npc.lines.length) {
-      setMsg(npc.lines[i]);
-      setActions([{ label: i < npc.lines.length - 1 ? 'NEXT ▶' : 'OK', primary: true, onClick: advance }]);
-    } else {
-      enterOverworld();
-    }
+  };
+  ab.addEventListener('touchstart', e => { e.preventDefault(); doAction(); }, {passive:false});
+  ab.addEventListener('click', doAction);
+}
+
+async function interactNpc(npc) {
+  // All NPCs are historical trainers now
+  if (!npc.trainerId) { enterOverworld(); return; }
+  const trainer = TRAINERS.find(t => t.id === npc.trainerId);
+  if (!trainer) { enterOverworld(); return; }
+
+  state.screen = 'trainer-intro';
+  showTrainerPortrait(trainer);
+
+  if (state.defeatedTrainers[trainer.id]) {
+    setMsg(`${trainer.name}: "Great to see you again, Noah! Remember: ${trainer.fact.split('.')[0]}."`);
+    setActions([{ label: 'OK', primary: true, onClick: enterOverworld }]);
+    return;
   }
-  setMsg(npc.lines[0]);
-  setActions([{ label: npc.lines.length > 1 ? 'NEXT ▶' : 'OK', primary: true, onClick: advance }]);
+
+  setMsg(`${trainer.name}: "Hello, Noah! I'm ${trainer.name}. ${trainer.role}."`);
+  setActions([{ label: 'TELL ME MORE ▶', primary: true, onClick: () => showTrainerFact(trainer) }]);
+}
+
+function svgInitialsDataUri(initials, color) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140"><rect width="140" height="140" fill="#${color || '684028'}"/><text x="70" y="95" font-size="60" fill="white" text-anchor="middle" font-family="sans-serif" font-weight="bold">${initials || '?'}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+
+// Use caricatures as PRIMARY portraits — photos were unreliable, caricatures are always there
+function trainerPortraitUri(trainer) {
+  return caricatureDataUri(trainer.id);
+}
+
+function showTrainerPortrait(trainer) {
+  const uri = trainerPortraitUri(trainer);
+  screen.innerHTML = `
+    <div class="trainer-intro fade-in">
+      <img class="trainer-portrait" src="${uri}" alt="${trainer.name}">
+      <div class="trainer-name">${trainer.name}</div>
+      <div class="trainer-role">${trainer.role}</div>
+      <div class="trainer-fact" id="trainerFact"></div>
+    </div>
+  `;
+}
+
+function showTrainerFact(trainer) {
+  const el = document.getElementById('trainerFact');
+  el.textContent = trainer.fact;
+  if (trainer.farsi && trainer.farsiLesson) {
+    setMsg(`${trainer.name} is going to teach you some Farsi (Persian) words!`);
+    setActions([
+      { label: '📖 TEACH ME FARSI', primary: true, onClick: () => showFarsiLesson(trainer) },
+    ]);
+  } else {
+    setMsg(`${trainer.name} tells you a story... read carefully — there will be a quiz!`);
+    setActions([
+      { label: '🧠 QUIZ ME', primary: true, onClick: () => startTrainerQuiz(trainer) },
+    ]);
+  }
+}
+
+function showFarsiLesson(trainer) {
+  state.screen = 'farsi-lesson';
+  const lesson = trainer.farsiLesson;
+  const uri = caricatureDataUri(trainer.id);
+  const canListen = speechRecSupported();
+  screen.innerHTML = `
+    <div class="trainer-intro fade-in" style="padding:10px;">
+      <img class="trainer-portrait" src="${uri}"
+           style="width:64px;height:64px;margin-bottom:4px;">
+      <div class="trainer-name" style="font-size:11px;">${trainer.name} teaches Farsi</div>
+      <div style="display:grid;gap:8px;margin-top:10px;width:100%;max-width:560px;">
+        ${lesson.map((w, i) => `
+          <div style="background:var(--fr-cream);color:var(--fr-dark);border:3px solid var(--fr-brown);border-radius:8px;padding:9px;display:flex;align-items:center;gap:10px;">
+            <div style="font-size:26px;direction:rtl;min-width:66px;text-align:right;font-family:'Times New Roman',serif;color:#401818;">${w.farsi}</div>
+            <div style="flex:1;text-align:left;">
+              <div style="font-size:9px;color:#e03028;letter-spacing:1px;">${w.pronounce}</div>
+              <div style="font-size:10px;margin-top:2px;color:#202830;">= ${w.english}</div>
+            </div>
+            <button class="speak-btn" data-farsi="${encodeURIComponent(w.farsi)}" title="Play pronunciation">🔊</button>
+            ${canListen ? `<button class="mic-btn" data-farsi="${encodeURIComponent(w.farsi)}" data-en="${w.english}" title="Say it back">🎤</button>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      <div style="font-size:8px;color:#ffd030;margin-top:8px;text-align:center;max-width:560px;line-height:1.7;">
+        🔊 = hear it  •  ${canListen ? '🎤 = say it back' : '(try Chrome/Edge for microphone mode)'}  •  Farsi reads RIGHT to LEFT
+      </div>
+    </div>
+  `;
+  setMsg("Tap 🔊 to hear each word. Try saying them out loud too!");
+  setActions([
+    { label: '🧠 QUIZ ME ON FARSI', primary: true, onClick: () => startFarsiQuiz(trainer) },
+  ]);
+
+  // Wire up speak buttons
+  document.querySelectorAll('.speak-btn').forEach(btn => {
+    btn.onclick = () => {
+      const farsi = decodeURIComponent(btn.dataset.farsi);
+      speakFarsi(farsi, btn);
+    };
+  });
+  // Wire up mic buttons
+  document.querySelectorAll('.mic-btn').forEach(btn => {
+    btn.onclick = async () => {
+      const farsi = decodeURIComponent(btn.dataset.farsi);
+      btn.classList.add('listening');
+      btn.textContent = '👂';
+      const res = await listenFarsi(farsi);
+      btn.classList.remove('listening');
+      btn.textContent = '🎤';
+      if (!res.supported) {
+        flashCloudIndicator('🔇 Microphone not supported — try Chrome', '#d08030');
+      } else if (res.matched) {
+        flashCloudIndicator(`✓ آفرین! You said "${btn.dataset.en}" correctly!`, '#30a040');
+        registerStreakResult(true);
+      } else {
+        flashCloudIndicator(`Heard: "${res.heard || 'nothing'}" — try again!`, '#d08030');
+      }
+    };
+  });
+}
+
+async function startFarsiQuiz(trainer) {
+  const lesson = trainer.farsiLesson;
+  const word = lesson[Math.floor(Math.random() * lesson.length)];
+  // Build choices: correct English + 3 random wrongs from other lessons
+  const allEnglish = Array.from(new Set(
+    TRAINERS.filter(t => t.farsiLesson)
+      .flatMap(t => t.farsiLesson.map(w => w.english))
+      .filter(e => e !== word.english)
+  ));
+  const wrongs = [];
+  while (wrongs.length < 3 && allEnglish.length) {
+    const idx = Math.floor(Math.random() * allEnglish.length);
+    wrongs.push(allEnglish.splice(idx, 1)[0]);
+  }
+  const choices = [word.english, ...wrongs].sort(() => Math.random() - 0.5);
+  const correctIndex = choices.indexOf(word.english);
+
+  // Speak the word automatically when quiz opens
+  setTimeout(() => speakFarsi(word.farsi), 400);
+  const res = await showModal({
+    title: '🌙 FARSI QUIZ TIME',
+    subtitle: `${trainer.name} wants to see if you remember! Tap 🔊 to hear it again.`,
+    questionHTML: `<div style="font-size:48px;direction:rtl;margin-bottom:6px;font-family:'Times New Roman',serif;">${word.farsi}</div>
+                   <div style="font-size:11px;color:#e03028;letter-spacing:1px;">(${word.pronounce})</div>
+                   <button class="speak-btn" id="farsiQuizSpeak" data-farsi="${encodeURIComponent(word.farsi)}" style="margin-top:8px;">🔊 HEAR IT</button>
+                   <div style="font-size:9px;margin-top:10px;color:#666;">What does it mean in English?</div>`,
+    choices,
+    correctIndex,
+    hint: `Listen to the word again with 🔊. The sound gives you a clue!`,
+    resultOnRight: `✓ آفرین! (āfarin!) That means "Well done!" in Farsi!`,
+    resultOnWrong: `The answer was "${word.english}". Keep practicing — you'll get it next time!`,
+  });
+  // Wire speaker button inside the modal (delayed until overlay exists)
+  setTimeout(() => {
+    const b = document.getElementById('farsiQuizSpeak');
+    if (b) b.onclick = (e) => { e.stopPropagation(); speakFarsi(word.farsi, b); };
+  }, 50);
+  registerStreakResult(res.correct);
+  setMsg(res.correct
+    ? `${trainer.name}: "Very good! Your Farsi is getting strong. Now let's battle!"`
+    : `${trainer.name}: "No worries — learning takes time. Battle time!"`);
+  setActions([{ label: '⚔️ START BATTLE ▶', primary: true, onClick: () => startTrainerBattle(trainer, res.correct) }]);
+}
+
+async function startTrainerQuiz(trainer) {
+  const got = await askTriviaBoost(trainer);
+  registerStreakResult(got);
+  // After quiz, battle the trainer
+  setMsg(got
+    ? `${trainer.name}: "Brilliant! Let's have a fun battle now — I'll go a little easy on you!"`
+    : `${trainer.name}: "No worries! Now, let's battle for real practice!"`);
+  setActions([{ label: '⚔️ START BATTLE ▶', primary: true, onClick: () => startTrainerBattle(trainer, got) }]);
 }
 
 function showSign(x, y) {
@@ -1664,6 +3388,9 @@ function showSign(x, y) {
 }
 
 function enterBuilding(x, y) {
+  // Gym check first
+  const gymId = state.gymDoors && state.gymDoors[`${x},${y}`];
+  if (gymId) { enterGym(gymId); return; }
   const isCenter = (state.world[y-1] && state.world[y-1][x] === 'R');
   const isMart   = (state.world[y-1] && state.world[y-1][x] === 'M');
   const isLab    = (state.world[y-1] && state.world[y-1][x] === 'L');
@@ -1674,17 +3401,23 @@ function enterBuilding(x, y) {
       { label: 'NO', onClick: enterOverworld },
     ]);
   } else if (isMart) {
-    setMsg(`CLERK: "Hi! POKEBALLS are $100 each. Buy one?"`);
+    setMsg(`CLERK: "Welcome! Here's what we have today:"`);
     setActions([
-      { label: 'BUY 1 BALL ($100)', primary: true, disabled: state.money < 100, onClick: () => {
+      { label: '⚪ POKEBALL ($100)', primary: true, disabled: state.money < 100, onClick: () => {
         state.money -= 100; state.balls++; updateHeader(); saveLocal();
-        setMsg(`CLERK: "Thank you! Come again!"`);
-        setActions([{ label: 'LEAVE', primary: true, onClick: enterOverworld }]);
+        setMsg(`CLERK: "Here you go!"`); setActions([{ label: 'SHOP MORE', onClick: () => enterBuilding(x, y) }, { label: 'LEAVE', back: true, onClick: enterOverworld }]);
       }},
-      { label: 'BUY 5 BALLS ($450)', disabled: state.money < 450, onClick: () => {
+      { label: '⚪ 5 BALLS ($450)', disabled: state.money < 450, onClick: () => {
         state.money -= 450; state.balls += 5; updateHeader(); saveLocal();
-        setMsg(`CLERK: "Bulk discount! Thank you!"`);
-        setActions([{ label: 'LEAVE', primary: true, onClick: enterOverworld }]);
+        setMsg(`CLERK: "Bulk discount!"`); setActions([{ label: 'SHOP MORE', onClick: () => enterBuilding(x, y) }, { label: 'LEAVE', back: true, onClick: enterOverworld }]);
+      }},
+      { label: '💊 POTION ($200)', disabled: state.money < 200, onClick: () => {
+        state.money -= 200; state.items.potion = (state.items.potion||0)+1; updateHeader(); saveLocal();
+        setMsg(`CLERK: "Heals 20 HP in battle!"`); setActions([{ label: 'SHOP MORE', onClick: () => enterBuilding(x, y) }, { label: 'LEAVE', back: true, onClick: enterOverworld }]);
+      }},
+      { label: '💊 SUPER POTION ($500)', disabled: state.money < 500, onClick: () => {
+        state.money -= 500; state.items.superPotion = (state.items.superPotion||0)+1; updateHeader(); saveLocal();
+        setMsg(`CLERK: "Heals 50 HP — handy!"`); setActions([{ label: 'SHOP MORE', onClick: () => enterBuilding(x, y) }, { label: 'LEAVE', back: true, onClick: enterOverworld }]);
       }},
       { label: 'LEAVE', back: true, onClick: enterOverworld },
     ]);
@@ -1692,7 +3425,14 @@ function enterBuilding(x, y) {
     setMsg(`PROF. ROWAN: "My lab is always open to you, Noah! Keep filling the Sinnoh Pokedex!"`);
     setActions([{ label: 'LEAVE', primary: true, onClick: enterOverworld }]);
   } else {
-    setMsg(`The door is locked.`);
+    // Regular house — random friendly flavor so it doesn't feel locked
+    const msgs = [
+      `🏠 "This is just a quiet home. The family is resting. Try a building with a red roof (POKEMON CENTER) or blue roof (POKE MART)!"`,
+      `🏠 "A little house. You hear a Pokemon snoring inside. Look for glowing signs or talk to people on the map!"`,
+      `🏠 "This door has a welcome mat but nobody's home right now. Explore the tall grass or visit the PC/Mart instead!"`,
+      `🏠 "You can hear kids doing homework inside. Head to buildings with a 🔬 sign for Prof. Rowan's Lab!"`,
+    ];
+    setMsg(msgs[Math.floor(Math.random() * msgs.length)]);
     setActions([{ label: 'OK', primary: true, onClick: enterOverworld }]);
   }
 }
@@ -1729,6 +3469,302 @@ async function startWildBattle() {
   setMsg(`A wild ${wild.name.toUpperCase()} appeared!`);
   await sleep(1100);
   battleMainMenu();
+}
+
+async function startTrainerBattle(trainer, quizBonus) {
+  // Build trainer team
+  const team = trainer.team.map(t => makeMon(t.id, t.level));
+  // If player got the quiz right, weaken the trainer's team slightly
+  if (quizBonus) team.forEach(m => { m.atk = Math.floor(m.atk * 0.85); m.hp = Math.floor(m.hp * 0.9); m.maxHp = m.hp; });
+  const first = team[0];
+  state.battle = {
+    wild: first,
+    trainer: trainer,
+    trainerTeam: team,
+    trainerIndex: 0,
+    quizBonus: !!quizBonus,
+  };
+  state.screen = 'battle';
+  renderBattle(true);
+  setMsg(`${trainer.name} sent out ${first.name.toUpperCase()}!`);
+  await sleep(1200);
+  battleMainMenu();
+}
+
+// =========================================================================
+// GYM SYSTEM
+// =========================================================================
+function enterGym(gymId) {
+  const gym = GYMS.find(g => g.id === gymId);
+  if (!gym) return;
+  state.screen = 'gym-intro';
+  const uri = caricatureDataUri(gym.id);
+  const won = !!state.badges[gym.id];
+  screen.innerHTML = `
+    <div class="trainer-intro fade-in" style="padding:14px;">
+      <div style="background:${gym.color};padding:4px 12px;border-radius:4px;font-size:9px;color:#fff;margin-bottom:8px;text-shadow:1px 1px 0 #000;">
+        ${gym.emoji} ${gym.badge} GYM ${won ? '✓ CLEARED' : '— Challenge!'}
+      </div>
+      <img class="trainer-portrait" src="${uri}" alt="${gym.leader}"
+           style="width:120px;height:120px;border-color:${gym.color};box-shadow:0 0 30px ${gym.color};">
+      <div class="trainer-name" style="color:${gym.color};">${gym.leader}</div>
+      <div class="trainer-role">Gym Leader — ${gym.theme}</div>
+      <div class="trainer-fact" style="border-left-color:${gym.color};max-width:560px;" id="gymFact"></div>
+    </div>
+  `;
+  document.getElementById('gymFact').textContent = gym.backstory;
+  if (won) {
+    setMsg(`${gym.leader}: "You already earned my ${gym.badge}! Come back anytime for a friendly rematch."`);
+    setActions([
+      { label: '⚔️ REMATCH', onClick: () => beginGymBattle(gym, true) },
+      { label: '⬅ LEAVE', back: true, onClick: enterOverworld },
+    ]);
+  } else {
+    setMsg(`${gym.leader} is telling you their story. Listen carefully — it matters!`);
+    setActions([{ label: `⚔️ ACCEPT CHALLENGE ▶`, primary: true, onClick: () => beginGymBattle(gym, false) }]);
+  }
+}
+
+async function beginGymBattle(gym, isRematch) {
+  setMsg(`${gym.leader}: "${gym.challenge}"`);
+  await sleep(1400);
+  // Gym leaders are treated as trainers with tougher teams and a badge payout
+  const leaderTrainer = {
+    id: 'gym_' + gym.id,
+    name: gym.leader + ' (Gym Leader)',
+    team: gym.team,
+    __gym: gym,
+    __rematch: isRematch,
+  };
+  startTrainerBattle(leaderTrainer, false);
+}
+
+function awardBadge(gym, isRematch) {
+  if (!isRematch) {
+    state.badges[gym.id] = true;
+    const r = gym.reward || {};
+    if (r.money) state.money += r.money;
+    if (r.balls) state.balls += r.balls;
+    if (r.superPotion) state.items.superPotion = (state.items.superPotion||0) + r.superPotion;
+    if (r.revive) state.items.revive = (state.items.revive||0) + r.revive;
+    updateHeader();
+    saveLocal();
+  } else {
+    state.money += 200;
+    updateHeader();
+    saveLocal();
+  }
+}
+
+// =========================================================================
+// INTERIOR MAPS (buildings) & CAVE MAZE
+// =========================================================================
+function enterCave() {
+  state.returnPos = { x: state.player.x, y: state.player.y };
+  // Build Oreburgh Mine maze (24x16)
+  const W = 24, H = 16;
+  const m = Array.from({length: H}, () => Array(W).fill('|'));
+  // Carve some pathways — simple hand-designed maze
+  const paths = [
+    [[1,1],[2,1],[3,1],[4,1],[5,1],[6,1]],
+    [[6,1],[6,2],[6,3],[6,4]],
+    [[6,4],[7,4],[8,4],[9,4],[10,4]],
+    [[10,4],[10,5],[10,6],[10,7]],
+    [[10,7],[11,7],[12,7],[13,7]],
+    [[1,1],[1,2],[1,3],[1,4],[1,5]],
+    [[1,5],[2,5],[3,5]],
+    [[3,5],[3,6],[3,7],[3,8]],
+    [[3,8],[4,8],[5,8],[6,8],[7,8],[8,8]],
+    [[8,8],[8,9],[8,10],[8,11],[8,12]],
+    [[8,12],[9,12],[10,12],[11,12],[12,12]],
+    [[12,12],[13,12],[14,12],[15,12]],
+    [[15,12],[15,11],[15,10],[15,9],[15,8],[15,7]],
+    [[15,7],[16,7],[17,7],[18,7],[19,7],[20,7]],
+    [[20,7],[20,6],[20,5],[20,4],[20,3]],
+    [[20,3],[21,3],[22,3]],
+    [[13,7],[13,8],[13,9]],
+    [[13,9],[14,9]],
+  ];
+  paths.forEach(path => path.forEach(([x,y]) => { if (m[y] && m[y][x] !== undefined) m[y][x] = '_'; }));
+  // Entrance (bottom-left) and exit (top-right)
+  m[1][1] = 'E'; // exit back to overworld
+  m[3][22] = '_';  // treasure area — rare Pokemon
+  state.interior = {
+    map: m, w: W, h: H,
+    type: 'cave',
+    name: 'Oreburgh Mine',
+    startX: 1, startY: 1,  // player spawns at exit mat
+  };
+  state.player.x = 1; state.player.y = 1;
+  renderInterior();
+  setMsg(`You entered OREBURGH MINE! Step on the ⬆ mat to leave. Wild rock Pokemon hide here!`);
+  setActions([
+    { label: '👥 PARTY', onClick: () => openParty(false) },
+    { label: '💾 SAVE', onClick: saveLocal },
+    { label: '🏆 BADGES', onClick: showBadgeCase },
+  ]);
+}
+
+function renderInterior() {
+  state.screen = 'interior';
+  const { map, w, h } = state.interior;
+  screen.innerHTML = `
+    <div id="viewport">
+      <div id="world"></div>
+      <div class="minimap-label">📍 ${state.interior.name}</div>
+      <div class="hint">Step on the exit mat ⬆ to leave</div>
+    </div>
+  `;
+  const world = $('#world');
+  world.style.width  = (w * TILE_SIZE) + 'px';
+  world.style.height = (h * TILE_SIZE) + 'px';
+  world.style.gridTemplateColumns = `repeat(${w}, ${TILE_SIZE}px)`;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const c = map[y][x];
+      const d = document.createElement('div');
+      d.className = 'tile ' + (TILE_CLASS[c] || 'grass');
+      world.appendChild(d);
+    }
+  }
+  // Player
+  const p = document.createElement('div');
+  p.className = 'entity';
+  p.id = 'player';
+  p.innerHTML = playerSpriteSVG();
+  world.appendChild(p);
+  updatePlayerPos();
+  updateCameraInterior();
+}
+
+function updateCameraInterior() {
+  const world = $('#world'); if (!world || !state.interior) return;
+  const vpW = screen.clientWidth;
+  const vpH = screen.clientHeight;
+  const { w, h } = state.interior;
+  let camX = state.player.x * TILE_SIZE + TILE_SIZE/2 - vpW/2;
+  let camY = state.player.y * TILE_SIZE + TILE_SIZE/2 - vpH/2;
+  camX = Math.max(0, Math.min(w * TILE_SIZE - vpW, camX));
+  camY = Math.max(0, Math.min(h * TILE_SIZE - vpH, camY));
+  world.style.transform = `translate(${-camX}px, ${-camY}px)`;
+}
+
+function tryMoveInterior(dir) {
+  const { map, w, h } = state.interior;
+  let dx = 0, dy = 0;
+  if (dir === 'up') dy = -1;
+  else if (dir === 'down') dy = 1;
+  else if (dir === 'left') dx = -1;
+  else if (dir === 'right') dx = 1;
+  state.player.dir = dir;
+  const nx = state.player.x + dx, ny = state.player.y + dy;
+  if (nx < 0 || ny < 0 || nx >= w || ny >= h) return;
+  const t = map[ny][nx];
+  if (BLOCKING.has(t)) return;
+  state.player.x = nx; state.player.y = ny;
+  updatePlayerPos();
+  updateCameraInterior();
+  // Exit tile
+  if (t === 'E') { exitInterior(); return; }
+  // Random cave encounter
+  if (state.interior.type === 'cave' && Math.random() < 0.12) {
+    startCaveBattle();
+  }
+}
+
+function exitInterior() {
+  state.interior = null;
+  if (state.returnPos) {
+    state.player.x = state.returnPos.x;
+    state.player.y = state.returnPos.y;
+    state.returnPos = null;
+  }
+  enterOverworld();
+}
+
+function startCaveBattle() {
+  // Cave has rock/ground/psychic wilds
+  const cavePool = [74, 41, 436, 408];
+  const id = cavePool[Math.floor(Math.random() * cavePool.length)];
+  const wild = makeMon(id, 8 + Math.floor(Math.random() * 6));
+  state.battle = { wild, fromInterior: true };
+  state.screen = 'battle';
+  renderBattle(true);
+  setMsg(`A wild ${wild.name.toUpperCase()} appeared in the cave!`);
+  setTimeout(battleMainMenu, 1000);
+}
+
+// Farsi Dictionary — all categories of learned words
+function showFarsiDictionary() {
+  state.screen = 'farsi-dict';
+  const canListen = speechRecSupported();
+  const cats = Object.entries(FARSI_DICT);
+  const body = cats.map(([key, cat]) => `
+    <div style="background:#fff8e0;border:3px solid var(--fr-brown);border-radius:8px;padding:10px;margin-bottom:10px;color:var(--fr-dark);">
+      <div style="font-size:10px;color:#c02020;margin-bottom:6px;">${cat.emoji} ${cat.label.toUpperCase()}</div>
+      <div style="display:grid;gap:4px;">
+        ${cat.words.map(w => `
+          <div style="display:flex;align-items:center;gap:8px;background:#fff;padding:6px;border-radius:4px;">
+            <div style="font-size:20px;direction:rtl;min-width:56px;text-align:right;font-family:'Times New Roman',serif;color:#401818;">${w.farsi}</div>
+            <div style="flex:1;">
+              <div style="font-size:8px;color:#c02020;">${w.pronounce}</div>
+              <div style="font-size:9px;">${w.english}</div>
+            </div>
+            <button class="speak-btn" data-farsi="${encodeURIComponent(w.farsi)}" style="width:28px;height:28px;font-size:12px;">🔊</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+  screen.innerHTML = `
+    <div class="party-screen fade-in" style="padding:12px;">
+      <h2>📚 FARSI DICTIONARY — فرهنگ فارسی</h2>
+      <div style="font-size:8px;color:#fff;background:rgba(0,0,0,0.4);padding:8px;border-radius:4px;margin-bottom:10px;">
+        Tap 🔊 to hear any word!  ${canListen ? 'Browser supports speaking practice too!' : 'Try Chrome for microphone mode.'}
+      </div>
+      ${body}
+    </div>
+  `;
+  setMsg("Your Farsi dictionary! Tap the speaker to hear each word.");
+  setActions([{ label: '⬅ BACK', back: true, onClick: () => {
+    if (state.interior) renderInterior();
+    else enterOverworld();
+  }}]);
+  // Wire speakers
+  document.querySelectorAll('.speak-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const farsi = decodeURIComponent(btn.dataset.farsi);
+      speakFarsi(farsi, btn);
+    };
+  });
+}
+
+// Badge case screen
+function showBadgeCase() {
+  state.screen = 'badges';
+  const earned = Object.keys(state.badges || {}).length;
+  const body = GYMS.map(g => {
+    const got = !!state.badges[g.id];
+    return `
+      <div style="background:${got ? g.color : '#666'};padding:10px;border-radius:8px;margin-bottom:6px;opacity:${got ? 1 : 0.5};color:#fff;text-shadow:1px 1px 0 #000;">
+        <div style="font-size:11px;">${got ? '✓' : '○'} ${g.emoji} ${g.badge}</div>
+        <div style="font-size:8px;margin-top:3px;">Leader: ${g.leader} (${g.location})</div>
+        ${got ? `<div style="font-size:7px;margin-top:4px;opacity:0.9;">${g.theme}</div>` : `<div style="font-size:7px;margin-top:4px;">Not earned yet</div>`}
+      </div>
+    `;
+  }).join('');
+  screen.innerHTML = `
+    <div class="party-screen fade-in" style="padding:14px;">
+      <h2>🏆 BADGE CASE — ${earned} / ${GYMS.length}</h2>
+      ${body}
+    </div>
+  `;
+  setMsg(earned === GYMS.length ? "You are a CHAMPION! All badges earned!" : `Earn all ${GYMS.length} badges by defeating the inspirational gym leaders!`);
+  setActions([{ label: '⬅ BACK', back: true, onClick: () => {
+    if (state.interior) renderInterior();
+    else enterOverworld();
+  }}]);
 }
 
 function renderBattle(withTransition = false) {
@@ -1784,12 +3820,53 @@ function hpColor(p) {
 function battleMainMenu() {
   const mon = state.party[state.activeMon];
   setMsg(`What will ${mon.name.toUpperCase()} do?`);
+  const isTrainer = !!state.battle?.trainer;
   setActions([
     { label: '⚔️ FIGHT', onClick: menuFight },
-    { label: '⚪ BALL', onClick: tryCatch, disabled: state.balls <= 0 },
+    { label: '🎒 BAG', onClick: openBagInBattle },
+    { label: isTrainer ? '⚪ BALL (no!)' : '⚪ BALL', onClick: tryCatch, disabled: state.balls <= 0 || isTrainer },
     { label: '👥 POKEMON', onClick: () => openParty(false) },
-    { label: '🏃 RUN', onClick: tryRun },
+    { label: isTrainer ? '🏃 FLEE' : '🏃 RUN', onClick: tryRun },
+    { label: '⬅ CANCEL', back: true, onClick: battleMainMenu, style: 'display:none' },
   ]);
+}
+
+function openBagInBattle() {
+  const items = state.items || {};
+  setMsg('Which item do you want to use?');
+  setActions([
+    { label: `💊 POTION (${items.potion||0})`, onClick: () => useItem('potion'), disabled: (items.potion||0) <= 0 },
+    { label: `💊 SUPER POTION (${items.superPotion||0})`, onClick: () => useItem('superPotion'), disabled: (items.superPotion||0) <= 0 },
+    { label: `✨ REVIVE (${items.revive||0})`, onClick: () => useItem('revive'), disabled: (items.revive||0) <= 0 },
+    { label: '⬅ BACK', back: true, onClick: battleMainMenu },
+  ]);
+}
+
+async function useItem(type) {
+  const mon = state.party[state.activeMon];
+  state.items = state.items || {};
+  setActions([]);
+  if (type === 'potion' || type === 'superPotion') {
+    const heal = type === 'potion' ? 20 : 50;
+    const before = mon.hp;
+    mon.hp = Math.min(mon.maxHp, mon.hp + heal);
+    state.items[type]--;
+    updateBattleUI();
+    setMsg(`${mon.name.toUpperCase()} recovered ${mon.hp - before} HP!`);
+    saveLocal();
+    await sleep(1100);
+    await enemyTurn();
+  } else if (type === 'revive') {
+    // Revive an unused fainted Pokemon
+    const fainted = state.party.findIndex(m => m.hp <= 0);
+    if (fainted === -1) { setMsg('No Pokemon need reviving!'); await sleep(1000); battleMainMenu(); return; }
+    state.party[fainted].hp = Math.floor(state.party[fainted].maxHp / 2);
+    state.items.revive--;
+    setMsg(`${state.party[fainted].name.toUpperCase()} was revived!`);
+    saveLocal();
+    await sleep(1100);
+    await enemyTurn();
+  }
 }
 function menuFight() {
   const mon = state.party[state.activeMon];
@@ -2123,8 +4200,13 @@ async function doPlayerMove(moveName) {
   const b = state.battle;
   const mon = state.party[state.activeMon];
   setActions([]);
-  setMsg(`${mon.name.toUpperCase()} used ${moveName.toUpperCase()}!`);
-  await sleep(700);
+
+  // 🧠 MATH BOOST — optional but rewarding
+  const mathCorrect = await askMathBoost('attack', b.wild.id);
+  const damageMultiplier = mathCorrect ? 1.5 : 1.0;   // big boost if right, normal if wrong
+
+  setMsg(`${mon.name.toUpperCase()} used ${moveName.toUpperCase()}!${mathCorrect ? ' (Power boost!)' : ''}`);
+  await sleep(600);
 
   await playMoveAnimation(moveName, true);
 
@@ -2132,7 +4214,8 @@ async function doPlayerMove(moveName) {
   await sleep(500);
   es.classList.remove('hit');
 
-  const { dmg, eff } = calcDamage(mon, b.wild, moveName);
+  const { dmg: baseDmg, eff } = calcDamage(mon, b.wild, moveName);
+  const dmg = Math.max(baseDmg > 0 ? 1 : 0, Math.floor(baseDmg * damageMultiplier));
   b.wild.hp = Math.max(0, b.wild.hp - dmg);
   updateBattleUI();
 
@@ -2141,7 +4224,7 @@ async function doPlayerMove(moveName) {
   else if (eff > 1) setMsgInstant(`A critical hit! It's SUPER EFFECTIVE! (-${dmg} HP)`);
   else if (eff < 1 && eff > 0) setMsgInstant(`It's not very effective... (-${dmg} HP)`);
   else if (eff === 0) setMsgInstant(`It had no effect on ${b.wild.name.toUpperCase()}...`);
-  else setMsgInstant(`${b.wild.name.toUpperCase()} took ${dmg} damage.`);
+  else setMsgInstant(`${b.wild.name.toUpperCase()} took ${dmg} damage.${mathCorrect ? ' 💪 Great math!' : ''}`);
   await sleep(900);
 
   if (b.wild.hp <= 0) { await faintEnemy(); return; }
@@ -2179,10 +4262,13 @@ async function faintEnemy() {
   const b = state.battle;
   const mon = state.party[state.activeMon];
   $('#enemySprite').classList.add('faint');
-  setMsgInstant(`Wild ${b.wild.name.toUpperCase()} fainted!`);
-  const xpGain = 10 + b.wild.level * 5;
+  const isTrainer = !!b.trainer;
+  setMsgInstant(isTrainer
+    ? `${b.trainer.name}'s ${b.wild.name.toUpperCase()} is tired!`
+    : `Wild ${b.wild.name.toUpperCase()} is tired!`);
+  const xpGain = (isTrainer ? 15 : 10) + b.wild.level * 5;
   mon.xp += xpGain;
-  const cash = 20 + b.wild.level * 8;
+  const cash = (isTrainer ? 40 : 20) + b.wild.level * 8;
   state.money += cash;
   updateHeader();
   await sleep(1100);
@@ -2200,8 +4286,190 @@ async function faintEnemy() {
   if (leveledUp) {
     setMsg(`🌟 ${mon.name.toUpperCase()} grew to Lv${mon.level}!`);
     await sleep(1300);
+    await tryEvolutions(mon);
+  }
+
+  // Trainer: send out next Pokemon, or end battle
+  if (isTrainer) {
+    b.trainerIndex++;
+    if (b.trainerIndex < b.trainerTeam.length) {
+      const next = b.trainerTeam[b.trainerIndex];
+      b.wild = next;
+      setMsg(`${b.trainer.name} sent out ${next.name.toUpperCase()}!`);
+      await sleep(1100);
+      renderBattle();
+      await sleep(400);
+      battleMainMenu();
+      return;
+    } else {
+      // WIN! Reward
+      state.defeatedTrainers[b.trainer.id] = true;
+      if (b.trainer.__gym) {
+        // This was a gym leader!
+        const gym = b.trainer.__gym;
+        awardBadge(gym, b.trainer.__rematch);
+        setMsg(`🏆 You defeated ${gym.leader}!`);
+        await sleep(1500);
+        if (!b.trainer.__rematch) {
+          setMsg(`✨ You earned the ${gym.emoji} ${gym.badge}! ${gym.leader}'s story will inspire you forever.`);
+          await sleep(2200);
+          const r = gym.reward || {};
+          setMsg(`Rewards: +$${r.money || 0}${r.balls ? `, +${r.balls} BALLS` : ''}${r.superPotion ? `, +${r.superPotion} SUPER POTION` : ''}${r.revive ? `, +${r.revive} REVIVE` : ''}!`);
+          await sleep(2000);
+        } else {
+          setMsg(`Thanks for the rematch! +$200.`);
+          await sleep(1500);
+        }
+      } else {
+        state.balls += 2;
+        state.money += 150;
+        updateHeader();
+        saveLocal();
+        setMsg(`🏆 You beat ${b.trainer.name}! +2 POKEBALLS, +$150!`);
+        await sleep(1600);
+        setMsg(`${b.trainer.name}: "Great battle, Noah! Remember what I taught you — history is full of heroes."`);
+        await sleep(1800);
+      }
+      endBattle();
+      return;
+    }
   }
   endBattle();
+}
+
+// =========================================================================
+// EVOLUTION
+// =========================================================================
+async function tryEvolutions(mon) {
+  // Loop so a Pokemon that leveled several times can chain-evolve
+  while (true) {
+    const evo = EVOLUTIONS[mon.id];
+    if (!evo || mon.level < evo.level) return;
+    const cancel = await runEvolutionScene(mon, evo.to);
+    if (cancel) { setMsg(`Huh? ${mon.name.toUpperCase()} stopped evolving!`); await sleep(1400); return; }
+    applyEvolution(mon, evo.to);
+    saveLocal();
+    // small pause then check for another stage
+    await sleep(400);
+  }
+}
+
+function applyEvolution(mon, newId) {
+  const base = POKEDEX[newId];
+  if (!base) return;
+  // Keep the current HP proportion
+  const hpRatio = mon.hp / mon.maxHp;
+  mon.id = newId;
+  mon.name = base.name;
+  mon.types = base.types.slice();
+  mon.maxHp = Math.floor(base.hp * (1 + mon.level * 0.1));
+  mon.hp = Math.max(1, Math.floor(mon.maxHp * hpRatio));
+  mon.atk = Math.floor(base.atk * (1 + mon.level * 0.08));
+  mon.def = Math.floor(base.def * (1 + mon.level * 0.08));
+  mon.catchRate = base.catchRate;
+  // Learn new moves from evolved form's list (keep any overlap)
+  const existing = new Set(mon.moves);
+  base.moves.forEach(m => { if (!existing.has(m)) mon.moves.push(m); });
+  // Cap moves to 4 (Pokemon convention)
+  if (mon.moves.length > 4) mon.moves = mon.moves.slice(0, 4);
+}
+
+function runEvolutionScene(mon, newId) {
+  return new Promise((resolve) => {
+    const prevScreen = state.screen;
+    state.screen = 'evolution';
+    const newBase = POKEDEX[newId];
+    const oldName = mon.name.toUpperCase();
+    const newName = newBase.name.toUpperCase();
+
+    screen.innerHTML = `
+      <div class="evo-screen fade-in">
+        <div class="evo-stars"></div>
+        <div class="evo-title">✨ WHAT? ✨</div>
+        <div class="evo-wrap">
+          <img class="evo-sprite" id="evoOld" src="${SPRITE_FRONT(mon.id)}" alt="${mon.name}">
+          <img class="evo-sprite hidden" id="evoNew" src="${SPRITE_FRONT(newId)}" alt="${newBase.name}">
+        </div>
+        <div class="evo-caption" id="evoCaption">${oldName} is evolving!</div>
+      </div>
+    `;
+    setMsg(`${oldName} is evolving! Press CANCEL to stop it, or WATCH to continue.`);
+    let cancelled = false;
+    let finished = false;
+
+    setActions([
+      { label: '▶ CONTINUE', primary: true, onClick: () => { /* let it run */ } },
+      { label: '❌ CANCEL', onClick: () => { cancelled = true; setActions([]); } },
+    ]);
+
+    const oldEl = document.getElementById('evoOld');
+    const newEl = document.getElementById('evoNew');
+
+    // Phase 1: pulsing white light for ~3 seconds, player can cancel during this
+    oldEl.classList.add('white-out');
+    oldEl.classList.add('morph');
+
+    const checkpoints = [500, 1100, 1700, 2300, 2900];
+    checkpoints.forEach(ms => {
+      setTimeout(() => {
+        if (finished) return;
+        if (cancelled) {
+          oldEl.classList.remove('white-out','morph');
+          newEl.classList.add('hidden');
+          finished = true;
+          setMsg(`Huh? ${oldName} stopped evolving!`);
+          setActions([]);
+          setTimeout(() => resolve(true), 300);
+        }
+      }, ms);
+    });
+
+    // Phase 2: full flash, swap to new sprite
+    setTimeout(() => {
+      if (cancelled || finished) return;
+      const fl = document.createElement('div');
+      fl.className = 'evo-flash-full';
+      screen.querySelector('.evo-screen').appendChild(fl);
+      setTimeout(() => fl.remove(), 600);
+
+      // sparkles burst
+      const wrap = screen.querySelector('.evo-wrap');
+      for (let i = 0; i < 14; i++) {
+        const s = document.createElement('div');
+        s.className = 'sparkle';
+        s.textContent = ['✨','⭐','🌟'][i % 3];
+        const angle = (Math.PI * 2) * (i / 14);
+        s.style.setProperty('--dx', Math.cos(angle) * 120 + 'px');
+        s.style.setProperty('--dy', Math.sin(angle) * 120 + 'px');
+        s.style.left = '100px';
+        s.style.top = '100px';
+        wrap.appendChild(s);
+        setTimeout(() => s.remove(), 1300);
+      }
+
+      oldEl.classList.add('hidden');
+      oldEl.classList.remove('white-out','morph');
+      newEl.classList.remove('hidden');
+      document.getElementById('evoCaption').innerHTML =
+        `Congratulations!<br>${oldName} evolved into <span style="color:#ffd030">${newName}</span>!`;
+      setMsg(`Congratulations! ${oldName} evolved into ${newName}!`);
+
+      setActions([{ label: '✓ AWESOME', primary: true, onClick: () => {
+        finished = true;
+        state.screen = prevScreen;
+        resolve(false);
+      }}]);
+
+      // Auto-advance after a while if user doesn't click
+      setTimeout(() => {
+        if (!finished) {
+          finished = true;
+          state.screen = prevScreen;
+          resolve(false);
+        }
+      }, 4500);
+    }, 3300);
+  });
 }
 
 async function faintPlayer() {
@@ -2229,6 +4497,9 @@ async function tryCatch() {
   state.balls--;
   updateHeader();
   setActions([]);
+
+  // 🧠 MATH BOOST — solve to improve catch rate
+  const mathCorrect = await askMathBoost('catch', b.wild.id);
   setMsg(`Noah threw a POKEBALL!`);
 
   const pb = document.createElement('div');
@@ -2241,7 +4512,8 @@ async function tryCatch() {
   const es = $('#enemySprite'); if (es) es.style.visibility = 'hidden';
 
   const hpRatio = b.wild.hp / b.wild.maxHp;
-  const chance = Math.min(0.95, b.wild.catchRate * (1.8 - hpRatio));
+  const mathMultiplier = mathCorrect ? 1.6 : 1.05;   // big boost if right, tiny pity if wrong
+  const chance = Math.min(0.97, b.wild.catchRate * (1.8 - hpRatio) * mathMultiplier);
   const shakes = Math.min(3, Math.floor(chance * 4) + Math.floor(Math.random() * 2));
 
   pb.classList.add('wiggle');
@@ -2250,9 +4522,11 @@ async function tryCatch() {
   await sleep(400);
 
   if (Math.random() < chance) {
-    setMsg(`Gotcha! ${b.wild.name.toUpperCase()} was caught!`);
+    setMsg(`Gotcha! ${b.wild.name.toUpperCase()} was caught!${b.wild.shiny ? ' ⭐ It was SHINY!' : ''}`);
     state.caught++;
-    const captured = makeMon(b.wild.id, b.wild.level);
+    const captured = makeMon(b.wild.id, b.wild.level, { location: state.location, date: new Date().toLocaleDateString() });
+    captured.shiny = b.wild.shiny || captured.shiny;   // preserve wild's shiny flag
+    captured.gender = b.wild.gender;
     captured.hp = Math.max(1, b.wild.hp);
     if (state.party.length < 6) state.party.push(captured);
     else setMsg(`Gotcha! ${b.wild.name.toUpperCase()} caught! (Party full — sent to PC)`);
@@ -2278,9 +4552,11 @@ async function tryRun() {
 }
 
 function endBattle() {
+  const wasInterior = state.battle?.fromInterior || state.interior;
   state.battle = null;
   saveLocal();
-  enterOverworld();
+  if (wasInterior && state.interior) { renderInterior(); }
+  else { enterOverworld(); }
 }
 
 // =========================================================================
@@ -2289,30 +4565,37 @@ function endBattle() {
 function openParty(forceSwitch) {
   const prev = state.screen;
   state.screen = 'party';
+  const genderIcon = g => g === 'male' ? '<span style="color:#4090f0">♂</span>' : g === 'female' ? '<span style="color:#e06090">♀</span>' : '';
   const body = state.party.map((m, i) => `
     <div class="party-mon ${i === state.activeMon ? 'active' : ''} ${m.hp <= 0 ? 'fainted' : ''}" data-i="${i}">
-      <img src="${SPRITE_FRONT(m.id)}" alt="${m.name}">
+      <img src="${SPRITE_FRONT(m.id)}" alt="${m.name}" style="${m.shiny ? 'filter: hue-rotate(45deg) brightness(1.3) drop-shadow(0 0 4px gold);' : ''}">
       <div class="info">
-        <div class="n">${m.name.toUpperCase()} Lv${m.level}</div>
+        <div class="n">${m.shiny ? '⭐ ' : ''}${m.name.toUpperCase()} ${genderIcon(m.gender)} Lv${m.level}</div>
         <div>${m.types.map(t => `<span class="type-pill type-${t}">${t.toUpperCase()}</span>`).join('')}</div>
         <div style="margin-top:3px">HP ${m.hp}/${m.maxHp}</div>
-        <div>A${m.atk} D${m.def}</div>
+        <div>Nature: ${m.nature || 'Hardy'}</div>
+        <div style="font-size:7px;opacity:0.7;">Caught: ${m.caughtLocation || 'Unknown'}</div>
       </div>
+      <button class="btn" style="font-size:8px;padding:6px;" data-detail="${i}">📕 INFO</button>
     </div>
   `).join('');
   screen.innerHTML = `
     <div class="party-screen fade-in">
-      <h2>NOAH'S TEAM (${state.party.length}/6)</h2>
+      <h2>NOAH'S TEAM (${state.party.length}/6) — ${state.caught} CAUGHT</h2>
       <div class="party-list">${body}</div>
     </div>
   `;
-  setMsg(forceSwitch ? 'Send out which POKEMON?' : "Click a POKEMON to make it your active battler.");
+  setMsg(forceSwitch ? 'Send out which POKEMON?' : "Tap a POKEMON to send it out, or tap INFO for Pokedex details.");
   setActions([{ label: '⬅ BACK', back: true, onClick: () => {
     if (prev === 'battle') { renderBattle(); battleMainMenu(); }
     else enterOverworld();
   } }]);
   document.querySelectorAll('.party-mon').forEach(el => {
-    el.onclick = async () => {
+    el.onclick = async (e) => {
+      if (e.target.dataset.detail !== undefined) {
+        openPokemonDetail(parseInt(e.target.dataset.detail), prev, forceSwitch);
+        return;
+      }
       const i = parseInt(el.dataset.i);
       if (state.party[i].hp <= 0) { setMsg(`${state.party[i].name.toUpperCase()} has fainted!`); return; }
       state.activeMon = i;
@@ -2327,6 +4610,54 @@ function openParty(forceSwitch) {
   });
 }
 
+function openPokemonDetail(idx, prevScreen, forceSwitch) {
+  const m = state.party[idx];
+  const dex = POKEDEX_ENTRIES[m.id] || { category: 'Unknown', height: '?', weight: '?', entry: 'Not much is known yet about this Pokemon. Keep exploring!' };
+  const gLabel = m.gender === 'male' ? '♂ Male' : m.gender === 'female' ? '♀ Female' : 'Genderless';
+  const totalStats = m.atk + m.def + m.maxHp;
+  screen.innerHTML = `
+    <div class="party-screen fade-in" style="padding:16px;">
+      <h2>📕 POKEDEX ENTRY #${String(m.id).padStart(3,'0')}</h2>
+      <div style="background:var(--fr-cream);border:3px solid var(--fr-brown);border-radius:8px;padding:12px;color:var(--fr-dark);">
+        <div style="display:flex;gap:14px;align-items:center;">
+          <img src="${SPRITE_FRONT(m.id)}" style="width:96px;height:96px;${m.shiny ? 'filter:hue-rotate(45deg) brightness(1.3) drop-shadow(0 0 6px gold);' : ''}">
+          <div style="flex:1;">
+            <div style="font-size:12px;">${m.shiny ? '⭐ ' : ''}${m.name.toUpperCase()}</div>
+            <div style="font-size:8px;opacity:0.7;margin-top:2px;">${dex.category} Pokemon</div>
+            <div style="font-size:8px;margin-top:4px;">
+              ${m.types.map(t => `<span class="type-pill type-${t}">${t.toUpperCase()}</span>`).join('')}
+            </div>
+            <div style="font-size:8px;margin-top:6px;">Height: ${dex.height} • Weight: ${dex.weight}</div>
+            <div style="font-size:8px;margin-top:2px;">${gLabel} • Lv ${m.level}</div>
+          </div>
+        </div>
+        <div style="font-size:8px;line-height:1.7;margin-top:12px;padding:10px;background:#fff;border-radius:6px;">
+          📖 <b>POKEDEX:</b> ${dex.entry}
+        </div>
+        <div style="font-size:8px;margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div>❤️ HP: <b>${m.hp} / ${m.maxHp}</b></div>
+          <div>⚔️ Attack: <b>${m.atk}</b></div>
+          <div>🛡️ Defense: <b>${m.def}</b></div>
+          <div>🎯 XP: <b>${m.xp}/${m.level*20}</b></div>
+          <div>🧠 Nature: <b>${m.nature || 'Hardy'}</b></div>
+          <div style="font-size:7px;opacity:0.7;">${m.natureDesc || ''}</div>
+        </div>
+        <div style="font-size:8px;margin-top:10px;padding:8px;background:#f0f8ff;border-radius:6px;">
+          📍 Caught at: <b>${m.caughtLocation}</b><br>
+          📅 Date: <b>${m.caughtDate}</b><br>
+          🎒 Caught at Lv ${m.caughtLevel}
+        </div>
+        <div style="font-size:8px;margin-top:10px;">
+          <b>Moves:</b>
+          ${m.moves.map(mv => `<div style="margin-top:4px;padding:5px;background:#fff;border-radius:4px;">🗡 ${mv.toUpperCase()} <span class="type-pill type-${(MOVES[mv]?.type || 'normal')}">${(MOVES[mv]?.type || 'normal').toUpperCase()}</span> <span style="opacity:0.7">Power ${MOVES[mv]?.power || '—'}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  setMsg(`Look at everything about your ${m.name.toUpperCase()}!`);
+  setActions([{ label: '⬅ BACK TO PARTY', back: true, onClick: () => openParty(forceSwitch) }]);
+}
+
 function healParty() {
   state.party.forEach(m => m.hp = m.maxHp);
   state.balls = Math.min(40, state.balls + 3);
@@ -2338,6 +4669,13 @@ function healParty() {
 // BOOT
 // =========================================================================
 function boot() {
+  setupMobileControls();
+  // Header SAVE button always works
+  const hs = document.getElementById('headerSave');
+  if (hs) hs.addEventListener('click', () => {
+    if (state.party.length === 0) { flashCloudIndicator('Nothing to save yet', '#888'); return; }
+    saveLocal();
+  });
   // Wait a tick so Firebase init module can run
   renderTitle();
   // Auto-sync: if user was previously signed in, Firebase will restore session
