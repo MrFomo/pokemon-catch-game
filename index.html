@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Pokemon Catch Game — Sinnoh Adventure</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <!-- =====  FIREBASE (cloud save + accounts)  =====
      Replace the placeholder values below with your own Firebase project's config.
@@ -270,6 +271,20 @@
   .tile.lab-roof::after { content: '🔬'; font-size: 14px; }
   .tile.gym-roof { background: linear-gradient(180deg, #806040 0%, #604028 100%); border: 2px solid #2a1a10; box-shadow: inset 0 0 10px #ffd030, 0 0 8px rgba(255,208,48,0.6); animation: gentleGlow 2.5s ease-in-out infinite; }
   .tile.gym-roof::after { content: '🏛️'; font-size: 14px; }
+  .tile.race-roof    { background: linear-gradient(180deg, #e03030 0%, #a01020 100%); border: 2px solid #401010; box-shadow: inset 0 0 10px #ffe040, 0 0 10px rgba(255,224,64,0.6); animation: gentleGlow 2.5s ease-in-out infinite; }
+  .tile.race-roof::after { content: '🏎️'; font-size: 16px; }
+  .tile.sudoku-roof  { background: linear-gradient(180deg, #4080c8 0%, #204080 100%); border: 2px solid #102040; box-shadow: inset 0 0 10px #80c0ff, 0 0 10px rgba(128,192,255,0.6); animation: gentleGlow 2.5s ease-in-out infinite; }
+  .tile.sudoku-roof::after  { content: '🧩'; font-size: 16px; }
+  .tile.memory-roof  { background: linear-gradient(180deg, #c040e0 0%, #601080 100%); border: 2px solid #200040; box-shadow: inset 0 0 10px #ff80ff, 0 0 10px rgba(255,128,255,0.6); animation: gentleGlow 2.5s ease-in-out infinite; }
+  .tile.memory-roof::after  { content: '🃏'; font-size: 16px; }
+  .tile.escape-roof  { background: linear-gradient(180deg, #c08020 0%, #805010 100%); border: 2px solid #402010; box-shadow: inset 0 0 10px #ffd030, 0 0 10px rgba(255,208,48,0.6); animation: gentleGlow 2.5s ease-in-out infinite; }
+  .tile.escape-roof::after  { content: '🔐'; font-size: 16px; }
+  .tile.family-roof { background: linear-gradient(45deg, #ff70a0, #ffd030, #70e0ff, #a070ff); background-size: 400% 400%; border: 2px solid #4a1050; animation: familyShimmer 3s ease infinite; box-shadow: 0 0 14px rgba(255,200,255,0.7); }
+  .tile.family-roof::after { content: '⭐'; font-size: 16px; filter: drop-shadow(0 0 4px white); }
+  @keyframes familyShimmer {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
   .tile.floor { background: #c8b090; background-image: repeating-linear-gradient(90deg, #c8b090 0 10px, #b89878 10px 12px); }
   .tile.wall { background: #7a5030; border: 1px solid #4a3018; }
   .tile.carpet { background: #d04040; background-image: repeating-linear-gradient(90deg, #d04040 0 8px, #b83030 8px 10px); }
@@ -816,6 +831,89 @@
     padding: 0 20px;
   }
 
+  /* MINI-GAMES */
+  .minigame-screen {
+    position: absolute; inset: 0;
+    background: #000;
+    overflow: hidden;
+  }
+  #raceCanvas { display: block; width: 100%; height: 100%; background: #70a0d0; }
+  .race-hud {
+    position: absolute; top: 8px; left: 8px;
+    background: rgba(0,0,0,0.7);
+    color: #fff; font-size: 10px;
+    padding: 6px 10px; border-radius: 6px;
+    z-index: 10;
+  }
+  .race-hud b { color: #ffd030; }
+  .sudoku-board {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 3px; max-width: 320px; margin: 0 auto;
+    background: #222; padding: 6px; border-radius: 8px;
+  }
+  .sudoku-row-3 { border-right: 3px solid #666 !important; }
+  .sudoku-col-3 { border-bottom: 3px solid #666 !important; }
+  .sudoku-cell {
+    background: #fff; aspect-ratio: 1; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 20px; cursor: pointer; user-select: none;
+    color: #202830; border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .sudoku-cell.fixed { background: #e0e0e0; color: #000; font-weight: bold; cursor: default; }
+  .sudoku-cell.selected { background: #ffd030; }
+  .sudoku-cell.wrong { background: #f08080; }
+  .sudoku-cell.correct-set { background: #60c060; color: #fff; }
+  .sudoku-numpad {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;
+    max-width: 320px; margin: 10px auto 0;
+  }
+  .sudoku-numpad button {
+    background: #4080c8; color: #fff; border: 2px solid #204080;
+    border-radius: 6px; padding: 10px; font-family: inherit;
+    font-size: 16px; font-weight: bold; cursor: pointer;
+    box-shadow: 0 2px 0 #204080;
+  }
+  .sudoku-numpad button:active { transform: translateY(2px); box-shadow: 0 0 0 #204080; }
+
+  .memory-board {
+    display: grid; gap: 6px; max-width: 440px; margin: 0 auto;
+    background: #222; padding: 8px; border-radius: 8px;
+  }
+  .memory-card {
+    aspect-ratio: 1;
+    background: #4080c8;
+    background-image: radial-gradient(circle at 30% 30%, #60a0e0, #205090);
+    border: 2px solid #204080;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    transition: transform 0.3s;
+    transform-style: preserve-3d;
+  }
+  .memory-card.flipped { transform: rotateY(180deg); background: #fff8e0; }
+  .memory-card img { width: 80%; height: 80%; object-fit: contain; transform: rotateY(180deg); }
+  .memory-card.matched { border-color: #60c060; box-shadow: 0 0 12px #60c060; }
+
+  .escape-panel {
+    background: var(--fr-cream); border: 4px solid var(--fr-brown);
+    border-radius: 8px; padding: 14px; max-width: 480px; margin: 0 auto;
+    color: var(--fr-dark); font-size: 10px; line-height: 1.7;
+  }
+  .escape-panel h3 { color: #c02020; margin-bottom: 8px; font-size: 12px; }
+  .escape-progress {
+    display: flex; gap: 6px; justify-content: center; margin-bottom: 10px;
+  }
+  .escape-progress .dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: #666; border: 2px solid #333;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: #fff;
+  }
+  .escape-progress .dot.done { background: #60c060; }
+  .escape-progress .dot.current { background: #ffd030; color: #333; }
+
   .speak-btn, .mic-btn {
     background: #4080c8; color: #fff;
     border: 2px solid #204080;
@@ -1138,6 +1236,214 @@ const POKEDEX = {
   421: { name: 'Cherrim',    types: ['grass'],              hp: 70, atk: 60, def: 70, moves: ['Absorb','Tackle','Leer'],               catchRate: 0.35 },
 };
 
+// =========================================================================
+// COMPLETE KANTO POKEDEX — All 151 Gen 1 Pokemon added in compact form
+// =========================================================================
+function P(id, name, t1, t2, hp, atk, def, cr, moves) {
+  POKEDEX[id] = { name, types: t2 ? [t1, t2] : [t1], hp, atk, def, catchRate: cr, moves };
+}
+// id, name, type1, type2, hp, atk, def, catchRate, moves
+P(1,  'Bulbasaur', 'grass','poison',45,49,49, 0.45, ['Tackle','Vine Whip','Leer']);
+P(2,  'Ivysaur',   'grass','poison',60,62,63, 0.25, ['Vine Whip','Razor Leaf','Tackle']);
+P(3,  'Venusaur',  'grass','poison',80,82,83, 0.10, ['Razor Leaf','Bite','Tackle']);
+P(4,  'Charmander','fire', null,    39,52,43, 0.45, ['Scratch','Ember','Leer']);
+P(5,  'Charmeleon','fire', null,    58,64,58, 0.25, ['Ember','Scratch','Bite']);
+P(6,  'Charizard', 'fire','flying', 78,84,78, 0.10, ['Ember','Gust','Bite']);
+P(7,  'Squirtle',  'water',null,    44,48,65, 0.45, ['Tackle','Bubble','Water Gun']);
+P(8,  'Wartortle', 'water',null,    59,63,80, 0.25, ['Bubble','Water Gun','Tackle']);
+P(9,  'Blastoise', 'water',null,    79,83,100,0.10, ['Water Gun','Bite','Tackle']);
+P(10, 'Caterpie',  'bug',  null,    45,30,35, 0.85, ['Tackle','String Shot']);
+P(11, 'Metapod',   'bug',  null,    50,20,55, 0.60, ['Tackle']);
+P(12, 'Butterfree','bug','flying', 60,45,50, 0.25, ['Gust','Bug Bite','Confusion']);
+P(13, 'Weedle',    'bug','poison', 40,35,30, 0.85, ['Tackle','String Shot']);
+P(14, 'Kakuna',    'bug','poison', 45,25,50, 0.60, ['Tackle']);
+P(15, 'Beedrill',  'bug','poison', 65,90,40, 0.20, ['Bug Bite','Tackle']);
+P(16, 'Pidgey',    'normal','flying',40,45,40, 0.80, ['Tackle','Gust']);
+P(17, 'Pidgeotto', 'normal','flying',63,60,55, 0.40, ['Gust','Quick Attack']);
+P(18, 'Pidgeot',   'normal','flying',83,80,75, 0.15, ['Gust','Quick Attack','Bite']);
+P(19, 'Rattata',   'normal',null,   30,56,35, 0.85, ['Tackle','Quick Attack','Bite']);
+P(20, 'Raticate',  'normal',null,   55,81,60, 0.45, ['Bite','Quick Attack','Tackle']);
+P(21, 'Spearow',   'normal','flying',40,60,30, 0.75, ['Tackle','Gust']);
+P(22, 'Fearow',    'normal','flying',65,90,65, 0.30, ['Gust','Quick Attack','Bite']);
+P(23, 'Ekans',     'poison',null,   35,60,44, 0.75, ['Bite','Leer']);
+P(24, 'Arbok',     'poison',null,   60,95,69, 0.30, ['Bite','Leer']);
+P(25, 'Pikachu',   'electric',null, 35,55,40, 0.45, ['Thunder Shock','Quick Attack','Tackle']);
+P(26, 'Raichu',    'electric',null, 60,90,55, 0.20, ['Thunder Shock','Quick Attack']);
+P(27, 'Sandshrew', 'ground', null,  50,75,85, 0.75, ['Scratch','Mud-Slap']);
+P(28, 'Sandslash', 'ground', null,  75,100,110,0.30, ['Scratch','Mud-Slap','Rock Throw']);
+P(29, 'Nidoran♀',  'poison', null,  55,47,52, 0.60, ['Tackle','Scratch']);
+P(30, 'Nidorina',  'poison', null,  70,62,67, 0.30, ['Scratch','Bite']);
+P(31, 'Nidoqueen', 'poison','ground',90,92,87,0.10, ['Scratch','Bite','Rock Throw']);
+P(32, 'Nidoran♂',  'poison', null,  46,57,40, 0.60, ['Tackle','Leer']);
+P(33, 'Nidorino',  'poison', null,  61,72,57, 0.30, ['Leer','Scratch']);
+P(34, 'Nidoking',  'poison','ground',81,102,77,0.10, ['Bite','Rock Throw','Scratch']);
+P(35, 'Clefairy',  'fairy', null,   70,45,48, 0.60, ['Pound','Growl']);
+P(36, 'Clefable',  'fairy', null,   95,70,73, 0.15, ['Pound','Confusion']);
+P(37, 'Vulpix',    'fire',  null,   38,41,40, 0.60, ['Ember','Tackle']);
+P(38, 'Ninetales', 'fire',  null,   73,76,75, 0.20, ['Ember','Bite','Quick Attack']);
+P(39, 'Jigglypuff','fairy', null,   115,45,20,0.70, ['Pound','Growl']);
+P(40, 'Wigglytuff','fairy', null,   140,70,45,0.30, ['Pound','Bite']);
+P(43, 'Oddish',    'grass','poison',45,50,55, 0.80, ['Absorb','Tackle']);
+P(44, 'Gloom',     'grass','poison',60,65,70, 0.35, ['Absorb','Mega Drain']);
+P(45, 'Vileplume', 'grass','poison',75,80,85, 0.15, ['Mega Drain','Absorb']);
+P(46, 'Paras',     'bug','grass',   35,70,55, 0.75, ['Scratch','Bug Bite']);
+P(47, 'Parasect',  'bug','grass',   60,95,80, 0.30, ['Bug Bite','Scratch']);
+P(48, 'Venonat',   'bug','poison',  60,55,50, 0.60, ['Tackle','Confusion']);
+P(49, 'Venomoth',  'bug','poison',  70,65,60, 0.25, ['Confusion','Gust']);
+P(50, 'Diglett',   'ground',null,   10,55,25, 0.80, ['Scratch','Mud-Slap']);
+P(51, 'Dugtrio',   'ground',null,   35,100,50,0.30, ['Mud-Slap','Scratch']);
+P(52, 'Meowth',    'normal',null,   40,45,35, 0.70, ['Scratch','Bite']);
+P(53, 'Persian',   'normal',null,   65,70,60, 0.25, ['Bite','Scratch','Quick Attack']);
+P(56, 'Mankey',    'fighting',null, 40,80,35, 0.75, ['Scratch','Leer']);
+P(57, 'Primeape',  'fighting',null, 65,105,60,0.30, ['Force Palm','Scratch']);
+P(58, 'Growlithe', 'fire',  null,   55,70,45, 0.55, ['Bite','Ember']);
+P(59, 'Arcanine',  'fire',  null,   90,110,80,0.20, ['Ember','Bite']);
+P(60, 'Poliwag',   'water', null,   40,50,40, 0.75, ['Bubble','Water Gun']);
+P(61, 'Poliwhirl', 'water', null,   65,65,65, 0.35, ['Water Gun','Bubble']);
+P(62, 'Poliwrath', 'water','fighting',90,95,95,0.15, ['Water Gun','Force Palm']);
+P(63, 'Abra',      'psychic',null,  25,20,15, 0.30, ['Confusion']);
+P(64, 'Kadabra',   'psychic',null,  40,35,30, 0.15, ['Confusion','Quick Attack']);
+P(65, 'Alakazam',  'psychic',null,  55,50,45, 0.10, ['Confusion','Quick Attack']);
+P(66, 'Machop',    'fighting',null, 70,80,50, 0.70, ['Force Palm','Leer']);
+P(67, 'Machoke',   'fighting',null, 80,100,70,0.30, ['Force Palm','Scratch']);
+P(68, 'Machamp',   'fighting',null, 90,130,80,0.15, ['Force Palm','Headbutt']);
+P(69, 'Bellsprout','grass','poison',50,75,35, 0.75, ['Vine Whip','Absorb']);
+P(70, 'Weepinbell','grass','poison',65,90,50, 0.30, ['Vine Whip','Razor Leaf']);
+P(71, 'Victreebel','grass','poison',80,105,65,0.15, ['Razor Leaf','Mega Drain']);
+P(72, 'Tentacool', 'water','poison',40,40,35, 0.60, ['Bubble','Water Gun']);
+P(73, 'Tentacruel','water','poison',80,70,65, 0.25, ['Water Gun','Bubble']);
+P(76, 'Golem',     'rock','ground', 80,120,130,0.10, ['Rock Throw','Tackle','Mud-Slap']);
+P(77, 'Ponyta',    'fire',  null,   50,85,55, 0.60, ['Ember','Tackle']);
+P(78, 'Rapidash',  'fire',  null,   65,100,70,0.25, ['Ember','Quick Attack']);
+P(79, 'Slowpoke',  'water','psychic',90,65,65,0.60, ['Confusion','Water Gun']);
+P(80, 'Slowbro',   'water','psychic',95,75,110,0.20, ['Water Gun','Confusion']);
+P(81, 'Magnemite', 'electric','steel',25,35,70,0.55, ['Thunder Shock','Tackle']);
+P(82, 'Magneton',  'electric','steel',50,60,95,0.25, ['Thunder Shock','Tackle']);
+P(83, 'Farfetchd','normal','flying',52,65,55, 0.45, ['Gust','Tackle']);
+P(84, 'Doduo',     'normal','flying',35,85,45, 0.60, ['Tackle','Quick Attack']);
+P(85, 'Dodrio',    'normal','flying',60,110,70,0.25, ['Quick Attack','Tackle']);
+P(86, 'Seel',      'water', null,   65,45,55, 0.65, ['Water Gun','Powder Snow']);
+P(87, 'Dewgong',   'water','ice',   90,70,80, 0.25, ['Powder Snow','Water Gun']);
+P(88, 'Grimer',    'poison',null,   80,80,50, 0.55, ['Tackle','Scratch']);
+P(89, 'Muk',       'poison',null,   105,105,75,0.20, ['Scratch','Tackle']);
+P(90, 'Shellder',  'water', null,   30,65,100,0.60, ['Tackle','Bubble']);
+P(91, 'Cloyster',  'water','ice',   50,95,180,0.20, ['Powder Snow','Water Gun']);
+P(92, 'Gastly',    'ghost','poison',30,35,30, 0.45, ['Astonish','Confusion']);
+P(93, 'Haunter',   'ghost','poison',45,50,45, 0.25, ['Astonish','Confusion']);
+P(94, 'Gengar',    'ghost','poison',60,65,60, 0.10, ['Confusion','Astonish','Bite']);
+P(95, 'Onix',      'rock','ground', 35,45,160,0.35, ['Tackle','Rock Throw']);
+P(96, 'Drowzee',   'psychic',null,  60,48,45, 0.60, ['Confusion','Pound']);
+P(97, 'Hypno',     'psychic',null,  85,73,70, 0.25, ['Confusion','Pound']);
+P(98, 'Krabby',    'water', null,   30,105,90,0.75, ['Bubble','Scratch']);
+P(99, 'Kingler',   'water', null,   55,130,115,0.25,['Bubble','Water Gun','Scratch']);
+P(100,'Voltorb',   'electric',null, 40,30,50, 0.55, ['Tackle','Thunder Shock']);
+P(101,'Electrode', 'electric',null, 60,50,70, 0.30, ['Thunder Shock','Tackle']);
+P(102,'Exeggcute', 'grass','psychic',60,40,80,0.55, ['Confusion','Absorb']);
+P(103,'Exeggutor', 'grass','psychic',95,95,85,0.15, ['Confusion','Razor Leaf']);
+P(104,'Cubone',    'ground',null,   50,50,95, 0.55, ['Tackle','Mud-Slap']);
+P(105,'Marowak',   'ground',null,   60,80,110,0.25, ['Mud-Slap','Headbutt']);
+P(106,'Hitmonlee', 'fighting',null, 50,120,53,0.25, ['Force Palm','Tackle']);
+P(107,'Hitmonchan','fighting',null, 50,105,79,0.25, ['Force Palm','Quick Attack']);
+P(108,'Lickitung', 'normal',null,   90,55,75, 0.45, ['Tackle','Leer']);
+P(109,'Koffing',   'poison',null,   40,65,95, 0.55, ['Tackle','Astonish']);
+P(110,'Weezing',   'poison',null,   65,90,120,0.25, ['Tackle','Astonish']);
+P(111,'Rhyhorn',   'ground','rock', 80,85,95, 0.55, ['Tackle','Rock Throw']);
+P(112,'Rhydon',    'ground','rock', 105,130,120,0.15,['Rock Throw','Headbutt','Tackle']);
+P(113,'Chansey',   'normal',null,   250,5,5,  0.25, ['Pound','Growl']);
+P(114,'Tangela',   'grass',null,    65,55,115,0.45, ['Vine Whip','Absorb']);
+P(115,'Kangaskhan','normal',null,   105,95,80,0.25, ['Tackle','Headbutt']);
+P(116,'Horsea',    'water',null,    30,40,70, 0.55, ['Bubble','Water Gun']);
+P(117,'Seadra',    'water',null,    55,65,95, 0.25, ['Water Gun','Bubble']);
+P(118,'Goldeen',   'water',null,    45,67,60, 0.75, ['Tackle','Water Gun']);
+P(119,'Seaking',   'water',null,    80,92,65, 0.30, ['Water Gun','Tackle']);
+P(120,'Staryu',    'water',null,    30,45,55, 0.55, ['Tackle','Water Gun']);
+P(121,'Starmie',   'water','psychic',60,75,85,0.25, ['Water Gun','Confusion']);
+P(122,'Mr. Mime',  'psychic','fairy',40,45,65,0.25, ['Confusion','Pound']);
+P(123,'Scyther',   'bug','flying',  70,110,80,0.25, ['Quick Attack','Bug Bite']);
+P(124,'Jynx',      'ice','psychic', 65,50,35, 0.25, ['Powder Snow','Confusion']);
+P(125,'Electabuzz','electric',null, 65,83,57, 0.25, ['Thunder Shock','Quick Attack']);
+P(126,'Magmar',    'fire',null,     65,95,57, 0.25, ['Ember','Scratch']);
+P(127,'Pinsir',    'bug',null,      65,125,100,0.25,['Bug Bite','Scratch']);
+P(128,'Tauros',    'normal',null,   75,100,95,0.25, ['Tackle','Headbutt']);
+P(131,'Lapras',    'water','ice',   130,85,80,0.10, ['Water Gun','Powder Snow']);
+P(132,'Ditto',     'normal',null,   48,48,48, 0.35, ['Tackle']);
+P(134,'Vaporeon',  'water',null,    130,65,60,0.15, ['Water Gun','Bubble','Tackle']);
+P(135,'Jolteon',   'electric',null, 65,65,60, 0.15, ['Thunder Shock','Quick Attack','Tackle']);
+P(136,'Flareon',   'fire',null,     65,130,60,0.15, ['Ember','Bite','Tackle']);
+P(137,'Porygon',   'normal',null,   65,60,70, 0.30, ['Tackle','Confusion']);
+P(138,'Omanyte',   'rock','water',  35,40,100,0.25, ['Tackle','Bubble']);
+P(139,'Omastar',   'rock','water',  70,60,125,0.10, ['Bubble','Rock Throw']);
+P(140,'Kabuto',    'rock','water',  30,80,90, 0.25, ['Scratch','Bubble']);
+P(141,'Kabutops',  'rock','water',  60,115,105,0.10,['Scratch','Rock Throw']);
+P(142,'Aerodactyl','rock','flying', 80,105,65,0.15, ['Gust','Bite']);
+P(143,'Snorlax',   'normal',null,   160,110,65,0.15,['Body Slam','Headbutt','Tackle']);
+P(144,'Articuno',  'ice','flying',  90,85,100,0.03, ['Powder Snow','Gust']);
+P(145,'Zapdos',    'electric','flying',90,90,85,0.03,['Thunder Shock','Gust']);
+P(146,'Moltres',   'fire','flying', 90,100,90,0.03, ['Ember','Gust']);
+P(147,'Dratini',   'dragon',null,   41,64,45, 0.25, ['Tackle','Dragon Rage']);
+P(148,'Dragonair', 'dragon',null,   61,84,65, 0.10, ['Dragon Rage','Bite']);
+P(149,'Dragonite', 'dragon','flying',91,134,95,0.05,['Dragon Rage','Bite','Gust']);
+P(150,'Mewtwo',    'psychic',null,  106,110,90,0.01,['Confusion','Quick Attack']);
+P(151,'Mew',       'psychic',null,  100,100,100,0.01,['Confusion','Tackle']);
+
+// =========================================================================
+// EVOLUTION MAP EXPANDED — add Kanto evolutions
+// =========================================================================
+// Additional evolutions for Gen 1
+const KANTO_EVOLUTIONS = {
+  1:   { to: 2,   level: 16 }, 2: { to: 3, level: 32 },
+  4:   { to: 5,   level: 16 }, 5: { to: 6, level: 36 },
+  7:   { to: 8,   level: 16 }, 8: { to: 9, level: 36 },
+  10:  { to: 11,  level: 7  }, 11:{ to: 12,level: 10 },
+  13:  { to: 14,  level: 7  }, 14:{ to: 15,level: 10 },
+  16:  { to: 17,  level: 18 }, 17:{ to: 18,level: 36 },
+  19:  { to: 20,  level: 20 },
+  21:  { to: 22,  level: 20 },
+  23:  { to: 24,  level: 22 },
+  25:  { to: 26,  level: 22 },
+  27:  { to: 28,  level: 22 },
+  29:  { to: 30,  level: 16 }, 30:{ to: 31,level: 36 },
+  32:  { to: 33,  level: 16 }, 33:{ to: 34,level: 36 },
+  35:  { to: 36,  level: 30 },
+  37:  { to: 38,  level: 30 },
+  39:  { to: 40,  level: 30 },
+  43:  { to: 44,  level: 21 }, 44:{ to: 45,level: 36 },
+  46:  { to: 47,  level: 24 },
+  48:  { to: 49,  level: 31 },
+  50:  { to: 51,  level: 26 },
+  52:  { to: 53,  level: 28 },
+  56:  { to: 57,  level: 28 },
+  58:  { to: 59,  level: 30 },
+  60:  { to: 61,  level: 25 }, 61:{ to: 62,level: 36 },
+  63:  { to: 64,  level: 16 }, 64:{ to: 65,level: 30 },
+  66:  { to: 67,  level: 28 }, 67:{ to: 68,level: 36 },
+  69:  { to: 70,  level: 21 }, 70:{ to: 71,level: 36 },
+  72:  { to: 73,  level: 30 },
+  75:  { to: 76,  level: 32 },
+  77:  { to: 78,  level: 40 },
+  79:  { to: 80,  level: 37 },
+  81:  { to: 82,  level: 30 },
+  84:  { to: 85,  level: 31 },
+  86:  { to: 87,  level: 34 },
+  88:  { to: 89,  level: 38 },
+  90:  { to: 91,  level: 32 },
+  92:  { to: 93,  level: 25 }, 93:{ to: 94,level: 36 },
+  96:  { to: 97,  level: 26 },
+  98:  { to: 99,  level: 28 },
+  100: { to: 101, level: 30 },
+  102: { to: 103, level: 30 },
+  104: { to: 105, level: 28 },
+  109: { to: 110, level: 35 },
+  111: { to: 112, level: 42 },
+  116: { to: 117, level: 32 },
+  118: { to: 119, level: 33 },
+  120: { to: 121, level: 28 },
+  138: { to: 139, level: 40 },
+  140: { to: 141, level: 40 },
+  147: { to: 148, level: 30 }, 148: { to: 149, level: 55 },
+};
+// KANTO_EVOLUTIONS merge happens below, after const EVOLUTIONS is declared
+
 // Short Pokedex entries (species info, 3rd-grade friendly)
 const POKEDEX_ENTRIES = {
   387: { category: 'Tiny Leaf', height: "1'04\"", weight: '22.5 lb', entry: "The shell on its back is made of soil. On a very healthy Turtwig, the shell is a little wet." },
@@ -1209,6 +1515,8 @@ const EVOLUTIONS = {
   408: { to: 409, level: 30 },  // Cranidos -> Rampardos
   420: { to: 421, level: 25 },  // Cherubi -> Cherrim
 };
+// Merge Kanto evolutions into the main EVOLUTIONS map (KANTO_EVOLUTIONS was declared earlier)
+Object.assign(EVOLUTIONS, KANTO_EVOLUTIONS);
 
 const MOVES = {
   'Tackle':        { power: 40, type: 'normal',  fx: 'impact' },
@@ -1461,6 +1769,492 @@ const TRAINERS = [
   },
 ];
 
+// Compact helper to add 100 more historians without giant repetitive blocks
+function H(id, initials, color, name, role, fact, qQ, qA, qOther, team) {
+  // qOther is 3 wrong answers; qA is correct (placed first then shuffled at quiz-time)
+  TRAINERS.push({
+    id, initials, color, name, role, fact,
+    quiz: { q: qQ, choices: [qA, ...qOther], answer: 0 },
+    team: team.map(([pid, lvl]) => ({ id: pid, level: lvl })),
+  });
+}
+
+// ---------- SCIENTISTS & MATHEMATICIANS (20) ----------
+H('galileo', 'GG', '604a30', 'Galileo Galilei', 'Astronomer (1564–1642)',
+  "I built telescopes and discovered that Jupiter has moons. I also showed that Earth goes around the Sun, not the other way around!",
+  'What did Galileo discover orbits Jupiter?', 'Moons', ['Comets', 'Rings', 'Stars'],
+  [[436, 9], [425, 10]]);
+H('darwin', 'CD', '4a5830', 'Charles Darwin', 'Naturalist (1809–1882)',
+  "I sailed around the world on a ship called the Beagle and came up with the theory of evolution — the idea that animals change over many, many generations.",
+  'What theory is Darwin most famous for?', 'Evolution', ['Gravity', 'Relativity', 'Electricity'],
+  [[412, 10], [420, 11]]);
+H('tesla', 'NT', '406080', 'Nikola Tesla', 'Inventor (1856–1943)',
+  "I invented AC electricity — the kind that powers homes around the world! I also dreamed of wireless power and had 300+ patents.",
+  'What kind of electricity did Tesla invent?', 'AC (alternating current)', ['DC', 'Battery', 'Solar'],
+  [[403, 10], [436, 11]]);
+H('hawking', 'SH', '404060', 'Stephen Hawking', 'Physicist (1942–2018)',
+  "I studied black holes and the beginning of the universe. I lived with ALS for decades and spoke through a computer voice — but kept doing brilliant science!",
+  'What did Stephen Hawking mainly study?', 'Black holes', ['Dinosaurs', 'Oceans', 'Butterflies'],
+  [[425, 11], [436, 12]]);
+H('sagan', 'CS', '505050', 'Carl Sagan', 'Astronomer (1934–1996)',
+  "I taught millions of people about space on my TV show Cosmos. My famous line: 'We are made of star-stuff' — because the atoms in you came from exploding stars!",
+  "Sagan famously said we are made of what?", 'Star-stuff', ['Cheese', 'Dreams', 'Water'],
+  [[436, 10], [425, 12]]);
+H('feynman', 'RF', '704a30', 'Richard Feynman', 'Physicist (1918–1988)',
+  "I won the Nobel Prize in Physics and helped explain quantum mechanics — the weird rules for tiny particles. I loved drumming, drawing, and solving puzzles too!",
+  "Feynman won the Nobel Prize in what?", 'Physics', ['Peace', 'Literature', 'Medicine'],
+  [[403, 11], [436, 12]]);
+H('rosalind', 'RF', '80608a', 'Rosalind Franklin', 'Chemist (1920–1958)',
+  "I took the famous X-ray photo that showed DNA is shaped like a twisted ladder (a double helix). Without my photograph, we wouldn't have figured out what DNA looks like.",
+  "Rosalind Franklin helped discover the shape of what?", 'DNA', ['The atom', 'A virus', 'The Moon'],
+  [[412, 10], [406, 11]]);
+H('ada', 'AL', '8a4060', 'Ada Lovelace', 'Mathematician (1815–1852)',
+  "I wrote the very first computer program — in the 1840s! That's before electricity! I imagined machines that could make music and art long before anyone else.",
+  "Ada Lovelace is considered the first WHAT in history?", 'Computer programmer', ['Doctor', 'Astronaut', 'Chef'],
+  [[436, 10], [433, 11]]);
+H('hopper', 'GH', '406890', 'Grace Hopper', 'Computer Scientist (1906–1992)',
+  "I invented the first programming language compiler and coined the term 'computer bug' after finding a literal moth stuck inside a computer!",
+  "Grace Hopper literally found a WHAT stuck in a computer?", 'Moth', ['Pencil', 'Snake', 'Fish'],
+  [[412, 10], [436, 12]]);
+H('hypatia', 'HY', '6a4a80', 'Hypatia of Alexandria', 'Mathematician (~370–415)',
+  "I taught math, astronomy, and philosophy in ancient Egypt. I'm one of the first women in history we know was a great scientist and teacher.",
+  "Hypatia taught in which ancient city?", 'Alexandria, Egypt', ['Rome, Italy', 'Athens, Greece', 'Babylon'],
+  [[74, 10], [436, 11]]);
+H('davinci', 'LD', '70502a', 'Leonardo da Vinci', 'Renaissance Genius (1452–1519)',
+  "I painted the Mona Lisa AND designed flying machines, submarines, and robots — centuries before they existed! I filled thousands of pages with curious inventions.",
+  "Besides painting, what did Leonardo design?", 'Flying machines', ['Spaceships', 'Cell phones', 'Video games'],
+  [[425, 11], [447, 12]]);
+H('pythagoras', 'PY', '6a8040', 'Pythagoras', 'Mathematician (~570–495 BCE)',
+  "I discovered the famous rule about right triangles: a² + b² = c². Every kid who learns geometry learns my theorem!",
+  "Pythagoras is famous for a theorem about what shape?", 'Right triangle', ['Circle', 'Square', 'Hexagon'],
+  [[74, 10], [436, 11]]);
+H('archimedes', 'AR', '604020', 'Archimedes', 'Greek Mathematician (~287–212 BCE)',
+  "I jumped out of my bathtub yelling 'EUREKA!' after discovering how water displacement works. I also invented amazing war machines and the Archimedes screw pump.",
+  "Archimedes famously yelled what word after his discovery?", 'Eureka', ['Hello', 'Goodbye', 'Wow'],
+  [[74, 10], [54, 11]]);
+H('copernicus', 'NC', '404060', 'Nicolaus Copernicus', 'Astronomer (1473–1543)',
+  "I proved that Earth orbits the Sun — not the other way around. This was a shocking, universe-rearranging idea at the time!",
+  "Copernicus said Earth orbits the WHAT?", 'Sun', ['Moon', 'Jupiter', 'Mars'],
+  [[436, 11], [425, 12]]);
+H('mendel', 'GM', '405040', 'Gregor Mendel', 'Biologist (1822–1884)',
+  "I grew peas in my garden and discovered how traits are passed from parents to children. I'm the father of genetics!",
+  "Mendel studied which plant to discover genetics?", 'Peas', ['Corn', 'Roses', 'Oak trees'],
+  [[406, 10], [420, 11]]);
+H('pasteur', 'LP', '604828', 'Louis Pasteur', 'Biologist (1822–1895)',
+  "I discovered that tiny germs cause disease, and I invented a way to make milk safer to drink — it's called 'pasteurization' after me!",
+  "Pasteur's process makes WHAT safer?", 'Milk', ['Air', 'Toys', 'Rocks'],
+  [[412, 10], [54, 11]]);
+H('ramanujan', 'SR', '604040', 'Srinivasa Ramanujan', 'Mathematician (1887–1920)',
+  "I grew up poor in India with almost no formal math training, but I saw incredible patterns in numbers. Mathematicians are still studying my discoveries!",
+  "Ramanujan was a genius at what subject?", 'Mathematics', ['Painting', 'Running', 'Singing'],
+  [[436, 10], [433, 11]]);
+H('turing', 'AT', '304050', 'Alan Turing', 'Computer Scientist (1912–1954)',
+  "I helped crack secret Nazi codes in WWII, saving millions of lives. I also came up with the idea of what we now call a computer — called a 'Turing Machine'.",
+  "Alan Turing helped crack what in WWII?", 'Secret codes', ['Locks', 'Diamonds', 'Rivers'],
+  [[412, 11], [436, 12]]);
+H('euclid', 'EU', '604a30', 'Euclid', 'Greek Mathematician (~325–265 BCE)',
+  "I wrote a book called 'Elements' that taught geometry for over 2,000 years. Every right-angle and parallel line you draw uses my rules.",
+  "Euclid is called the Father of what subject?", 'Geometry', ['History', 'Music', 'Cooking'],
+  [[74, 10], [408, 11]]);
+H('crick', 'FC', '60402a', 'Francis Crick', 'Biologist (1916–2004)',
+  "With James Watson (and thanks to Rosalind Franklin's photo), I figured out the double-helix shape of DNA — the instructions inside every living thing.",
+  "Crick discovered the shape of WHAT is a double helix?", 'DNA', ['Clouds', 'Rocks', 'Fire'],
+  [[412, 10], [436, 11]]);
+
+// ---------- ARTISTS (10) ----------
+H('michelangelo', 'MI', '604a30', 'Michelangelo', 'Sculptor & Painter (1475–1564)',
+  "I sculpted the statue of David and painted the Sistine Chapel ceiling — all alone, on my back, for four years! My art still inspires people today.",
+  "What did Michelangelo paint on a chapel ceiling?", 'The Sistine Chapel', ['Stars', 'Animals', 'Presidents'],
+  [[425, 10], [436, 11]]);
+H('vangogh', 'VG', '406040', 'Vincent van Gogh', 'Painter (1853–1890)',
+  "I painted 'Starry Night' and hundreds of sunflowers. I only sold one painting in my life — today my paintings are worth millions!",
+  "Van Gogh famously painted what flower?", 'Sunflowers', ['Roses', 'Tulips', 'Daisies'],
+  [[420, 10], [406, 11]]);
+H('picasso', 'PP', '40506a', 'Pablo Picasso', 'Painter (1881–1973)',
+  "I co-invented a new way of painting called 'Cubism' — showing things from multiple angles at once. I made art for 80 years and changed it forever!",
+  "Picasso co-invented what art style?", 'Cubism', ['Pointillism', 'Impressionism', 'Graffiti'],
+  [[433, 10], [436, 11]]);
+H('monet', 'CM', '4a7a90', 'Claude Monet', 'Painter (1840–1926)',
+  "I started 'Impressionism' — painting with small dabs of color to capture LIGHT and feelings instead of exact details. I loved painting my garden's water lilies.",
+  "Monet is famous for painting what flowers in his pond?", 'Water lilies', ['Cactus', 'Roses', 'Sunflowers'],
+  [[54, 10], [418, 11]]);
+H('frida', 'FK', 'a04060', 'Frida Kahlo', 'Painter (1907–1954)',
+  "I painted bold self-portraits even while suffering great pain from a bus accident. My Mexican art is loved around the world.",
+  "Frida Kahlo was famous for what kind of paintings?", 'Self-portraits', ['Landscapes', 'Spaceships', 'Cartoons'],
+  [[420, 10], [133, 11]]);
+H('okeeffe', 'OK', '8a5040', "Georgia O'Keeffe", 'Painter (1887–1986)',
+  "I painted huge close-ups of flowers and the New Mexico desert. I was called the Mother of American Modernism.",
+  "O'Keeffe is famous for painting what up-close?", 'Flowers', ['Cars', 'Computers', 'Cities'],
+  [[420, 10], [406, 11]]);
+H('dali', 'SD', '80604a', 'Salvador Dalí', 'Surrealist Painter (1904–1989)',
+  "I painted melting clocks and dream-like scenes. My style was called Surrealism — art that looks like weird, wonderful dreams.",
+  "Dalí famously painted melting what?", 'Clocks', ['Candles', 'Ice cream', 'Cars'],
+  [[425, 10], [433, 11]]);
+H('rembrandt', 'RE', '604020', 'Rembrandt', 'Dutch Painter (1606–1669)',
+  "I painted dramatic faces lit by candles 400 years ago. My style used light and shadow like no one before me.",
+  "Rembrandt was from what country?", 'Netherlands (Holland)', ['Japan', 'Egypt', 'Brazil'],
+  [[436, 10], [425, 11]]);
+H('warhol', 'AW', 'a08040', 'Andy Warhol', 'Pop Artist (1928–1987)',
+  "I turned everyday things — like soup cans and celebrity photos — into famous colorful art called Pop Art.",
+  "Warhol made art from what kind of cans?", 'Soup cans', ['Paint cans', 'Tin cans', 'Soda cans'],
+  [[133, 10], [427, 11]]);
+H('hokusai', 'HO', '406a80', 'Katsushika Hokusai', 'Japanese Artist (1760–1849)',
+  "I drew 'The Great Wave off Kanagawa' — one of the most recognizable images in the world. I made art in Japan for over 70 years!",
+  "Hokusai's most famous artwork shows what?", 'A giant wave', ['A dragon', 'A mountain', 'A cat'],
+  [[418, 10], [129, 11]]);
+
+// ---------- MUSICIANS (10) ----------
+H('mozart', 'WM', '604030', 'Wolfgang Mozart', 'Composer (1756–1791)',
+  "I composed my first music when I was 5 years old and wrote over 600 pieces before I was 35. I'm one of the greatest composers ever!",
+  "Mozart started writing music at what age?", '5 years old', ['25', '50', '15'],
+  [[425, 10], [436, 11]]);
+H('beethoven', 'LB', '303030', 'Ludwig van Beethoven', 'Composer (1770–1827)',
+  "I kept composing amazing music even after I went completely DEAF. My 9th Symphony is one of the most played pieces in the world!",
+  "What happened to Beethoven's hearing?", 'He went deaf', ['He could hear 5 miles away', 'Nothing', 'It got better'],
+  [[436, 11], [74, 10]]);
+H('bach', 'JB', '604030', 'Johann Sebastian Bach', 'Composer (1685–1750)',
+  "I wrote some of the most beautiful classical music and had TWENTY children (a few also became famous composers!).",
+  "Bach had how many children (roughly)?", '20', ['2', '100', 'None'],
+  [[436, 10], [425, 11]]);
+H('louisarmstrong', 'LA', '604020', 'Louis Armstrong', 'Jazz Musician (1901–1971)',
+  "I played the trumpet like nobody ever had and sang with a gravelly voice the world loved. My song 'What a Wonderful World' still makes people smile.",
+  "Armstrong played what instrument?", 'Trumpet', ['Piano', 'Drums', 'Violin'],
+  [[133, 10], [427, 11]]);
+H('ella', 'EF', '6a4a30', 'Ella Fitzgerald', 'Jazz Singer (1917–1996)',
+  "I was called the 'First Lady of Song' and won 13 Grammys. I could make up melodies on the spot — it's called 'scat singing'.",
+  "What was Ella Fitzgerald's nickname?", 'First Lady of Song', ['The Queen of Pop', 'Rocket Lady', 'Thunder Voice'],
+  [[133, 10], [427, 11]]);
+H('raycharles', 'RC', '504030', 'Ray Charles', 'Musician (1930–2004)',
+  "I went blind at age 7 but became one of the greatest singers and piano players ever. I mixed gospel, blues, and jazz into something new.",
+  "Ray Charles lost what sense at age 7?", 'His sight (he went blind)', ['His taste', 'His hearing', 'His smell'],
+  [[436, 10], [433, 11]]);
+H('stevie', 'SW', '404030', 'Stevie Wonder', 'Musician (born 1950)',
+  "I've been blind since shortly after birth. I've won 25 Grammys and written songs like 'Superstition' — everybody knows my music!",
+  "How many Grammys has Stevie Wonder won?", '25', ['0', '3', '100'],
+  [[436, 11], [425, 10]]);
+H('duke', 'DE', '202020', 'Duke Ellington', 'Jazz Composer (1899–1974)',
+  "I wrote over 1,000 jazz songs and led one of the greatest big bands in history for 50 years!",
+  "What kind of music is Duke Ellington famous for?", 'Jazz', ['Country', 'Rap', 'Classical only'],
+  [[427, 11], [133, 10]]);
+H('aretha', 'AF', '804040', 'Aretha Franklin', 'Singer (1942–2018)',
+  "I was called the QUEEN OF SOUL! My song 'RESPECT' became an anthem for civil rights and women everywhere.",
+  "Aretha's nickname was Queen of what?", 'Soul', ['Pop', 'Rock', 'Rap'],
+  [[427, 11], [54, 10]]);
+H('elvis', 'EL', '805040', 'Elvis Presley', 'Singer (1935–1977)',
+  "I was called the King of Rock and Roll. I changed popular music forever with songs like 'Hound Dog' and 'Jailhouse Rock'.",
+  "Elvis was the King of what kind of music?", 'Rock and Roll', ['Classical', 'Opera', 'Country only'],
+  [[133, 10], [427, 11]]);
+
+// ---------- WRITERS (10) ----------
+H('shakespeare', 'WS', '604a30', 'William Shakespeare', 'Playwright (1564–1616)',
+  "I wrote 37 plays and 154 sonnets — including Romeo and Juliet, Hamlet, and Macbeth. Kids still read my plays 400 years later!",
+  "Shakespeare wrote 'Romeo and ___'?", 'Juliet', ['Alice', 'Max', 'Harry'],
+  [[425, 11], [436, 10]]);
+H('twain', 'MT', '604040', 'Mark Twain', 'Author (1835–1910)',
+  "I wrote 'The Adventures of Tom Sawyer' and 'Huckleberry Finn' — funny stories about American kids. My real name was Samuel Clemens!",
+  "Twain wrote 'The Adventures of Tom ___'?", 'Sawyer', ['Cooper', 'Smith', 'Johnson'],
+  [[427, 10], [133, 11]]);
+H('dickens', 'CD', '404030', 'Charles Dickens', 'Author (1812–1870)',
+  "I wrote 'A Christmas Carol' (with Scrooge and three ghosts) and 'Oliver Twist'. I cared deeply about helping poor children.",
+  "Dickens wrote a famous story about WHICH holiday?", 'Christmas', ['Halloween', 'Thanksgiving', 'Valentine'],
+  [[436, 10], [425, 11]]);
+H('austen', 'JA', '806060', 'Jane Austen', 'Author (1775–1817)',
+  "I wrote 'Pride and Prejudice' and 'Emma' — funny, smart stories about life in England 200 years ago. My books are still huge hits!",
+  "Austen's 'Pride and ___'?", 'Prejudice', ['Kindness', 'Bravery', 'Friendship'],
+  [[427, 11], [133, 10]]);
+H('angelou', 'MA', '503020', 'Maya Angelou', 'Poet (1928–2014)',
+  "I wrote 'I Know Why the Caged Bird Sings' and beautiful poems. I spoke at presidents' inaugurations and inspired millions.",
+  "Angelou wrote 'I Know Why the Caged ___ Sings'?", 'Bird', ['Dog', 'Whale', 'Fish'],
+  [[427, 10], [396, 11]]);
+H('dickinson', 'ED', '604050', 'Emily Dickinson', 'Poet (1830–1886)',
+  "I wrote almost 1,800 poems in my bedroom and published hardly any while alive. After I died, people discovered I was one of the greatest poets ever!",
+  "Dickinson wrote almost how many poems?", '1,800', ['10', '100', '50,000'],
+  [[412, 10], [420, 11]]);
+H('hughes', 'LH', '504030', 'Langston Hughes', 'Poet (1902–1967)',
+  "I wrote poems that celebrated Black life in America during the Harlem Renaissance. My poem 'Dreams' is taught in schools everywhere.",
+  "Hughes wrote during the Harlem what?", 'Renaissance', ['Tournament', 'Vacation', 'Blizzard'],
+  [[427, 10], [396, 11]]);
+H('annefrank', 'AF', '704a30', 'Anne Frank', 'Diarist (1929–1945)',
+  "I was a Jewish girl hiding from Nazis in WWII. I kept a diary for two years before being caught. My diary was published and read by millions.",
+  "Anne Frank is famous for writing her what?", 'Diary', ['Spaceship', 'Painting', 'Song'],
+  [[420, 10], [425, 11]]);
+H('dahl', 'RD', '605040', 'Roald Dahl', 'Children\'s Author (1916–1990)',
+  "I wrote 'Charlie and the Chocolate Factory', 'Matilda', and 'James and the Giant Peach' — all to make kids laugh and feel brave.",
+  "Dahl wrote 'Charlie and the Chocolate ___'?", 'Factory', ['Shop', 'Cake', 'River'],
+  [[427, 10], [133, 11]]);
+H('tolkien', 'JT', '605030', 'J.R.R. Tolkien', 'Author (1892–1973)',
+  "I wrote 'The Hobbit' and 'The Lord of the Rings' — about hobbits, dragons, and elves. I even invented their own languages!",
+  "Tolkien wrote 'The Lord of the ___'?", 'Rings', ['Dragons', 'Robots', 'Boats'],
+  [[443, 10], [447, 11]]);
+
+// ---------- LEADERS (15) ----------
+H('churchill', 'WC', '604020', 'Winston Churchill', 'UK Prime Minister (1874–1965)',
+  "I led Britain through World War II, standing up to the Nazis when it seemed all was lost. I'm known for my powerful speeches: 'never, never, never give up!'",
+  "Churchill led which country during WWII?", 'United Kingdom (Britain)', ['USA', 'France', 'Canada'],
+  [[436, 11], [425, 10]]);
+H('fdr', 'FD', '404060', 'Franklin D. Roosevelt', '32nd U.S. President (1882–1945)',
+  "I led America through the Great Depression and most of WWII — from a wheelchair, because polio paralyzed my legs. I was elected FOUR times!",
+  "FDR was elected how many times?", '4', ['1', '2', '8'],
+  [[436, 12], [74, 10]]);
+H('jfk', 'JK', '305070', 'John F. Kennedy', '35th U.S. President (1917–1963)',
+  "I challenged America to send a person to the Moon — and we did it! I also famously said: 'Ask not what your country can do for you — ask what you can do for your country.'",
+  "JFK challenged America to go to the WHAT?", 'Moon', ['Sun', 'Mars', 'Ocean'],
+  [[425, 11], [436, 12]]);
+H('washington', 'GW', '504030', 'George Washington', '1st U.S. President (1732–1799)',
+  "I led the American army to win independence from Britain, then became the first President. I refused to be called 'King' — I believed in democracy.",
+  "Washington was the first WHAT of the United States?", 'President', ['King', 'General only', 'Queen'],
+  [[133, 11], [427, 10]]);
+H('jefferson', 'TJ', '604a30', 'Thomas Jefferson', '3rd U.S. President (1743–1826)',
+  "I wrote the Declaration of Independence — the document that started America. I also bought the giant Louisiana Territory, doubling the USA's size!",
+  "Jefferson wrote the Declaration of what?", 'Independence', ['War', 'Peace', 'Dinner'],
+  [[436, 11], [425, 10]]);
+H('teddy', 'TR', '504030', 'Theodore Roosevelt', '26th U.S. President (1858–1919)',
+  "I created the National Parks so the USA's most beautiful places would be protected forever. The 'teddy bear' is named after me!",
+  "Roosevelt protected what for the future?", 'National Parks', ['Candy stores', 'Pools', 'Skyscrapers'],
+  [[133, 11], [447, 10]]);
+H('eleanor', 'ER', '605040', 'Eleanor Roosevelt', 'First Lady (1884–1962)',
+  "I changed what First Ladies did — I gave speeches, wrote newspaper columns, and later helped write the Universal Declaration of Human Rights!",
+  "Eleanor helped write the Universal Declaration of what?", 'Human Rights', ['Delicious Food', 'Fast Cars', 'Video Games'],
+  [[427, 11], [133, 10]]);
+H('obama', 'BO', '503020', 'Barack Obama', '44th U.S. President (born 1961)',
+  "I became the first Black president of the United States in 2009. I also wrote books about hope and got the Nobel Peace Prize.",
+  "Obama was the first Black what?", 'U.S. President', ['Astronaut', 'Doctor', 'Judge'],
+  [[133, 12], [447, 11]]);
+H('rbg', 'RB', '404060', 'Ruth Bader Ginsburg', 'Supreme Court Justice (1933–2020)',
+  "I was a Supreme Court Justice who fought for equal rights for women and men. Kids called me the Notorious RBG! I worked out in my 80s.",
+  "Ginsburg fought for what kind of rights?", 'Equal rights', ['Secret rights', 'Loud rights', 'Expensive rights'],
+  [[436, 11], [425, 12]]);
+H('elizabeth1', 'E1', '804020', 'Queen Elizabeth I', 'Queen of England (1533–1603)',
+  "I ruled England for 44 years during a golden age of art and exploration (Shakespeare wrote plays during my reign!).",
+  "Elizabeth I ruled what country?", 'England', ['France', 'Egypt', 'Japan'],
+  [[436, 12], [425, 11]]);
+H('victoria', 'QV', '604040', 'Queen Victoria', 'Queen of UK (1819–1901)',
+  "I ruled for 63 years — one of the longest reigns in history! A whole era is named after me: the Victorian era.",
+  "An era is named after Queen Victoria — what era?", 'Victorian', ['Medieval', 'Stone Age', 'Modern'],
+  [[427, 11], [436, 12]]);
+H('catherine', 'CT', '406060', 'Catherine the Great', 'Russian Empress (1729–1796)',
+  "I ruled Russia for 34 years and made it bigger and stronger. I collected art and helped build schools and hospitals.",
+  "Catherine ruled what country?", 'Russia', ['Italy', 'Greece', 'Mexico'],
+  [[459, 12], [436, 11]]);
+H('joanofarc', 'JA', 'a08040', 'Joan of Arc', 'French Hero (1412–1431)',
+  "I was only a teenager when I led the French army to victory in battle! I believed visions told me to save France.",
+  "Joan of Arc led the army of what country?", 'France', ['Spain', 'Egypt', 'Japan'],
+  [[447, 11], [436, 10]]);
+H('cleopatra', 'CL', '8a6030', 'Cleopatra', 'Queen of Egypt (69–30 BCE)',
+  "I was the last Pharaoh of ancient Egypt. I spoke many languages, including Egyptian — the only Pharaoh who bothered to learn it!",
+  "Cleopatra ruled what country?", 'Egypt', ['Greece', 'Rome', 'Persia'],
+  [[74, 11], [436, 12]]);
+H('caesar', 'JC', '604030', 'Julius Caesar', 'Roman Leader (100–44 BCE)',
+  "I was a brilliant Roman general and leader. A month (July!) and a salad are named after me! I was famous for the phrase 'Veni, vidi, vici' — 'I came, I saw, I conquered'.",
+  "What month is named after Julius Caesar?", 'July', ['June', 'May', 'October'],
+  [[447, 12], [436, 11]]);
+
+// ---------- EXPLORERS (8) ----------
+H('columbus', 'CC', '406080', 'Christopher Columbus', 'Explorer (1451–1506)',
+  "I sailed across the Atlantic Ocean in 1492 looking for India and accidentally reached the Americas — which changed world history forever.",
+  "Columbus reached the Americas in what year?", '1492', ['1776', '1200', '2001'],
+  [[129, 10], [418, 11]]);
+H('marcopolo', 'MP', '604a20', 'Marco Polo', 'Explorer (1254–1324)',
+  "I traveled from Italy to China over the Silk Road — a 17-year adventure! I brought back amazing stories that Europeans found hard to believe.",
+  "Marco Polo traveled from Italy to what country?", 'China', ['Japan', 'Mexico', 'Australia'],
+  [[396, 10], [418, 11]]);
+H('shackleton', 'ES', '405070', 'Ernest Shackleton', 'Antarctic Explorer (1874–1922)',
+  "My ship got crushed by ice in Antarctica, but I got all 27 of my crew home alive across hundreds of miles of ice and ocean — one of the greatest survival stories ever.",
+  "Shackleton explored which icy continent?", 'Antarctica', ['Africa', 'Europe', 'Australia'],
+  [[459, 11], [54, 10]]);
+H('ibnbattuta', 'IB', '704030', 'Ibn Battuta', 'Moroccan Explorer (1304–1369)',
+  "I traveled over 75,000 miles across Africa, Asia, and Europe — about 3 times as far as Marco Polo! I wrote a famous book about my journeys.",
+  "Ibn Battuta traveled how many miles?", 'Over 75,000', ['20', '500', '500 million'],
+  [[418, 10], [396, 11]]);
+H('zhenghe', 'ZH', '604040', 'Zheng He', 'Chinese Explorer (1371–1433)',
+  "I led HUGE fleets — hundreds of ships! — from China to Africa and Arabia in the 1400s. My ships were 5 times bigger than Columbus's!",
+  "Zheng He was an explorer from what country?", 'China', ['France', 'USA', 'Brazil'],
+  [[418, 11], [129, 10]]);
+H('amundsen', 'RA', '506080', 'Roald Amundsen', 'Polar Explorer (1872–1928)',
+  "I was the first person to reach the South Pole in 1911! Later I also flew an airship over the North Pole.",
+  "Amundsen was the first to reach the what Pole?", 'South Pole', ['Pizza pole', 'Swing pole', 'Pencil pole'],
+  [[459, 11], [425, 10]]);
+H('magellan', 'FM', '405060', 'Ferdinand Magellan', 'Explorer (1480–1521)',
+  "My crew was the first to sail all the way around the world — though I died partway through, the ships made it back 3 years later.",
+  "Magellan's crew was the first to sail around what?", 'The world', ['A small lake', 'Europe only', 'One island'],
+  [[129, 10], [418, 11]]);
+H('shackletonred', 'SS', '406070', 'Sitting Bull', 'Lakota Chief (1831–1890)',
+  "I was a Lakota leader who united Native American tribes to defend our homeland. My courage and vision are remembered today.",
+  "Sitting Bull was a chief of which people?", 'Lakota Sioux', ['Roman', 'Viking', 'Greek'],
+  [[74, 11], [447, 10]]);
+
+// ---------- ATHLETES (8) ----------
+H('ali', 'MA', '305080', 'Muhammad Ali', 'Boxer (1942–2016)',
+  "I was called 'The Greatest' in boxing. I said I 'float like a butterfly, sting like a bee'. I also stood up for civil rights outside the ring.",
+  "Ali was a champion in what sport?", 'Boxing', ['Swimming', 'Golf', 'Chess'],
+  [[447, 12], [454, 11]]);
+H('wilma', 'WR', '805030', 'Wilma Rudolph', 'Sprinter (1940–1994)',
+  "I had polio as a kid — couldn't walk! But I trained hard and became the first American woman to win 3 Olympic gold medals in track in 1960.",
+  "Rudolph won 3 Olympic golds in what sport?", 'Track (running)', ['Skating', 'Diving', 'Archery'],
+  [[396, 11], [427, 10]]);
+H('serena', 'SW', '405030', 'Serena Williams', 'Tennis Champion (born 1981)',
+  "I've won 23 Grand Slam tennis titles — more than anyone in the modern era! My sister Venus and I are tennis legends.",
+  "Serena Williams is a champion in what sport?", 'Tennis', ['Baseball', 'Gymnastics', 'Cricket'],
+  [[447, 12], [427, 11]]);
+H('brucelee', 'BL', '604030', 'Bruce Lee', 'Martial Artist (1940–1973)',
+  "I revolutionized martial arts and movies. I invented a fighting style called Jeet Kune Do — fast, efficient, and creative.",
+  "Bruce Lee was famous for what?", 'Martial arts', ['Baking', 'Opera singing', 'Airplane flying'],
+  [[447, 12], [454, 11]]);
+H('pele', 'PE', '407030', 'Pelé', 'Soccer Legend (1940–2022)',
+  "I won THREE World Cups for Brazil and scored over 1,200 career goals — the most of anyone in history. Many call me the GOAT of soccer!",
+  "Pelé won three World Cups in what sport?", 'Soccer', ['Football (American)', 'Basketball', 'Hockey'],
+  [[447, 12], [418, 11]]);
+H('billiejean', 'BK', '804060', 'Billie Jean King', 'Tennis Champion (born 1943)',
+  "I won 39 Grand Slam tennis titles and beat a famous man 1973's 'Battle of the Sexes' match, proving women could play on any stage.",
+  "Billie Jean King is famous for what sport?", 'Tennis', ['Swimming', 'Golf', 'Football'],
+  [[427, 11], [447, 12]]);
+H('simone', 'SB', '406050', 'Simone Biles', 'Gymnast (born 1997)',
+  "I've won more World gymnastics medals than anyone ever. I have moves named after me that nobody else can do — literally impossible for most humans!",
+  "Simone Biles is a champion at what?", 'Gymnastics', ['Soccer', 'Golf', 'Skateboarding'],
+  [[447, 12], [427, 11]]);
+H('thorpe', 'JT', '604030', 'Jim Thorpe', 'Olympic Athlete (1887–1953)',
+  "I was a Native American athlete who won gold medals in the 1912 Olympics in track AND pentathlon AND pro-baseball AND pro-football — a superstar in FOUR sports!",
+  "Jim Thorpe won Olympic gold in what year?", '1912', ['1776', '2020', '1000'],
+  [[447, 12], [396, 11]]);
+
+// ---------- INVENTORS (8) ----------
+H('wrightbros', 'WB', '604a30', 'Wright Brothers', 'Inventors (Wilbur & Orville)',
+  "My brother and I flew the world's FIRST successful airplane in 1903 — for 12 seconds over Kitty Hawk, North Carolina. Now planes fly worldwide!",
+  "Wright Brothers invented the first successful what?", 'Airplane', ['Submarine', 'Television', 'Toaster'],
+  [[396, 10], [425, 11]]);
+H('bell', 'AB', '604a30', 'Alexander Graham Bell', 'Inventor (1847–1922)',
+  "I invented the telephone in 1876 — the first words ever spoken on a phone were 'Mr. Watson, come here. I want to see you.'",
+  "Bell invented what?", 'Telephone', ['Television', 'Radio', 'Bicycle'],
+  [[403, 10], [425, 11]]);
+H('ford', 'HF', '404040', 'Henry Ford', 'Inventor (1863–1947)',
+  "I invented the assembly line for making cars — so they could be built fast and cheap. My Model T let millions of people own a car for the first time.",
+  "Ford revolutionized the making of what?", 'Cars', ['Houses', 'Clothes', 'Food'],
+  [[403, 10], [436, 11]]);
+H('jobs', 'SJ', '505050', 'Steve Jobs', 'Apple Co-founder (1955–2011)',
+  "I co-founded Apple and made the Mac, the iPod, iPhone, and iPad. I pushed that technology should be both smart AND beautiful.",
+  "Jobs co-founded which company?", 'Apple', ['Orange', 'Google', 'Amazon'],
+  [[436, 11], [425, 12]]);
+H('gates', 'BG', '304060', 'Bill Gates', 'Microsoft Co-founder (born 1955)',
+  "I co-founded Microsoft — the company that made Windows (the computer system most of the world uses). Now I give away most of my money to help the poor.",
+  "Gates co-founded what company?", 'Microsoft', ['Apple', 'Ford', 'Sony'],
+  [[436, 11], [412, 10]]);
+H('carver', 'GC', '604a30', 'George Washington Carver', 'Scientist (1864–1943)',
+  "I was born into slavery but became a scientist who discovered over 300 uses for peanuts! I helped poor Southern farmers grow better crops.",
+  "Carver found 300+ uses for what food?", 'Peanuts', ['Pizza', 'Pasta', 'Bread'],
+  [[420, 10], [406, 11]]);
+H('marconi', 'GM', '604030', 'Guglielmo Marconi', 'Radio Inventor (1874–1937)',
+  "I invented radio — sending messages through the air without any wires! In 1901 I sent the first wireless message across the Atlantic Ocean.",
+  "Marconi invented what?", 'Radio', ['TV', 'Internet', 'Refrigerator'],
+  [[403, 10], [425, 11]]);
+H('timbl', 'TB', '306080', 'Tim Berners-Lee', 'Inventor (born 1955)',
+  "I invented the WORLD WIDE WEB in 1989 — giving the whole world the internet as we know it. I gave it away for FREE so everyone could use it!",
+  "Berners-Lee invented the what?", 'World Wide Web (www)', ['Bicycle', 'Airplane', 'Car'],
+  [[436, 12], [425, 11]]);
+
+// ---------- SPACE PIONEERS (5) ----------
+H('sallyride', 'SR', '304070', 'Sally Ride', 'Astronaut (1951–2012)',
+  "I was the FIRST American woman in space, aboard the Space Shuttle in 1983. I later taught science and inspired girls to become astronauts too.",
+  "Sally Ride was the first American what in space?", 'Woman', ['Pilot', 'Teacher', 'Robot'],
+  [[425, 11], [436, 12]]);
+H('maejemison', 'MJ', '502030', 'Mae Jemison', 'Astronaut (born 1956)',
+  "I was the FIRST Black woman in space, in 1992. Before that I was a doctor in Africa helping people. I also love to dance!",
+  "Mae Jemison was the first Black woman in where?", 'Space', ['Broadway', 'Tennis', 'Chess'],
+  [[436, 12], [425, 11]]);
+H('gagarin', 'YG', '203060', 'Yuri Gagarin', 'Cosmonaut (1934–1968)',
+  "I was the FIRST human EVER to go to space, on April 12, 1961! I orbited Earth and came home a worldwide hero.",
+  "Gagarin was the FIRST person to do what?", 'Travel to space', ['Bake a pie', 'Climb Everest', 'Run a mile'],
+  [[436, 12], [425, 11]]);
+H('buzz', 'BA', '202040', 'Buzz Aldrin', 'Astronaut (born 1930)',
+  "I was the SECOND person to walk on the Moon, right after Neil Armstrong, in July 1969. Woody from Toy Story's buddy is named after me!",
+  "Aldrin was the second person to walk on what?", 'The Moon', ['Mars', 'Everest', 'Niagara Falls'],
+  [[425, 11], [436, 12]]);
+H('johnglenn', 'JG', '404070', 'John Glenn', 'Astronaut (1921–2016)',
+  "I was the first American to ORBIT Earth in 1962. Then I became a Senator — and then went BACK to space at age 77! Oldest astronaut ever!",
+  "At what age did Glenn return to space?", '77', ['7', '21', '200'],
+  [[396, 11], [425, 12]]);
+
+// ---------- PHILOSOPHERS (5) ----------
+H('socrates', 'SO', '604a30', 'Socrates', 'Greek Philosopher (~470–399 BCE)',
+  "I asked people questions instead of telling them answers — now called the Socratic method! I taught people to THINK for themselves, which is why I'm called the father of philosophy.",
+  "Socrates taught people by asking what?", 'Questions', ['Pictures', 'Songs', 'Games'],
+  [[436, 11], [74, 10]]);
+H('plato', 'PL', '404060', 'Plato', 'Greek Philosopher (~427–347 BCE)',
+  "I was Socrates's student. I started the first university — called the Academy — in Athens. Most philosophy since is based on my ideas!",
+  "Plato started the first what?", 'University (Academy)', ['Bakery', 'Factory', 'Railway'],
+  [[436, 11], [433, 10]]);
+H('aristotle', 'AS', '604a30', 'Aristotle', 'Greek Philosopher (384–322 BCE)',
+  "I was Plato's student and tutored Alexander the Great. I wrote about EVERYTHING: science, ethics, politics, theater — all the ideas shaped the modern world.",
+  "Aristotle tutored which famous leader?", 'Alexander the Great', ['Genghis Khan', 'King George', 'Napoleon'],
+  [[436, 11], [74, 10]]);
+H('confucius', 'CF', '604a30', 'Confucius', 'Chinese Philosopher (~551–479 BCE)',
+  "I taught kindness, respect for family, and doing the right thing. My teachings shape Chinese culture to this day. 'Do unto others as you'd have them do unto you' started with me!",
+  "Confucius taught in which country?", 'China', ['Greece', 'Egypt', 'Norway'],
+  [[436, 12], [447, 10]]);
+H('wollstonecraft', 'MW', '805060', 'Mary Wollstonecraft', 'Philosopher (1759–1797)',
+  "Over 200 years ago, I wrote that women should be educated the same as men. I'm called the mother of feminism. My daughter wrote 'Frankenstein'!",
+  "Wollstonecraft argued women should be what?", 'Educated equally', ['Silent', 'Taller', 'Faster'],
+  [[427, 11], [133, 10]]);
+
+// ---------- PERSIAN / MIDDLE EASTERN (5) ----------
+H('avicenna', 'IS', '7a4a30', 'Avicenna (Ibn Sina)', 'Persian Polymath (980–1037)',
+  "I wrote the Canon of Medicine — a book used to train doctors for 600 years! I was also a philosopher and poet. People called me the father of modern medicine.",
+  "Avicenna wrote a famous book about what?", 'Medicine', ['Cooking', 'Dancing', 'Painting'],
+  [[436, 12], [406, 11]]);
+H('hafez', 'HZ', '6a4a80', 'Hafez', 'Persian Poet (1325–1390)',
+  "I wrote the most beloved poems in the Persian language. Iranians still memorize my poems today — my Divan is found in almost every Persian home.",
+  "Hafez wrote in what language?", 'Persian (Farsi)', ['Chinese', 'Japanese', 'Russian'],
+  [[433, 11], [425, 10]]);
+H('saadi', 'SA', '504a30', 'Saadi', 'Persian Poet (1210–1291)',
+  "I wrote famous poems about kindness — one of my poems is etched on the entrance of the United Nations building! It says humans should care for each other.",
+  "Saadi's poem is etched at what famous building?", 'United Nations', ['Statue of Liberty', 'Eiffel Tower', 'Pyramids'],
+  [[447, 11], [133, 10]]);
+H('alkhwarizmi', 'AK', '805030', 'Al-Khwarizmi', 'Persian Mathematician (~780–850)',
+  "I invented ALGEBRA — the word itself comes from my book's title! The word 'algorithm' also comes from my name.",
+  "Al-Khwarizmi invented what math?", 'Algebra', ['Pottery', 'Rockets', 'Chess'],
+  [[436, 12], [408, 11]]);
+H('razi', 'AR', '604a30', 'Al-Razi (Rhazes)', 'Persian Physician (854–925)',
+  "I was one of the first great doctors. I discovered alcohol as a medicine and wrote over 200 books on medicine, science, and philosophy.",
+  "Al-Razi was a famous what?", 'Doctor', ['Sailor', 'Carpenter', 'Singer'],
+  [[436, 11], [420, 10]]);
+
+// ---------- ACTIVISTS & OTHER HEROES (9 — adjusts total to 100) ----------
+H('cesarchavez', 'CE', '505030', 'César Chávez', 'Labor Leader (1927–1993)',
+  "I organized farm workers in the USA to fight for fair pay and safe working conditions. My motto was 'Sí, se puede' — 'Yes, it can be done!'",
+  "Chávez organized workers who picked what?", 'Farm crops', ['Movies', 'Cars', 'Computers'],
+  [[406, 11], [420, 10]]);
+H('dolores', 'DH', '805040', 'Dolores Huerta', 'Labor Leader (born 1930)',
+  "I co-founded the farmworkers' union with César Chávez. I keep fighting for workers' rights — still active in my 90s!",
+  "Dolores co-founded a union with whom?", 'César Chávez', ['MLK Jr.', 'Gandhi', 'Newton'],
+  [[406, 11], [427, 10]]);
+H('greta', 'GT', '305040', 'Greta Thunberg', 'Climate Activist (born 2003)',
+  "I started skipping school at 15 to protest climate change. Kids around the world joined me in 'Fridays for Future' climate strikes. We have to protect our planet!",
+  "Thunberg protests about what issue?", 'Climate change', ['Homework', 'Bedtimes', 'Vegetables'],
+  [[459, 11], [406, 10]]);
+H('helen', 'HK', '605040', 'Helen Keller', 'Activist & Author (1880–1968)',
+  "I lost my sight AND hearing when I was 19 months old. With my teacher Anne Sullivan, I learned to speak, read, and write — and became a world-famous author and activist!",
+  "Helen Keller's teacher was named what?", 'Anne Sullivan', ['Mary Smith', 'Jane Doe', 'Ada Lovelace'],
+  [[427, 11], [133, 10]]);
+H('susanb', 'SB', '504030', 'Susan B. Anthony', 'Suffragist (1820–1906)',
+  "I worked my whole life so women could vote in America. I didn't live to see it happen, but because of me and others, the 19th Amendment passed.",
+  "Anthony fought for women's right to what?", 'Vote', ['Dance', 'Fly airplanes', 'Drive'],
+  [[427, 11], [133, 10]]);
+H('sojourner', 'ST', '503020', 'Sojourner Truth', 'Abolitionist (1797–1883)',
+  "I was born enslaved but escaped to freedom. I gave the famous speech 'Ain't I a Woman?' and fought for both Black rights and women's rights.",
+  "Truth gave the famous speech 'Ain't I a ___?'", 'Woman', ['Bird', 'Star', 'Tree'],
+  [[427, 11], [133, 10]]);
+H('florence', 'FN', '805060', 'Florence Nightingale', 'Nurse (1820–1910)',
+  "I invented MODERN NURSING. In the 1850s I cleaned up filthy war hospitals and saved thousands of lives. I used statistics (math!) to prove hygiene matters.",
+  "Nightingale invented modern what?", 'Nursing', ['Pirates', 'Cooking', 'Skating'],
+  [[420, 10], [406, 11]]);
+H('clara', 'CB', '604030', 'Clara Barton', 'Red Cross Founder (1821–1912)',
+  "I founded the American Red Cross in 1881 — helping people after wars, floods, and disasters. I worked as a nurse during the Civil War too.",
+  "Barton founded the American what Cross?", 'Red', ['Blue', 'Green', 'Black'],
+  [[427, 11], [133, 10]]);
+H('marthahamer', 'FH', '403020', 'Fannie Lou Hamer', 'Civil Rights Leader (1917–1977)',
+  "I was a sharecropper's daughter who became a voice for voting rights in Mississippi. My famous line: 'I'm sick and tired of being sick and tired!'",
+  "Hamer fought for the right to WHAT?", 'Vote', ['Fly', 'Dance', 'Run'],
+  [[427, 11], [133, 10]]);
+
 // =========================================================================
 // CARICATURE PORTRAIT GENERATOR — draws a recognizable cartoon portrait from features
 // =========================================================================
@@ -1490,6 +2284,137 @@ const TRAINER_FEATURES = {
   spark:     { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'short', mustache:true, outfit:'#303030', bg:'#6a5020' },
   wildlife:  { skin:'#f5d5a8', hair:'#c8a060', hairStyle:'ponytail', outfit:'#5a7030', bg:'#405028' },
   cosmos:    { skin:'#7a5030', hair:'#1a0a08', hairStyle:'updo', glasses:'cateye', outfit:'#7050a0', outfitTrim:'#e0e0e0', bg:'#404080' },
+  ocean:     { skin:'#f5d5a8', hair:'#d8d0c0', hairStyle:'short', hat:'cap', hatColor:'#e02020', bg:'#4090e0', outfit:'#2060a0' },
+  unity:     { skin:'#6a4530', hair:'#1a0a08', hairStyle:'crew',  bg:'#c04040', outfit:'#e0e0e0', outfitTrim:'#c04040' },
+  frost:     { skin:'#f0d4a8', hair:'#d0d0c0', hairStyle:'short', beard:'full', hat:'scarf', hatColor:'#e0e0e0', bg:'#98d8e8', outfit:'#4060a0' },
+  champion:  { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short', bg:'#ffd030', outfit:'#c02020', outfitTrim:'#fff' },
+  // === FAMILY GYM LEADERS ===
+  david:     { skin:'#d8a880', hair:'#2a1810', hairStyle:'short', bg:'#40a040', outfit:'#3a6030', outfitTrim:'#fff' },
+  massoud:   { skin:'#c89070', hair:'#3a2818', hairStyle:'short', mustache:true, glasses:'round', bg:'#203060', outfit:'#e0e0e0', outfitTrim:'#2030a0' },
+  fafa:      { skin:'#d8a880', hair:'#2a1810', hairStyle:'long', bg:'#a04060', outfit:'#c06090', outfitTrim:'#ffd0e0' },
+  azadeh:    { skin:'#d8a880', hair:'#1a0a08', hairStyle:'long', bg:'#2a2a4a', outfit:'#1a1a2a', outfitTrim:'#fff' },
+  coco:      { skin:'#f8e0c0', hair:'#8a5030', hairStyle:'braids', bg:'#ffb0d0', outfit:'#f090b0', outfitTrim:'#fff' },
+  jason:     { skin:'#d8a880', hair:'#1a0a08', hairStyle:'short', beard:'chin', bg:'#4a3080', outfit:'#802080', outfitTrim:'#f0d030' },
+  yaya:      { skin:'#d8a880', hair:'#d8c890', hairStyle:'bun', glasses:'round', bg:'#60c070', outfit:'#e0f0ff', outfitTrim:'#60a070' },
+  mikey:     { skin:'#d8a880', hair:'#2a1810', hairStyle:'short', hat:'cap', hatColor:'#d84020', bg:'#e08020', outfit:'#d04020', outfitTrim:'#fff' },
+  matson:    { skin:'#d8a880', hair:'#3a2818', hairStyle:'short', hat:'cap', hatColor:'#202040', bg:'#404040', outfit:'#303030', outfitTrim:'#e0d020' },
+  benjamin:  { skin:'#d8a880', hair:'#2a1810', hairStyle:'short', bg:'#30a060', outfit:'#ffffff', outfitTrim:'#30a060' },
+  melody:    { skin:'#e8c8a0', hair:'#4a2818', hairStyle:'ponytail', bg:'#f060a0', outfit:'#a03060', outfitTrim:'#ffffff' },
+
+  // === EXPANDED HISTORIANS (features for the 100 new trainers) ===
+  galileo:    { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'long',   beard:'long', bg:'#604a30', outfit:'#403020' },
+  darwin:     { skin:'#f0d4a8', hair:'#d0d0c0', hairStyle:'short',  beard:'full', bg:'#4a5830', outfit:'#2a2a2a' },
+  tesla:      { skin:'#f0d4a8', hair:'#2a1810', hairStyle:'short',  mustache:true, bg:'#406080', outfit:'#2a3040' },
+  hawking:    { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'short',  glasses:'round', bg:'#404060', outfit:'#303040' },
+  sagan:      { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  bg:'#505050', outfit:'#3a3030' },
+  feynman:    { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  bg:'#704a30', outfit:'#4a3a2a' },
+  rosalind:   { skin:'#f0d4a8', hair:'#2a1810', hairStyle:'short',  bg:'#80608a', outfit:'#5a4060' },
+  ada:        { skin:'#f0d4a8', hair:'#1a0f08', hairStyle:'long',   bg:'#8a4060', outfit:'#4a2040' },
+  hopper:     { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'short',  bg:'#406890', outfit:'#304060' },
+  hypatia:    { skin:'#d0a070', hair:'#2a1810', hairStyle:'long',   bg:'#6a4a80', outfit:'#4a2040' },
+  davinci:    { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'long-curly', beard:'long', bg:'#70502a', outfit:'#4a3020' },
+  pythagoras: { skin:'#d0a070', hair:'#e0d0c0', hairStyle:'short',  beard:'full', bg:'#6a8040', outfit:'#604030' },
+  archimedes: { skin:'#d0a070', hair:'#e0d0c0', hairStyle:'short',  beard:'full', bg:'#604020', outfit:'#503020' },
+  copernicus: { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  bg:'#404060', outfit:'#3a3030' },
+  mendel:     { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  beard:'chin', bg:'#405040', outfit:'#2a2a2a' },
+  pasteur:    { skin:'#f0d4a8', hair:'#d0d0c0', hairStyle:'short',  beard:'chin', bg:'#604828', outfit:'#3a2a20' },
+  ramanujan:  { skin:'#a87040', hair:'#1a0a08', hairStyle:'short',  bg:'#604040', outfit:'#402a20' },
+  turing:     { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  bg:'#304050', outfit:'#2a3040' },
+  euclid:     { skin:'#d0a070', hair:'#e0d0c0', hairStyle:'short',  beard:'long', bg:'#604a30', outfit:'#503020' },
+  crick:      { skin:'#f0d4a8', hair:'#d0d0c0', hairStyle:'short',  bg:'#60402a', outfit:'#4a3020' },
+  michelangelo:{ skin:'#f0d4a8', hair:'#3a2818', hairStyle:'long',  beard:'long', bg:'#604a30', outfit:'#4a3020' },
+  vangogh:    { skin:'#f0d4a8', hair:'#c8703a', hairStyle:'short',  beard:'chin', bg:'#406040', outfit:'#2a4060' },
+  picasso:    { skin:'#f0d4a8', hair:'#1a1008', hairStyle:'short',  bg:'#40506a', outfit:'#3a3a3a' },
+  monet:      { skin:'#f0d4a8', hair:'#d0d0c0', hairStyle:'short',  beard:'full', bg:'#4a7a90', outfit:'#3a5a70' },
+  frida:      { skin:'#c89070', hair:'#1a0a08', hairStyle:'updo',   bg:'#a04060', outfit:'#701830' },
+  okeeffe:    { skin:'#f0d4a8', hair:'#d0d0c0', hairStyle:'bun',    bg:'#8a5040', outfit:'#4a2820' },
+  dali:       { skin:'#f0d4a8', hair:'#1a0a08', hairStyle:'short',  mustache:true, bg:'#80604a', outfit:'#4a2a20' },
+  rembrandt:  { skin:'#f0d4a8', hair:'#c8703a', hairStyle:'long',   bg:'#604020', outfit:'#402010' },
+  warhol:     { skin:'#f0d4a8', hair:'#e0e0e0', hairStyle:'short',  glasses:'round', bg:'#a08040', outfit:'#2a2a2a' },
+  hokusai:    { skin:'#d0a070', hair:'#1a0a08', hairStyle:'short',  bg:'#406a80', outfit:'#2a3a4a' },
+  mozart:     { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'long-curly', bg:'#604030', outfit:'#804028' },
+  beethoven:  { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'wild',   bg:'#303030', outfit:'#2a2030' },
+  bach:       { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'long-curly', bg:'#604030', outfit:'#3a2a1a' },
+  louisarmstrong: { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short', bg:'#604020', outfit:'#402818' },
+  ella:       { skin:'#6a4530', hair:'#1a0a08', hairStyle:'updo',   bg:'#6a4a30', outfit:'#4a2820' },
+  raycharles: { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short',  glasses:'round', bg:'#504030', outfit:'#2a2a30' },
+  stevie:     { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short',  glasses:'round', bg:'#404030', outfit:'#3a2a20' },
+  duke:       { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short',  mustache:true, bg:'#202020', outfit:'#2a2030' },
+  aretha:     { skin:'#6a4530', hair:'#1a0a08', hairStyle:'updo',   bg:'#804040', outfit:'#5a2a40' },
+  elvis:      { skin:'#f0d4a8', hair:'#1a0a08', hairStyle:'wild',   bg:'#805040', outfit:'#4a2a2a' },
+  shakespeare:{ skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  beard:'chin', bg:'#604a30', outfit:'#402820' },
+  twain:      { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'wild',   mustache:true, bg:'#604040', outfit:'#e0e0e0' },
+  dickens:    { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'long',   beard:'full', bg:'#404030', outfit:'#2a2a30' },
+  austen:     { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'updo',   bg:'#806060', outfit:'#604040' },
+  angelou:    { skin:'#6a4530', hair:'#3a2818', hairStyle:'short',  bg:'#503020', outfit:'#4a3020' },
+  dickinson:  { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'bun',    bg:'#604050', outfit:'#3a2830' },
+  hughes:     { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short',  mustache:true, bg:'#504030', outfit:'#3a2a20' },
+  annefrank:  { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  bg:'#704a30', outfit:'#604030' },
+  dahl:       { skin:'#f0d4a8', hair:'#c8a060', hairStyle:'short',  bg:'#605040', outfit:'#2a3a4a' },
+  tolkien:    { skin:'#f0d4a8', hair:'#d0d0c0', hairStyle:'short',  mustache:true, bg:'#605030', outfit:'#4a3a2a' },
+  churchill:  { skin:'#f5d5a8', hair:'#d8d0c0', hairStyle:'bald',   bg:'#604020', outfit:'#2a2a30' },
+  fdr:        { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  glasses:'round', bg:'#404060', outfit:'#2a2a40' },
+  jfk:        { skin:'#f0d4a8', hair:'#8a5030', hairStyle:'short',  bg:'#305070', outfit:'#2a2a50' },
+  washington: { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'long',   bg:'#504030', outfit:'#303050' },
+  jefferson:  { skin:'#f0d4a8', hair:'#e0d0c0', hairStyle:'long',   bg:'#604a30', outfit:'#3a2a20' },
+  teddy:      { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  mustache:true, glasses:'round', bg:'#504030', outfit:'#2a2a30' },
+  eleanor:    { skin:'#f0d4a8', hair:'#c8a060', hairStyle:'updo',   bg:'#605040', outfit:'#4a3a4a' },
+  obama:      { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short',  bg:'#503020', outfit:'#2a3050' },
+  rbg:        { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  glasses:'round', bg:'#404060', outfit:'#1a1a20' },
+  elizabeth1: { skin:'#f5d5a8', hair:'#e0a060', hairStyle:'updo',   bg:'#804020', outfit:'#6a2020' },
+  victoria:   { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'bun',    bg:'#604040', outfit:'#2a2a40' },
+  catherine:  { skin:'#f0d4a8', hair:'#c8a060', hairStyle:'updo',   bg:'#406060', outfit:'#3a3a60' },
+  joanofarc:  { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'crew',   bg:'#a08040', outfit:'#8a8a8a' },
+  cleopatra:  { skin:'#d0a070', hair:'#1a0a08', hairStyle:'long',   hat:'crown', bg:'#8a6030', outfit:'#3a60a0' },
+  caesar:     { skin:'#d0a070', hair:'#c8a060', hairStyle:'crew',   bg:'#604030', outfit:'#a02020' },
+  columbus:   { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'long',   beard:'chin', bg:'#406080', outfit:'#4a3020' },
+  marcopolo:  { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'long',   beard:'full', bg:'#604a20', outfit:'#604030' },
+  shackleton: { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  beard:'chin', bg:'#405070', outfit:'#2a3a4a' },
+  ibnbattuta: { skin:'#a87040', hair:'#1a0f08', hairStyle:'hidden', hat:'turban', beard:'long', bg:'#704030', outfit:'#4a3020' },
+  zhenghe:    { skin:'#c89070', hair:'#1a0a08', hairStyle:'hidden', hat:'turban', beard:'chin', bg:'#604040', outfit:'#a06040' },
+  amundsen:   { skin:'#f0d4a8', hair:'#d0d0c0', hairStyle:'short',  beard:'long', bg:'#506080', outfit:'#4a4a4a' },
+  magellan:   { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  beard:'full', bg:'#405060', outfit:'#3a2a20' },
+  shackletonred:{skin:'#a87040', hair:'#1a0a08', hairStyle:'long', hat:'headband', bg:'#406070', outfit:'#604030' },
+  ali:        { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short',  bg:'#305080', outfit:'#808080' },
+  wilma:      { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short',  bg:'#805030', outfit:'#3a3a3a' },
+  serena:     { skin:'#6a4530', hair:'#1a0a08', hairStyle:'long',   bg:'#405030', outfit:'#a02040' },
+  brucelee:   { skin:'#c89070', hair:'#1a0a08', hairStyle:'short',  bg:'#604030', outfit:'#c0c020' },
+  pele:       { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short',  bg:'#407030', outfit:'#e0c020' },
+  billiejean: { skin:'#f0d4a8', hair:'#8a5030', hairStyle:'short',  glasses:'cateye', bg:'#804060', outfit:'#4a2a4a' },
+  simone:     { skin:'#6a4530', hair:'#1a0a08', hairStyle:'bun',    bg:'#406050', outfit:'#a02040' },
+  thorpe:     { skin:'#a87040', hair:'#1a0a08', hairStyle:'short',  bg:'#604030', outfit:'#404030' },
+  wrightbros: { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  mustache:true, bg:'#604a30', outfit:'#2a2a30' },
+  bell:       { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'short',  beard:'full', bg:'#604a30', outfit:'#3a2a20' },
+  ford:       { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  bg:'#404040', outfit:'#2a2a2a' },
+  jobs:       { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  beard:'chin', glasses:'round', bg:'#505050', outfit:'#1a1a1a' },
+  gates:      { skin:'#f0d4a8', hair:'#c8a060', hairStyle:'short',  glasses:'round', bg:'#304060', outfit:'#303040' },
+  carver:     { skin:'#6a4530', hair:'#d0d0c0', hairStyle:'short',  bg:'#604a30', outfit:'#4a3020' },
+  marconi:    { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  beard:'chin', bg:'#604030', outfit:'#3a2a20' },
+  timbl:      { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  beard:'chin', bg:'#306080', outfit:'#303040' },
+  sallyride:  { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'short',  bg:'#304070', outfit:'#2a3050' },
+  maejemison: { skin:'#6a4530', hair:'#1a0a08', hairStyle:'short',  bg:'#502030', outfit:'#2a3050' },
+  gagarin:    { skin:'#f0d4a8', hair:'#8a5030', hairStyle:'crew',   bg:'#203060', outfit:'#4a4a4a' },
+  buzz:       { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'crew',   bg:'#202040', outfit:'#e0e0e0' },
+  johnglenn:  { skin:'#f0d4a8', hair:'#d8d0c0', hairStyle:'crew',   bg:'#404070', outfit:'#e0e0e0' },
+  socrates:   { skin:'#d0a070', hair:'#d0d0c0', hairStyle:'bald',   beard:'full', bg:'#604a30', outfit:'#c0b89a' },
+  plato:      { skin:'#d0a070', hair:'#d0d0c0', hairStyle:'short',  beard:'long', bg:'#404060', outfit:'#c0b89a' },
+  aristotle:  { skin:'#d0a070', hair:'#c8a060', hairStyle:'short',  beard:'full', bg:'#604a30', outfit:'#c0b89a' },
+  confucius:  { skin:'#c89070', hair:'#1a0a08', hairStyle:'long',   beard:'long', hat:'turban', hatColor:'#604030', bg:'#604a30', outfit:'#a08040' },
+  wollstonecraft:{ skin:'#f0d4a8', hair:'#c8a060', hairStyle:'bun', bg:'#805060', outfit:'#4a3040' },
+  avicenna:   { skin:'#c89070', hair:'#1a0a08', hairStyle:'hidden', hat:'turban', hatColor:'#e0d0b0', beard:'full', bg:'#7a4a30', outfit:'#4a3020' },
+  hafez:      { skin:'#c89070', hair:'#1a0a08', hairStyle:'hidden', hat:'turban', hatColor:'#d0a060', beard:'full', bg:'#6a4a80', outfit:'#4a2040' },
+  saadi:      { skin:'#c89070', hair:'#1a0a08', hairStyle:'hidden', hat:'turban', hatColor:'#b0a060', beard:'long', bg:'#504a30', outfit:'#3a3020' },
+  alkhwarizmi:{ skin:'#c89070', hair:'#1a0a08', hairStyle:'hidden', hat:'turban', hatColor:'#a08040', beard:'full', bg:'#805030', outfit:'#604030' },
+  razi:       { skin:'#c89070', hair:'#1a0a08', hairStyle:'hidden', hat:'turban', hatColor:'#c0a060', beard:'long', bg:'#604a30', outfit:'#4a3020' },
+  cesarchavez:{ skin:'#a87040', hair:'#1a0a08', hairStyle:'short',  bg:'#505030', outfit:'#4a3020' },
+  dolores:    { skin:'#a87040', hair:'#3a2818', hairStyle:'long',   bg:'#805040', outfit:'#6a2a4a' },
+  greta:      { skin:'#f5d5a8', hair:'#c8a060', hairStyle:'braids', bg:'#305040', outfit:'#4a6030' },
+  helen:      { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'bun',    bg:'#605040', outfit:'#3a3a50' },
+  susanb:     { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'bun',    glasses:'round', bg:'#504030', outfit:'#2a2a2a' },
+  sojourner:  { skin:'#6a4530', hair:'#1a0f08', hairStyle:'hidden', hat:'scarf', hatColor:'#e0d0c0', bg:'#503020', outfit:'#4a3020' },
+  florence:   { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'bun',    bg:'#805060', outfit:'#e0e0e0' },
+  clara:      { skin:'#f0d4a8', hair:'#3a2818', hairStyle:'bun',    bg:'#604030', outfit:'#d02020' },
+  marthahamer:{ skin:'#6a4530', hair:'#1a0a08', hairStyle:'short',  bg:'#403020', outfit:'#4a3028' },
 };
 
 function caricatureSVG(f) {
@@ -1727,24 +2652,41 @@ if ('speechSynthesis' in window) {
   window.speechSynthesis.onvoiceschanged = loadVoices;
 }
 
-function speakFarsi(text, button) {
+function speakFarsi(text, button, phonetic) {
   if (!('speechSynthesis' in window)) {
-    flashCloudIndicator('🔇 Speech not supported on this device', '#888');
+    flashCloudIndicator('🔇 Speech not supported — try Chrome', '#888');
     return;
   }
+  // Mobile Safari / Chrome sometimes need a user-gesture resume
+  try { window.speechSynthesis.resume(); } catch {}
   if (!_voicesLoaded) loadVoices();
+  // Retry voice lookup if voices came in late
+  if (!_persianVoice) loadVoices();
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = 'fa-IR';
-  if (_persianVoice) u.voice = _persianVoice;
-  u.rate = 0.85;
-  u.pitch = 1.0;
-  if (button) {
-    button.classList.add('speaking');
-    u.onend = () => button.classList.remove('speaking');
-    u.onerror = () => button.classList.remove('speaking');
+
+  const tryUtter = (content, lang, voice) => {
+    const u = new SpeechSynthesisUtterance(content);
+    u.lang = lang;
+    if (voice) u.voice = voice;
+    u.rate = 0.85; u.pitch = 1.0; u.volume = 1.0;
+    if (button) {
+      button.classList.add('speaking');
+      u.onend = () => button.classList.remove('speaking');
+      u.onerror = () => { button.classList.remove('speaking'); };
+    }
+    window.speechSynthesis.speak(u);
+    return u;
+  };
+
+  if (_persianVoice) {
+    tryUtter(text, 'fa-IR', _persianVoice);
+  } else {
+    // No Persian voice installed — speak the phonetic approximation in English
+    // This actually sounds better than forcing a non-Persian engine to read Arabic script
+    const fallbackText = (phonetic || text).replace(/[-·]/g, ' ');
+    tryUtter(fallbackText, 'en-US', null);
+    flashCloudIndicator('📢 No Persian voice on device — playing phonetic', '#d08030');
   }
-  window.speechSynthesis.speak(u);
 }
 
 // Web Speech API — speech recognition (for "say it back" mode, Chrome/Edge)
@@ -1784,49 +2726,92 @@ async function listenFarsi(expectedWord) {
 // =========================================================================
 const GYMS = [
   {
-    id: 'kindness', order: 1, badge: 'KINDNESS BADGE', emoji: '💖', color: '#f090c8',
-    leader: 'Fred Rogers', initials: 'FR', leaderColor: '8a3050',
+    id: 'kindness', order: 1, rank: 'BADGE 1/8', badge: 'KINDNESS BADGE', emoji: '💖', color: '#f090c8',
+    leader: 'Fred Rogers',
     location: 'Sandgem Town',
-    portrait: 'https://upload.wikimedia.org/wikipedia/en/6/6f/Mister_Rogers_Neighborhood_Title_Screen.jpg',
-    fallbackInitials: 'FR',
     theme: "Kindness & Friendship",
-    backstory: "For 33 years, Fred Rogers hosted 'Mister Rogers' Neighborhood' on TV. He taught millions of children that they were special just the way they were, that feelings are okay, and that a kind word can change someone's whole day. His most famous lesson: 'Look for the helpers' when scary things happen.",
-    challenge: "Before we battle, I want you to remember: 'Won't you be my neighbor?' Let's have a friendly match!",
-    team: [{ id: 427, level: 10 }, { id: 133, level: 12 }],
+    backstory: "For 33 years, Fred Rogers hosted 'Mister Rogers' Neighborhood' on TV. He taught millions of children that they were special just the way they were. His most famous lesson: 'Look for the helpers' when scary things happen.",
+    challenge: "Won't you be my neighbor? Let's have a friendly match!",
+    team: [{ id: 427, level: 8 }, { id: 133, level: 10 }],
     reward: { money: 300, balls: 2, superPotion: 1 },
+    requiresPrevious: null,
   },
   {
-    id: 'spark', order: 2, badge: 'SPARK BADGE', emoji: '⚡', color: '#f8d030',
-    leader: 'Thomas Edison', initials: 'TE', leaderColor: '6a5020',
-    location: 'Jubilife City',
-    portrait: 'https://upload.wikimedia.org/wikipedia/commons/3/3b/Thomas_Edison2.jpg',
-    theme: "Invention & Electric Type",
-    backstory: "Thomas Edison held over 1,000 patents! He invented the light bulb, the phonograph (first music player), and the movie camera. He famously said 'Genius is 1% inspiration and 99% perspiration' — meaning hard work matters more than being smart. He failed thousands of times before succeeding.",
-    challenge: "I failed 1,000 times before inventing the lightbulb. Let's see if you can light up the scoreboard against me!",
-    team: [{ id: 403, level: 14 }, { id: 404, level: 15 }],
+    id: 'wildlife', order: 2, rank: 'BADGE 2/8', badge: 'WILDLIFE BADGE', emoji: '🌿', color: '#60b840',
+    leader: 'Jane Goodall',
+    location: 'Eterna City',
+    theme: "Respect for all life — Grass-type specialist",
+    backstory: "Jane Goodall spent over 60 years studying chimpanzees in Africa. She discovered that animals have feelings and each have unique personalities. She taught the world to respect all creatures.",
+    challenge: "Every creature deserves respect. Fight with heart!",
+    team: [{ id: 406, level: 14 }, { id: 412, level: 15 }, { id: 420, level: 13 }],
     reward: { money: 500, balls: 3, superPotion: 1 },
+    requiresPrevious: 'kindness',
   },
   {
-    id: 'wildlife', order: 3, badge: 'WILDLIFE BADGE', emoji: '🌿', color: '#60b840',
-    leader: 'Jane Goodall', initials: 'JG', leaderColor: '405028',
-    location: 'Route 202',
-    portrait: 'https://upload.wikimedia.org/wikipedia/commons/3/3a/Jane_Goodall_2015.jpg',
-    theme: "Respect for all life",
-    backstory: "Jane Goodall spent over 60 years studying chimpanzees in Africa. She discovered that animals have feelings, use tools, and each have unique personalities — something nobody believed before her. She taught the world to respect all living creatures, big and small.",
-    challenge: "Every creature deserves respect, including the Pokemon you battle. Fight with heart!",
-    team: [{ id: 406, level: 16 }, { id: 412, level: 17 }, { id: 420, level: 15 }],
-    reward: { money: 700, balls: 3, revive: 1 },
+    id: 'spark', order: 3, rank: 'BADGE 3/8', badge: 'SPARK BADGE', emoji: '⚡', color: '#f8d030',
+    leader: 'Thomas Edison',
+    location: 'Jubilife City',
+    theme: "Invention & Electric-type",
+    backstory: "Thomas Edison held over 1,000 patents! He invented the light bulb and the phonograph. He famously said 'Genius is 1% inspiration and 99% perspiration'. He failed thousands of times before succeeding.",
+    challenge: "I failed 1,000 times before inventing the lightbulb. Let's see if you can light up the scoreboard!",
+    team: [{ id: 403, level: 17 }, { id: 25, level: 18 }, { id: 81, level: 19 }],
+    reward: { money: 800, balls: 3, superPotion: 2 },
+    requiresPrevious: 'wildlife',
   },
   {
-    id: 'cosmos', order: 4, badge: 'COSMOS BADGE', emoji: '🌌', color: '#6060f0',
-    leader: 'Katherine Johnson', initials: 'KJ', leaderColor: '404080',
-    location: 'Oreburgh Gate',
-    portrait: 'https://upload.wikimedia.org/wikipedia/commons/7/76/Katherine_Johnson_at_NASA%2C_in_1966.jpg',
-    theme: "Math & Space",
-    backstory: "Katherine Johnson was a NASA mathematician. Her calculations made the first American spaceflight possible, and later the Apollo 11 moon landing. Astronaut John Glenn refused to fly until SHE personally checked the computer's numbers. She broke barriers as a Black woman in science — all with pencil, paper, and brilliance.",
+    id: 'ocean', order: 4, rank: 'BADGE 4/8', badge: 'OCEAN BADGE', emoji: '🌊', color: '#4090e0',
+    leader: 'Jacques Cousteau',
+    location: 'Pastoria City',
+    theme: "Oceanography — Water-type",
+    backstory: "Jacques Cousteau was a French ocean explorer who co-invented SCUBA gear and made films showing what's under the sea. He inspired generations to protect the oceans.",
+    challenge: "The sea is older than humankind. Show me your respect for it!",
+    team: [{ id: 418, level: 20 }, { id: 129, level: 21 }, { id: 131, level: 22 }],
+    reward: { money: 1200, balls: 4, superPotion: 2, revive: 1 },
+    requiresPrevious: 'spark',
+  },
+  {
+    id: 'cosmos', order: 5, rank: 'BADGE 5/8', badge: 'COSMOS BADGE', emoji: '🌌', color: '#6060f0',
+    leader: 'Katherine Johnson',
+    location: 'Celestic Town',
+    theme: "Math & Space — Psychic/Steel",
+    backstory: "Katherine Johnson was a NASA mathematician. Her calculations made Apollo 11's moon landing possible. Astronaut John Glenn refused to fly until SHE personally checked the numbers.",
     challenge: "Space flight requires PERFECT math. Ready to calculate your way to victory?",
-    team: [{ id: 436, level: 18 }, { id: 437, level: 20 }, { id: 425, level: 17 }],
-    reward: { money: 1000, balls: 5, superPotion: 2, revive: 1 },
+    team: [{ id: 436, level: 24 }, { id: 437, level: 25 }, { id: 425, level: 23 }],
+    reward: { money: 1800, balls: 5, superPotion: 2, revive: 1 },
+    requiresPrevious: 'ocean',
+  },
+  {
+    id: 'unity', order: 6, rank: 'BADGE 6/8', badge: 'UNITY BADGE', emoji: '🏅', color: '#c04040',
+    leader: 'Jesse Owens',
+    location: 'Veilstone City',
+    theme: "Athletics & Courage — Fighting-type",
+    backstory: "Jesse Owens was a Black American athlete who won 4 Olympic gold medals in 1936 Berlin, proving the Nazi idea of racial superiority wrong. His speed and grace changed the world.",
+    challenge: "Life shouldn't be measured in wins, but in how you inspire others. Race me!",
+    team: [{ id: 447, level: 27 }, { id: 56, level: 28 }, { id: 66, level: 29 }],
+    reward: { money: 2500, balls: 6, superPotion: 3, revive: 1 },
+    requiresPrevious: 'cosmos',
+  },
+  {
+    id: 'frost', order: 7, rank: 'BADGE 7/8', badge: 'FROST BADGE', emoji: '❄️', color: '#98d8e8',
+    leader: 'Ernest Shackleton',
+    location: 'Snowpoint City',
+    theme: "Endurance in ice — Ice-type",
+    backstory: "Shackleton's Antarctic expedition was crushed by ice in 1914. Yet he got all 27 men home alive across months of freezing ocean — one of history's greatest survival stories. He never left anyone behind.",
+    challenge: "In the coldest places, courage shines brightest. Let's battle!",
+    team: [{ id: 459, level: 30 }, { id: 124, level: 31 }, { id: 460, level: 32 }],
+    reward: { money: 3500, balls: 7, superPotion: 3, revive: 2 },
+    requiresPrevious: 'unity',
+  },
+  {
+    id: 'champion', order: 8, rank: 'BADGE 8/8 — CHAMPION!', badge: 'CHAMPION BADGE', emoji: '🏆', color: '#ffd030',
+    leader: 'Muhammad Ali',
+    location: 'Pokemon League',
+    theme: "Be the greatest — all types",
+    backstory: "Muhammad Ali was called 'The Greatest' in boxing AND outside the ring. He stood up for what was right even when it cost him his career. He said: 'Impossible is nothing.'",
+    challenge: "I AM THE GREATEST! But are YOU? One last fight!",
+    team: [{ id: 445, level: 40 }, { id: 448, level: 42 }, { id: 149, level: 45 }],
+    reward: { money: 10000, balls: 15, superPotion: 5, revive: 3 },
+    requiresPrevious: 'frost',
   },
 ];
 
@@ -2296,6 +3281,43 @@ function generateWorld() {
   for (let y = 22; y < 42; y++) g[y][40] = 'p';
   for (let y = 62; y < 75; y++) g[y][40] = 'p';
   for (let y = 98; y < 110; y++) g[y][40] = 'p';
+
+  // -------- MINI-GAME HOUSES (distinct colored & emoji roofs) --------
+  state.minigameDoors = state.minigameDoors || {};
+  // Racing Arcade (Hearthome) — RED roof, 🏎️
+  placeBuilding(g, 48, 36, 4, 3, 'X');
+  state.minigameDoors['49,38'] = 'race';
+  state.minigameDoors['50,38'] = 'race';
+  // Sudoku House (right near Twinleaf start — EASY to find) — BLUE roof, 🧩
+  placeBuilding(g, 14, 3, 3, 2, 'Y');
+  state.minigameDoors['15,4'] = 'sudoku';
+  // Memory Match House (Eterna City) — PURPLE roof, 🃏
+  placeBuilding(g, 82, 54, 3, 2, 'Z');
+  state.minigameDoors['83,55'] = 'memory';
+  // Math Escape Room (Celestic Town) — ORANGE roof, 🔐
+  placeBuilding(g, 186, 52, 3, 2, 'W');
+  state.minigameDoors['187,53'] = 'escape';
+
+  // -------- FAMILY GYMS (11 personalized gyms, rainbow roofs across the map) --------
+  state.familyGymDoors = state.familyGymDoors || {};
+  const familyPlacements = [
+    { id: 'coco',     x: 11, y: 7  },  // right near Twinleaf for easy access
+    { id: 'david',    x: 28, y: 23 },  // near Sandgem
+    { id: 'yaya',     x: 14, y: 85 },  // Pastoria (pharmacy)
+    { id: 'jason',    x: 34, y: 21 },  // Jubilife (concert hall)
+    { id: 'fafa',     x: 53, y: 34 },  // Hearthome (kitchen)
+    { id: 'azadeh',   x: 42, y: 36 },  // Hearthome (law firm)
+    { id: 'matson',   x: 56, y: 36 },  // Hearthome (speedway)
+    { id: 'benjamin', x: 54, y: 112},  // Sunyshore (soccer pitch)
+    { id: 'mikey',    x: 142, y: 93 }, // Veilstone (sports)
+    { id: 'melody',   x: 18, y: 52 },  // Canalave (running)
+    { id: 'massoud',  x: 191, y: 56 }, // Celestic (aerospace — ancient stars)
+  ];
+  familyPlacements.forEach(p => {
+    placeBuilding(g, p.x, p.y, 3, 2, 'V');
+    const doorX = p.x + 1, doorY = p.y + 1;
+    state.familyGymDoors[`${doorX},${doorY}`] = p.id;
+  });
   // East-west near middle (between Jubilife and Eterna)
   for (let x = 55; x < 68; x++) g[55][x] = 'p';
   // Scatter decoration in new regions
@@ -2336,8 +3358,10 @@ const TILE_CLASS = {
   'R': 'pokecenter-roof', 'M': 'pokemart-roof', 'L': 'lab-roof',
   'B': 'building-roof', 'C': 'cave', 'F': 'fence', 'G': 'gym-roof',
   '_': 'floor', '|': 'wall', 'c': 'carpet', 'k': 'counter', 'E': 'exit-mat',
+  'X': 'race-roof', 'Y': 'sudoku-roof', 'Z': 'memory-roof', 'W': 'escape-roof',
+  'V': 'family-roof',
 };
-const BLOCKING = new Set(['T','r','w','#','R','M','L','B','C','G','|']);
+const BLOCKING = new Set(['T','r','w','#','R','M','L','B','C','G','|','X','Y','Z','W','V']);
 
 // =========================================================================
 // STATE
@@ -2394,6 +3418,7 @@ function buildSavePayload() {
     bestStreak: state.bestStreak || 0,
     shinyBoostCharges: state.shinyBoostCharges || 0,
     badges: state.badges || {},
+    caughtSpecies: state.caughtSpecies || {},
   };
 }
 
@@ -2413,6 +3438,9 @@ function applySavePayload(s) {
   state.bestStreak = s.bestStreak || 0;
   state.shinyBoostCharges = s.shinyBoostCharges || 0;
   state.badges     = s.badges     || {};
+  state.caughtSpecies = s.caughtSpecies || {};
+  // Auto-mark caught for any Pokemon currently in party
+  state.party.forEach(m => { state.caughtSpecies[m.id] = true; });
   return true;
 }
 
@@ -3111,44 +4139,84 @@ function renderStarters() {
 // OVERWORLD
 // =========================================================================
 function spawnNpcs() {
-  // Place historical trainers on the map (kept away from blocked tiles)
-  // Each trainer is battleable once per save — we track defeated status.
   if (!state.defeatedTrainers) state.defeatedTrainers = {};
-  const pos = [
-    ['lincoln',   6, 5 ],
-    ['franklin',  9, 5 ],
-    ['tubman',    3, 16],
-    ['einstein',  12, 14],
-    ['curie',     16, 21],
-    ['armstrong', 30, 19],
-    ['earhart',   27, 10],
-    ['mlk',       20, 16],
-    ['parks',     30, 22],
-    ['newton',    23, 26],
-    // Persian / Farsi trainers
-    ['cyrus',     13, 5 ],
-    ['rumi',      15, 13],
-    ['khayyam',   22, 9 ],
-    ['ferdowsi',  5,  19],
-    // More global figures
-    ['gandhi',    27, 24],
-    ['mandela',   34, 15],
-    ['robinson',  31, 26],
-    ['malala',    10, 25],
-    ['douglass',  18, 26],
-    ['sacagawea', 7,  12],
+  // Original 20 in Sinnoh starting area (x 3-40, y 5-28)
+  const fixedPos = {
+    // Original 20
+    lincoln: [6, 5], franklin: [9, 5], tubman: [3, 16], einstein: [12, 14],
+    curie: [16, 21], armstrong: [30, 19], earhart: [27, 10], mlk: [20, 16],
+    parks: [30, 22], newton: [23, 26],
+    cyrus: [13, 5], rumi: [15, 13], khayyam: [22, 9], ferdowsi: [5, 19],
+    gandhi: [27, 24], mandela: [34, 15], robinson: [31, 26], malala: [10, 25],
+    douglass: [18, 26], sacagawea: [7, 12],
+  };
+  // Distribute all OTHER trainers across the huge 200x150 map using safe walkable coords
+  // We'll use a list of manually selected spots that are on 'grass' or 'path' tiles
+  const distributions = [
+    // Valley Windworks & Fuego Ironworks (x 62-105, y 2-18)
+    ['galileo', 64, 4], ['tesla', 72, 6], ['darwin', 78, 9], ['hawking', 86, 4],
+    ['sagan', 93, 8], ['feynman', 98, 13], ['hopper', 87, 16], ['ada', 66, 13],
+    // Mt Coronet North & Snowpoint & Route 217 (x 108-195, y 3-22)
+    ['copernicus', 114, 16], ['pasteur', 124, 10], ['mendel', 130, 15], ['amundsen', 142, 8],
+    ['rosalind', 149, 18], ['crick', 155, 16], ['turing', 160, 4], ['ramanujan', 172, 8],
+    ['euclid', 180, 14], ['hypatia', 190, 12],
+    // Lake Verity / Pastoria Beach / Canalave (x 0-30, y 30-62)
+    ['picasso', 3, 33], ['vangogh', 5, 36], ['monet', 8, 45], ['frida', 13, 48],
+    ['okeeffe', 18, 55], ['dali', 6, 58], ['rembrandt', 11, 60],
+    // Jubilife / Hearthome (x 25-62, y 22-42)
+    ['shakespeare', 28, 29], ['twain', 36, 30], ['dickens', 43, 28], ['austen', 50, 30],
+    ['angelou', 55, 32], ['dickinson', 45, 37], ['hughes', 52, 39], ['annefrank', 48, 34],
+    ['dahl', 58, 36], ['tolkien', 42, 41],
+    // Eterna City / Route 211 / Celestic Town (x 65-200, y 42-62)
+    ['mozart', 70, 44], ['beethoven', 75, 48], ['bach', 81, 54], ['louisarmstrong', 83, 60],
+    ['ella', 95, 52], ['raycharles', 105, 51], ['stevie', 113, 52], ['duke', 125, 51],
+    ['aretha', 140, 51], ['elvis', 165, 47], ['hokusai', 172, 52], ['warhol', 183, 58],
+    ['michelangelo', 189, 49], ['davinci', 194, 55],
+    // Pastoria / Great Marsh / Veilstone / Solaceon (x 2-195, y 70-98)
+    ['churchill', 5, 85], ['fdr', 12, 92], ['jfk', 22, 88], ['washington', 30, 87],
+    ['jefferson', 40, 86], ['teddy', 46, 92], ['eleanor', 52, 91], ['obama', 60, 87],
+    ['rbg', 70, 75], ['elizabeth1', 80, 85], ['victoria', 100, 90], ['catherine', 120, 84],
+    ['joanofarc', 138, 83], ['cleopatra', 150, 84], ['caesar', 160, 87], ['columbus', 172, 84],
+    ['marcopolo', 178, 90], ['shackleton', 188, 85], ['ibnbattuta', 193, 92],
+    // Sunyshore / Route 222 / Pokemon League / Victory Road / Fullmoon (x 25-200, y 100-140)
+    ['zhenghe', 28, 108], ['magellan', 38, 115], ['shackletonred', 48, 109],
+    ['ali', 55, 117], ['wilma', 70, 110], ['serena', 80, 113], ['brucelee', 90, 116],
+    ['pele', 100, 112], ['billiejean', 108, 108], ['simone', 115, 107], ['thorpe', 122, 108],
+    ['wrightbros', 130, 108], ['bell', 136, 112], ['ford', 142, 110], ['jobs', 148, 113],
+    ['gates', 156, 110], ['carver', 163, 108], ['marconi', 170, 113], ['timbl', 175, 117],
+    ['sallyride', 156, 117], ['maejemison', 162, 122], ['gagarin', 158, 128], ['buzz', 170, 122],
+    ['johnglenn', 180, 120],
+    ['socrates', 35, 107], ['plato', 42, 108], ['aristotle', 49, 107], ['confucius', 56, 110],
+    ['wollstonecraft', 32, 113],
+    ['avicenna', 76, 122], ['hafez', 82, 125], ['saadi', 88, 122], ['alkhwarizmi', 95, 124], ['razi', 100, 124],
+    ['cesarchavez', 30, 121], ['dolores', 40, 123], ['greta', 53, 124], ['helen', 103, 108],
+    ['susanb', 62, 124], ['sojourner', 78, 128], ['florence', 92, 128], ['clara', 118, 128],
+    ['marthahamer', 135, 127],
   ];
-  state.npcs = pos.map(([id, x, y]) => {
-    const t = TRAINERS.find(tr => tr.id === id);
-    return {
-      x, y,
-      sprite: '🎓',
-      trainerId: id,
-      name: t.name,
-      role: t.role,
-      portrait: t.portrait,
-      fact: t.fact,
-    };
+
+  state.npcs = [];
+  // Add fixed positions first
+  Object.entries(fixedPos).forEach(([id, [x, y]]) => {
+    const t = TRAINERS.find(tr => tr.id === id); if (!t) return;
+    state.npcs.push({ x, y, sprite: '🎓', trainerId: id, name: t.name, role: t.role, fact: t.fact });
+  });
+  // Add distributed positions
+  distributions.forEach(([id, x, y]) => {
+    const t = TRAINERS.find(tr => tr.id === id); if (!t) return;
+    // If target tile is a blocking tile, find a nearby walkable spot
+    let px = x, py = y;
+    if (state.world && state.world[py] && BLOCKING.has(state.world[py][px])) {
+      for (let dy = -2; dy <= 2 && BLOCKING.has(state.world[py]?.[px]); dy++) {
+        for (let dx = -2; dx <= 2; dx++) {
+          const nx = x + dx, ny = y + dy;
+          if (ny >= 0 && ny < MAP_H && nx >= 0 && nx < MAP_W && !BLOCKING.has(state.world[ny][nx])) {
+            px = nx; py = ny; break;
+          }
+        }
+        if (!BLOCKING.has(state.world[py]?.[px])) break;
+      }
+    }
+    state.npcs.push({ x: px, y: py, sprite: '🎓', trainerId: id, name: t.name, role: t.role, fact: t.fact });
   });
 }
 
@@ -3158,16 +4226,89 @@ function enterOverworld() {
   if (state.npcs.length === 0) spawnNpcs();
   renderOverworld();
   updateLocation(true);
-  setMsg(`Arrow keys/WASD to move. Red-roof = Pokemon Center. Brown-roof = GYM (battle for badges)!`);
+  setMsg(`Arrow keys/WASD/tap to move. Look for glowing roofs: 🧩 Sudoku (near start), 🏎️ Race (Hearthome), 🃏 Memory (Eterna), 🔐 Escape (Celestic)!`);
   setActions([
     { label: '👥 PARTY', onClick: () => openParty(false) },
+    { label: '📕 POKEDEX', onClick: showPokedexViewer },
     { label: '🏆 BADGES', onClick: showBadgeCase },
     { label: '📚 FARSI', onClick: showFarsiDictionary },
+    { label: '🎮 MINI-GAMES', onClick: openMinigameMenu },
+    { label: '⭐ FAMILY GYMS', onClick: openFamilyGymMenu },
     { label: '💾 SAVE', onClick: () => { saveLocal(); setMsg('Game saved!' + (state.user ? ' (syncing to cloud)' : ' (stored in this browser)')); } },
     { label: '💊 HEAL', onClick: healParty },
     { label: '🏠 TITLE', onClick: () => { saveLocal(); renderTitle(); } },
   ]);
   updateHeader();
+}
+
+function openFamilyGymMenu() {
+  state.returnPos = { x: state.player.x, y: state.player.y };
+  state.screen = 'family-menu';
+  const done = state.defeatedFamilyGyms || {};
+  const rows = FAMILY_GYMS.map(g => {
+    const cleared = done[g.id];
+    return `
+      <div class="party-mon" data-fg="${g.id}" style="${cleared ? 'opacity:0.7;border-color:#60a060;' : ''}">
+        <img src="${caricatureDataUri(g.id)}" alt="${g.leader}" style="width:48px;height:48px;border-radius:50%;">
+        <div class="info">
+          <div class="n">${g.leader}${cleared ? ' ✓' : ''}</div>
+          <div style="font-size:7px;opacity:0.85;">${g.title}</div>
+          <div style="font-size:7px;color:#c06030;">🎁 ${g.rewardName}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+  screen.innerHTML = `
+    <div class="party-screen fade-in" style="padding:12px;">
+      <h2>⭐ FAMILY GYMS — ${Object.keys(done).length}/${FAMILY_GYMS.length} cleared</h2>
+      <div style="background:rgba(0,0,0,0.4);padding:6px;border-radius:6px;margin-bottom:10px;font-size:8px;color:#fff;text-align:center;">
+        Personalized challenges from David, Massoud, Fafa, Azadeh, Coco, Jason, Yaya, Mikey, Matson, Benjamin, Melody. Each rewards a unique Pokemon!
+      </div>
+      <div style="display:grid;gap:6px;">${rows}</div>
+    </div>
+  `;
+  setMsg("Choose a family gym to enter!");
+  setActions([{ label: '⬅ BACK', back: true, onClick: () => { state.returnPos = null; enterOverworld(); } }]);
+  document.querySelectorAll('[data-fg]').forEach(el => {
+    el.onclick = () => enterFamilyGym(el.dataset.fg);
+  });
+}
+
+function openMinigameMenu() {
+  state.returnPos = { x: state.player.x, y: state.player.y };
+  state.screen = 'minigame-menu';
+  screen.innerHTML = `
+    <div class="party-screen fade-in" style="padding:16px;">
+      <h2>🎮 MINI-GAME ARCADE</h2>
+      <div style="background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;margin-bottom:12px;font-size:9px;color:#fff;text-align:center;line-height:1.7;">
+        Pick a game to play now! Winning earns you a legendary Pokemon battle. In the world, each game also has its own house you can visit (look for glowing roofs).
+      </div>
+      <div style="display:grid;gap:10px;">
+        <div class="party-mon" id="mini-race">
+          <div style="font-size:42px;">🏎️</div>
+          <div class="info"><div class="n">3D KART RACE</div><div style="font-size:7px;opacity:0.8;">Found in Hearthome City · Win: battle Mewtwo</div></div>
+        </div>
+        <div class="party-mon" id="mini-sudoku">
+          <div style="font-size:42px;">🧩</div>
+          <div class="info"><div class="n">SUDOKU SANCTUARY</div><div style="font-size:7px;opacity:0.8;">Found just east of Twinleaf Town · Win: battle Articuno</div></div>
+        </div>
+        <div class="party-mon" id="mini-memory">
+          <div style="font-size:42px;">🃏</div>
+          <div class="info"><div class="n">MEMORY MATCH</div><div style="font-size:7px;opacity:0.8;">Found in Eterna City · Win: battle Moltres</div></div>
+        </div>
+        <div class="party-mon" id="mini-escape">
+          <div style="font-size:42px;">🔐</div>
+          <div class="info"><div class="n">MATH ESCAPE ROOM</div><div style="font-size:7px;opacity:0.8;">Found in Celestic Town · Win: battle Zapdos</div></div>
+        </div>
+      </div>
+    </div>
+  `;
+  setMsg("Choose a mini-game to play. Each has a legendary reward!");
+  setActions([{ label: '⬅ BACK', back: true, onClick: () => { state.returnPos = null; enterOverworld(); } }]);
+  document.getElementById('mini-race').onclick   = () => startMiniGame('race');
+  document.getElementById('mini-sudoku').onclick = () => startMiniGame('sudoku');
+  document.getElementById('mini-memory').onclick = () => startMiniGame('memory');
+  document.getElementById('mini-escape').onclick = () => startMiniGame('escape');
 }
 
 function locationOf(x, y) {
@@ -3610,7 +4751,7 @@ function showFarsiLesson(trainer) {
               <div style="font-size:9px;color:#e03028;letter-spacing:1px;">${w.pronounce}</div>
               <div style="font-size:10px;margin-top:2px;color:#202830;">= ${w.english}</div>
             </div>
-            <button class="speak-btn" data-farsi="${encodeURIComponent(w.farsi)}" title="Play pronunciation">🔊</button>
+            <button class="speak-btn" data-farsi="${encodeURIComponent(w.farsi)}" data-phonetic="${encodeURIComponent(w.pronounce)}" title="Play pronunciation">🔊</button>
             ${canListen ? `<button class="mic-btn" data-farsi="${encodeURIComponent(w.farsi)}" data-en="${w.english}" title="Say it back">🎤</button>` : ''}
           </div>
         `).join('')}
@@ -3629,7 +4770,8 @@ function showFarsiLesson(trainer) {
   document.querySelectorAll('.speak-btn').forEach(btn => {
     btn.onclick = () => {
       const farsi = decodeURIComponent(btn.dataset.farsi);
-      speakFarsi(farsi, btn);
+      const phonetic = btn.dataset.phonetic ? decodeURIComponent(btn.dataset.phonetic) : null;
+      speakFarsi(farsi, btn, phonetic);
     };
   });
   // Wire up mic buttons
@@ -3722,6 +4864,12 @@ function enterBuilding(x, y) {
   // Gym check first
   const gymId = state.gymDoors && state.gymDoors[`${x},${y}`];
   if (gymId) { enterGym(gymId); return; }
+  // Mini-game door check
+  const miniId = state.minigameDoors && state.minigameDoors[`${x},${y}`];
+  if (miniId) { enterMiniGameHouse(miniId); return; }
+  // Family gym door check
+  const famId = state.familyGymDoors && state.familyGymDoors[`${x},${y}`];
+  if (famId) { enterFamilyGym(famId); return; }
   const isCenter = (state.world[y-1] && state.world[y-1][x] === 'R');
   const isMart   = (state.world[y-1] && state.world[y-1][x] === 'M');
   const isLab    = (state.world[y-1] && state.world[y-1][x] === 'L');
@@ -3783,11 +4931,76 @@ function checkEncounter() {
 // =========================================================================
 // BATTLE
 // =========================================================================
-const WILD_COMMON = [396, 399, 401, 403, 406, 412, 418, 422, 427, 434, 41, 54, 74, 129, 453, 459, 420];
-const WILD_RARE   = [443, 447, 425, 436, 433, 133, 408];
+const WILD_COMMON = [396, 399, 401, 403, 406, 412, 418, 422, 427, 434, 41, 54, 74, 129, 453, 459, 420,
+  // Kanto commons
+  10, 13, 16, 19, 21, 23, 27, 29, 32, 35, 39, 43, 46, 48, 50, 52, 56, 58, 60, 66, 69, 72, 77, 81, 84, 86, 88, 90, 92, 96, 98, 100, 102, 104, 108, 109, 111, 116, 118, 120, 137, 147];
+const WILD_RARE   = [443, 447, 425, 436, 433, 133, 408,
+  // Kanto rares
+  25, 63, 113, 115, 122, 123, 124, 125, 126, 127, 128, 131, 132, 134, 135, 136, 142, 143];
+const WILD_LEGENDARY = [144, 145, 146, 150, 151, 149];
+
+// Regional encounter table — certain Pokemon prefer certain locations
+const REGIONAL_POOLS = {
+  'Eterna Forest':     [10, 13, 46, 48, 412, 401, 420],
+  'Pastoria City':     [60, 72, 86, 90, 98, 118, 129, 418, 422],
+  'Pastoria Beach':    [60, 72, 86, 116, 118, 120, 129, 418],
+  'Great Marsh':       [10, 13, 46, 48, 72, 88, 118, 401],
+  'Mt. Coronet North': [27, 50, 74, 95, 104, 111, 140, 408],
+  'Mt. Coronet Pass':  [27, 50, 74, 95, 104, 111, 408],
+  'Snowpoint City':    [86, 87, 90, 91, 124, 144, 459, 460],
+  'Route 217 (Icy)':   [86, 87, 124, 459, 91],
+  'Victory Road':      [74, 75, 76, 95, 105, 142, 443, 444],
+  'Fullmoon Island':   [131, 120, 121, 118, 129],
+  'Valley Windworks':  [25, 81, 100, 403, 81, 100],
+  'Fuego Ironworks':   [4, 37, 58, 77, 126, 390],
+  'Route 222 (Beach)': [72, 86, 98, 116, 118, 120, 129, 418],
+  'Pokemon League':    [25, 113, 143, 148, 149, 150, 445],
+};
+
+// Legendary encounters are FIXED at specific coordinates — and each only appears ONCE until caught
+// This creates "epic" shrine battles hidden in the hardest-to-reach places
+const LEGENDARY_SHRINES = [
+  { id: 144, name: 'Articuno',  x: 192, y: 15,  level: 35, required: 'frost',   location: 'Snowpoint Cavern' },
+  { id: 145, name: 'Zapdos',    x: 95,  y: 11,  level: 38, required: 'spark',   location: 'Power Plant Roof' },
+  { id: 146, name: 'Moltres',   x: 96,  y: 6,   level: 40, required: 'ocean',   location: 'Fuego Ironworks Summit' },
+  { id: 149, name: 'Dragonite', x: 194, y: 136, level: 45, required: 'unity',   location: 'Fullmoon Island' },
+  { id: 150, name: 'Mewtwo',    x: 183, y: 127, level: 55, required: 'champion',location: 'Victory Cavern' },
+  { id: 151, name: 'Mew',       x: 5,   y: 145, level: 50, required: null,      location: 'Hidden Glade (secret)' },
+];
+
+function checkLegendaryShrine() {
+  if (!state.defeatedLegendaries) state.defeatedLegendaries = {};
+  for (const s of LEGENDARY_SHRINES) {
+    if (state.player.x === s.x && state.player.y === s.y) {
+      if (state.defeatedLegendaries[s.id]) return null;
+      if (s.required && !state.badges[s.required]) {
+        flashCloudIndicator(`🔒 Need ${s.required.toUpperCase()} badge first`, '#d08030');
+        return null;
+      }
+      state.defeatedLegendaries[s.id] = true; // mark seen so you can't grind it
+      const mon = makeMon(s.id, s.level);
+      mon.hp = mon.maxHp;
+      return { mon, shrine: s };
+    }
+  }
+  return null;
+}
 
 function pickWild() {
-  const pool = Math.random() < 0.12 ? WILD_RARE : WILD_COMMON;
+  // Epic shrine at fixed location?
+  const shrine = checkLegendaryShrine();
+  if (shrine) {
+    flashCloudIndicator(`⚡ ${shrine.shrine.name.toUpperCase()} APPEARS! ${shrine.shrine.location}`, '#f0d030');
+    return shrine.mon;
+  }
+  const loc = state.location;
+  // 1.5% chance for random legendary
+  if (Math.random() < 0.015) {
+    const id = WILD_LEGENDARY[Math.floor(Math.random() * WILD_LEGENDARY.length)];
+    return makeMon(id, 25 + Math.floor(Math.random() * 15));
+  }
+  let pool = REGIONAL_POOLS[loc];
+  if (!pool) pool = Math.random() < 0.12 ? WILD_RARE : WILD_COMMON;
   const id = pool[Math.floor(Math.random() * pool.length)];
   return makeMon(id, randLv());
 }
@@ -3831,10 +5044,33 @@ function enterGym(gymId) {
   state.screen = 'gym-intro';
   const uri = caricatureDataUri(gym.id);
   const won = !!state.badges[gym.id];
+
+  // Enforce gym order — must have previous badge
+  if (gym.requiresPrevious && !state.badges[gym.requiresPrevious]) {
+    const prev = GYMS.find(g => g.id === gym.requiresPrevious);
+    screen.innerHTML = `
+      <div class="trainer-intro fade-in" style="padding:14px;">
+        <div style="background:#666;padding:4px 12px;border-radius:4px;font-size:9px;color:#fff;margin-bottom:8px;">
+          🔒 GYM LOCKED
+        </div>
+        <img class="trainer-portrait" src="${uri}" alt="${gym.leader}"
+             style="width:100px;height:100px;border-color:#666;filter:grayscale(0.6);">
+        <div class="trainer-name" style="color:#888;">${gym.leader}</div>
+        <div class="trainer-role">${gym.rank}</div>
+        <div class="trainer-fact" style="border-left-color:#888;max-width:560px;">
+          This gym is LOCKED. You need the <b style="color:${prev.color};">${prev.emoji} ${prev.badge}</b> first. Go defeat <b>${prev.leader}</b> in ${prev.location} to unlock this gym!
+        </div>
+      </div>
+    `;
+    setMsg(`This gym is locked. Come back after earning the ${prev.badge}!`);
+    setActions([{ label: '⬅ LEAVE', primary: true, onClick: enterOverworld }]);
+    return;
+  }
+
   screen.innerHTML = `
     <div class="trainer-intro fade-in" style="padding:14px;">
       <div style="background:${gym.color};padding:4px 12px;border-radius:4px;font-size:9px;color:#fff;margin-bottom:8px;text-shadow:1px 1px 0 #000;">
-        ${gym.emoji} ${gym.badge} GYM ${won ? '✓ CLEARED' : '— Challenge!'}
+        ${gym.emoji} ${gym.rank} — ${gym.location} ${won ? '✓ CLEARED' : ''}
       </div>
       <img class="trainer-portrait" src="${uri}" alt="${gym.leader}"
            style="width:120px;height:120px;border-color:${gym.color};box-shadow:0 0 30px ${gym.color};">
@@ -4041,7 +5277,7 @@ function showFarsiDictionary() {
               <div style="font-size:8px;color:#c02020;">${w.pronounce}</div>
               <div style="font-size:9px;">${w.english}</div>
             </div>
-            <button class="speak-btn" data-farsi="${encodeURIComponent(w.farsi)}" style="width:28px;height:28px;font-size:12px;">🔊</button>
+            <button class="speak-btn" data-farsi="${encodeURIComponent(w.farsi)}" data-phonetic="${encodeURIComponent(w.pronounce)}" style="width:28px;height:28px;font-size:12px;">🔊</button>
           </div>
         `).join('')}
       </div>
@@ -4066,9 +5302,1775 @@ function showFarsiDictionary() {
     btn.onclick = (e) => {
       e.stopPropagation();
       const farsi = decodeURIComponent(btn.dataset.farsi);
-      speakFarsi(farsi, btn);
+      const phonetic = btn.dataset.phonetic ? decodeURIComponent(btn.dataset.phonetic) : null;
+      speakFarsi(farsi, btn, phonetic);
     };
   });
+}
+
+// =========================================================================
+// MINI-GAME HOUSES — racing, sudoku, memory, escape room
+// =========================================================================
+// =========================================================================
+// FAMILY GYMS — 11 personalized gyms built by family/friends
+// =========================================================================
+const FAMILY_GYMS = [
+  { id: 'david',    leader: 'David',    title: "David's Bike Race Track",        minigame: 'bike_race', reward: 59,  rewardName: 'Arcanine',  level: 25, intro: "Yo! I'm David. In my gym, we don't walk — we RACE bikes! First across the finish line gets the prize." },
+  { id: 'massoud',  leader: 'Massoud',  title: "Massoud's Aerospace Engineering",minigame: 'aerospace', reward: 151, rewardName: 'Mew',       level: 50, intro: "Welcome! I'm Massoud. Engineers use math to build rockets. Solve my physics puzzles and we'll launch a spaceship together!" },
+  { id: 'fafa',     leader: 'Fafa',     title: "Fafa's Ghormeh Sabzi Kitchen",   minigame: 'cooking',   reward: 470, rewardName: 'Leafeon',   level: 30, intro: "Salam azizam! I'm Fafa. Cooking is math! Help me scale my ghormeh sabzi recipe and you'll earn a leaf Pokemon." },
+  { id: 'azadeh',   leader: 'Azadeh',   title: "Azadeh's Law Firm",              minigame: 'royalty',   reward: 94,  rewardName: 'Gengar',    level: 30, intro: "Hello! I'm Azadeh, attorney at law. We need to calculate royalties for Michael Jackson's family from a new movie. Math makes law work!" },
+  { id: 'coco',     leader: 'Coco',     title: "Coco's Tic-Tac-Toe Palace",      minigame: 'tictactoe', reward: 39,  rewardName: 'Jigglypuff',level: 15, intro: "Hi, I'm Coco! My palace is ALL about Tic-Tac-Toe! Beat me and I'll give you my favorite fluffy Pokemon!" },
+  { id: 'jason',    leader: 'Jason',    title: "Jason's Concert Hall",           minigame: 'concert',   reward: 26,  rewardName: 'Raichu',    level: 28, intro: "I'm Jason, concert promoter! We need to figure out ticket sales math for an upcoming show. Multiplication is your friend!" },
+  { id: 'yaya',     leader: 'Yaya',     title: "Yaya's Pharmacy",                minigame: 'pharmacy',  reward: 113, rewardName: 'Chansey',   level: 25, intro: "I'm Yaya, pharmacist. Sick patients need exact medicine doses. Help me add them up correctly!" },
+  { id: 'mikey',    leader: 'Mikey',    title: "Mikey's Basketball Arena",       minigame: 'basketball',reward: 66,  rewardName: 'Machop',    level: 20, intro: "I'm Mikey! Shoot free throws like I do. Make 5 in a row and you'll win a powerhouse Pokemon!" },
+  { id: 'matson',   leader: 'Matson',   title: "Matson's Car Speedway",          minigame: 'car_race',  reward: 78,  rewardName: 'Rapidash',  level: 28, intro: "Yo, I'm Matson! Welcome to the speedway. Fast cars, fast Pokemon. Win the race, get Rapidash!" },
+  { id: 'benjamin', leader: 'Benjamin', title: "Benjamin's Soccer Pitch",        minigame: 'soccer',    reward: 395, rewardName: 'Empoleon',  level: 35, intro: "Hi, I'm Benjamin! Soccer is life. Score 3 goals past my goalie and win an epic Pokemon!" },
+  { id: 'melody',   leader: 'Melody',   title: "Melody's Running Track",         minigame: 'running',   reward: 101, rewardName: 'Electrode', level: 25, intro: "I'm Melody! I love to run — rhythm is everything. Keep pace with the beat to win!" },
+];
+
+const MINIGAME_REWARDS = {
+  race:   { id: 150, name: 'Mewtwo',    level: 45, desc: 'Legendary Psychic Pokemon' },
+  sudoku: { id: 144, name: 'Articuno',  level: 40, desc: 'Legendary Ice/Flying Pokemon' },
+  memory: { id: 146, name: 'Moltres',   level: 40, desc: 'Legendary Fire/Flying Pokemon' },
+  escape: { id: 145, name: 'Zapdos',    level: 40, desc: 'Legendary Electric/Flying Pokemon' },
+};
+
+function enterMiniGameHouse(id) {
+  state.screen = 'minigame-intro';
+  state.returnPos = { x: state.player.x, y: state.player.y };
+  const titles = {
+    race: { emoji: '🏎️', title: '3D POKEMON KART ARENA', intro: "Race your Pokemon against AI opponents! Win first place to battle a legendary Pokemon!", color: '#e03030' },
+    sudoku: { emoji: '🧩', title: 'THE SUDOKU SANCTUARY', intro: "Solve the Sudoku puzzle to prove your logic. Complete it and a legendary ice bird appears!", color: '#4080c8' },
+    memory: { emoji: '🃏', title: 'THE MEMORY MATCH CHALLENGE', intro: "Match all pairs of Pokemon cards from memory! Clear the board to battle a legendary fire bird!", color: '#e04020' },
+    escape: { emoji: '🔐', title: 'THE MATH ESCAPE ROOM', intro: "Solve three math puzzles to unlock the final door. A legendary thunder bird awaits inside!", color: '#f0d030' },
+  };
+  const t = titles[id];
+  const reward = MINIGAME_REWARDS[id];
+  screen.innerHTML = `
+    <div class="trainer-intro fade-in" style="padding:16px;">
+      <div style="background:${t.color};padding:6px 14px;border-radius:4px;font-size:11px;color:#fff;margin-bottom:10px;text-shadow:1px 1px 0 #000;">
+        ${t.emoji} ${t.title}
+      </div>
+      <div style="font-size:80px;margin:14px 0;">${t.emoji}</div>
+      <div class="trainer-fact" style="border-left-color:${t.color};max-width:560px;margin-top:10px;">
+        ${t.intro}<br><br>
+        <b style="color:#ffd030;">🎁 REWARD:</b> Beat this game to encounter <b>${reward.name}</b> — ${reward.desc}!
+      </div>
+    </div>
+  `;
+  setMsg(`Welcome to the ${t.title}!`);
+  setActions([
+    { label: '▶ START GAME', primary: true, onClick: () => startMiniGame(id) },
+    { label: '⬅ LEAVE', back: true, onClick: exitMiniGame },
+  ]);
+}
+
+function exitMiniGame() {
+  // Stop any running game loops
+  if (state.race && state.race.stop) state.race.stop();
+  state.race = null;
+  if (state.returnPos) {
+    state.player.x = state.returnPos.x;
+    state.player.y = state.returnPos.y;
+    state.returnPos = null;
+  }
+  enterOverworld();
+}
+
+async function minigameWin(id) {
+  const reward = MINIGAME_REWARDS[id];
+  setMsg(`🏆 You WON the ${id.toUpperCase()} challenge! ${reward.name.toUpperCase()} appears for battle!`);
+  setActions([]);
+  await sleep(1800);
+  // Start battle with the legendary
+  const wild = makeMon(reward.id, reward.level);
+  state.battle = { wild };
+  state.screen = 'battle';
+  renderBattle(true);
+  setMsg(`A wild ${reward.name.toUpperCase()} appeared!`);
+  setTimeout(battleMainMenu, 1100);
+}
+
+function startMiniGame(id) {
+  if (id === 'race') startRaceGame();
+  else if (id === 'sudoku') startSudokuGame();
+  else if (id === 'memory') startMemoryGame();
+  else if (id === 'escape') startEscapeGame();
+}
+
+// =========================================================================
+// 🏎️ 3D KART RACE (Three.js)
+// =========================================================================
+// Proper Mario Kart-style race engine (shared by all race minigames)
+function startRaceGame() { mkRace({ title: "3D KART ARENA", vehicleColor: 0xe03030, onWin: () => minigameWin('race') }); }
+
+function mkRace(opts) {
+  state.screen = 'minigame-race';
+  screen.innerHTML = `
+    <div class="minigame-screen">
+      <canvas id="raceCanvas"></canvas>
+      <div class="race-hud" style="font-size:11px;">
+        🏁 Lap <b id="raceLap">1</b>/3 &nbsp;•&nbsp; Place: <b id="racePlace">1</b>/4 &nbsp;•&nbsp; Speed: <b id="raceSpeed">0</b>
+      </div>
+      <div id="itemSlot" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.8);border:3px solid #ffd030;border-radius:12px;width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-size:36px;z-index:10;color:#fff;">—</div>
+      <div id="itemHint" style="position:absolute;top:76px;right:8px;font-size:8px;color:#fff;background:rgba(0,0,0,0.6);padding:3px 6px;border-radius:3px;z-index:10;">Press E / ⚡ button</div>
+      <button id="useItemBtn" style="position:fixed;bottom:120px;right:20px;width:70px;height:70px;background:linear-gradient(180deg,#ffd030,#c0a020);color:#333;font-family:inherit;font-size:12px;font-weight:bold;border:4px solid #a08010;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:9999;box-shadow:0 5px 0 #a08010;">⚡ USE</button>
+      <div id="raceCountdown" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:120px;color:#ffd030;text-shadow:4px 4px 0 #000;font-family:inherit;z-index:20;pointer-events:none;"></div>
+      <div id="raceToast" style="position:absolute;top:48%;left:50%;transform:translate(-50%,-50%);font-size:24px;color:#fff;text-shadow:3px 3px 0 #000;font-family:inherit;z-index:15;pointer-events:none;opacity:0;transition:opacity 0.3s;"></div>
+    </div>
+  `;
+  setMsg(`${opts.title} — UP accelerate, LEFT/RIGHT steer, DOWN brake, E (or ⚡ button) to use items. 3 laps!`);
+  setActions([{ label: '⬅ GIVE UP', back: true, onClick: exitMiniGame }]);
+  if (typeof THREE === 'undefined') { setMsg('3D engine not loaded. Refresh the page.'); return; }
+
+  const canvas = document.getElementById('raceCanvas');
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width; canvas.height = rect.height;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x87ceeb);
+  scene.fog = new THREE.Fog(0x87ceeb, 60, 300);
+
+  const camera = new THREE.PerspectiveCamera(75, rect.width / rect.height, 0.1, 500);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(rect.width, rect.height);
+
+  // Lighting
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+  sun.position.set(30, 60, 20);
+  scene.add(sun);
+  const fillLight = new THREE.DirectionalLight(0xffd0a0, 0.3);
+  fillLight.position.set(-30, 40, -20);
+  scene.add(fillLight);
+
+  // Ground (colorful grass)
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshLambertMaterial({ color: 0x70c040 }));
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+
+  // Track parameters — longer-ovalish kidney shape via parametric curve
+  // radius varies with angle to make it interesting
+  const trackBaseR = 65, trackWidth = 16;
+  function trackCenter(a) {
+    // Slight kidney bean shape
+    const bump = Math.sin(a * 2) * 4;
+    const r = trackBaseR + bump;
+    return { r, x: Math.cos(a) * r, z: Math.sin(a) * r };
+  }
+
+  // Build track ring
+  const trackGeo = new THREE.RingGeometry(trackBaseR - trackWidth/2 - 4, trackBaseR + trackWidth/2 + 4, 96);
+  const trackMat = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+  const track = new THREE.Mesh(trackGeo, trackMat);
+  track.rotation.x = -Math.PI / 2; track.position.y = 0.05; scene.add(track);
+
+  // Inner + outer fences (decorative cubes)
+  for (let i = 0; i < 48; i++) {
+    const a = (i / 48) * Math.PI * 2;
+    [trackBaseR - trackWidth/2 - 2.5, trackBaseR + trackWidth/2 + 2.5].forEach((rr, idx) => {
+      const fence = new THREE.Mesh(
+        new THREE.BoxGeometry(1.5, 1.8, 1.5),
+        new THREE.MeshLambertMaterial({ color: idx === 0 ? 0xff3030 : 0xffffff })
+      );
+      fence.position.set(Math.cos(a) * rr, 0.9, Math.sin(a) * rr);
+      scene.add(fence);
+    });
+  }
+
+  // Start line (checkered pattern)
+  for (let i = 0; i < 6; i++) {
+    const seg = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xffffff : 0x000000 })
+    );
+    seg.rotation.x = -Math.PI / 2;
+    seg.position.set(trackBaseR - trackWidth/2 + 1 + i * 2.5, 0.06, 0);
+    scene.add(seg);
+  }
+
+  // Boost pads — arrows on track
+  const boostPads = []; // [angle]
+  [0.3, 1.6, 3.0, 4.5].forEach(a => {
+    const pad = new THREE.Mesh(
+      new THREE.PlaneGeometry(8, 4),
+      new THREE.MeshBasicMaterial({ color: 0x30e0f0, transparent: true, opacity: 0.85 })
+    );
+    pad.rotation.x = -Math.PI / 2;
+    const c = trackCenter(a);
+    pad.position.set(c.x, 0.07, c.z);
+    pad.rotation.z = -a;
+    scene.add(pad);
+    boostPads.push({ angle: a, used: false });
+  });
+
+  // Trees and decorations around the environment
+  for (let i = 0; i < 40; i++) {
+    const a = (i / 40) * Math.PI * 2;
+    const r = 110 + Math.random() * 60;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.8, 4, 6), new THREE.MeshLambertMaterial({ color: 0x6a4028 }));
+    trunk.position.set(Math.cos(a) * r, 2, Math.sin(a) * r);
+    scene.add(trunk);
+    const top = new THREE.Mesh(new THREE.ConeGeometry(3.5, 9, 6), new THREE.MeshLambertMaterial({ color: 0x206030 }));
+    top.position.set(Math.cos(a) * r, 7, Math.sin(a) * r);
+    scene.add(top);
+  }
+  // Mountains in distance
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const m = new THREE.Mesh(new THREE.ConeGeometry(25, 40, 8), new THREE.MeshLambertMaterial({ color: 0x7a6a80 }));
+    m.position.set(Math.cos(a) * 200, 15, Math.sin(a) * 200);
+    scene.add(m);
+  }
+
+  // Item boxes (rotating) — pick up to get a random item
+  const itemBoxes = [];
+  [0.8, 2.2, 3.8, 5.2].forEach(a => {
+    const group = new THREE.Group();
+    const box = new THREE.Mesh(
+      new THREE.BoxGeometry(2, 2, 2),
+      new THREE.MeshLambertMaterial({ color: 0xfff040, emissive: 0x806020 })
+    );
+    group.add(box);
+    const qm = new THREE.Mesh(
+      new THREE.BoxGeometry(0.6, 0.6, 2.02),
+      new THREE.MeshBasicMaterial({ color: 0xe03030 })
+    );
+    group.add(qm);
+    const c = trackCenter(a);
+    group.position.set(c.x, 2, c.z);
+    scene.add(group);
+    itemBoxes.push({ group, angle: a, respawnAt: 0, active: true });
+  });
+
+  // Banana hazards (dropped by racers) — array of { x, z, group, owner }
+  const bananas = [];
+  function dropBanana(racer) {
+    const back = 4;
+    const ba = racer.angle - 0.04;
+    const c = trackCenter(ba);
+    const group = new THREE.Group();
+    const b = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 8), new THREE.MeshLambertMaterial({ color: 0xffe040 }));
+    b.scale.set(1.2, 0.6, 0.8);
+    group.add(b);
+    group.position.set(c.x, 0.5, c.z);
+    scene.add(group);
+    bananas.push({ group, x: c.x, z: c.z, owner: racer });
+  }
+
+  // Racer class
+  const racers = [];
+  const playerMon = state.party[state.activeMon];
+  function createRacer(color, pokemonId, isPlayer, lane) {
+    const group = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.0, 3.4), new THREE.MeshLambertMaterial({ color }));
+    body.position.y = 0.7; group.add(body);
+    // Wheels
+    const wheelGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.4, 12);
+    const wheelMat = new THREE.MeshLambertMaterial({ color: 0x101010 });
+    [[-1.1,0.45,-1.3],[1.1,0.45,-1.3],[-1.1,0.45,1.3],[1.1,0.45,1.3]].forEach(([x,y,z]) => {
+      const w = new THREE.Mesh(wheelGeo, wheelMat); w.rotation.z = Math.PI/2; w.position.set(x,y,z); group.add(w);
+    });
+    // Pokemon sprite on top
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: new THREE.TextureLoader().load(SPRITE_FRONT(pokemonId)),
+    }));
+    sprite.scale.set(3, 3, 1);
+    sprite.position.y = 2.8;
+    group.add(sprite);
+
+    const startAngle = -0.05 + lane * 0.03;
+    const c = trackCenter(startAngle);
+    group.position.set(c.x, 0, c.z);
+    group.rotation.y = -Math.PI / 2 - startAngle;
+    scene.add(group);
+
+    return {
+      group, isPlayer, sprite,
+      angle: startAngle,
+      radius: trackBaseR + (lane - 1.5) * 2.5,
+      speed: 0, lap: 0, pokemonId,
+      finished: false,
+      item: null,          // 'mushroom' | 'banana' | 'shell' | null
+      boostTime: 0,        // remaining boost duration
+      spinTime: 0,         // spin-out duration from hitting banana
+      aiAggression: isPlayer ? 0 : 0.7 + Math.random() * 0.3,
+    };
+  }
+
+  const aiColors = [0x30e030, 0xf8d030, 0x3060f0];
+  const aiPool = [133, 25, 447, 445, 448, 6, 9, 3, 59, 78];
+  racers.push(createRacer(opts.vehicleColor, playerMon.id, true, 0));
+  for (let i = 0; i < 3; i++) racers.push(createRacer(aiColors[i], aiPool[Math.floor(Math.random() * aiPool.length)], false, i + 1));
+  const player = racers[0];
+
+  // Input
+  const keys = { up:false, down:false, left:false, right:false, use:false, drift:false };
+  const setKey = (code, down) => {
+    if (code === 'ArrowUp' || code === 'KeyW') keys.up = down;
+    else if (code === 'ArrowDown' || code === 'KeyS') keys.down = down;
+    else if (code === 'ArrowLeft' || code === 'KeyA') keys.left = down;
+    else if (code === 'ArrowRight' || code === 'KeyD') keys.right = down;
+    else if (code === 'KeyE' || code === 'Space') keys.use = down;
+    else if (code === 'ShiftLeft' || code === 'ShiftRight') keys.drift = down;
+    else return false;
+    return true;
+  };
+  const kd = e => { if (setKey(e.code, true)) e.preventDefault(); };
+  const ku = e => { if (setKey(e.code, false)) e.preventDefault(); };
+  window.addEventListener('keydown', kd);
+  window.addEventListener('keyup', ku);
+  // Use item on keypress edge
+  let useEdge = false;
+  window.addEventListener('keydown', e => { if ((e.code === 'KeyE' || e.code === 'Space') && !e.repeat) useEdge = true; });
+
+  // D-pad
+  const dpadBtns = document.querySelectorAll('#dpad .dpad-btn[data-dir]');
+  const dpadH = [];
+  dpadBtns.forEach(b => {
+    const dir = b.dataset.dir;
+    const down = () => { keys[dir] = true; };
+    const up = () => { keys[dir] = false; };
+    b.addEventListener('pointerdown', down);
+    b.addEventListener('pointerup', up);
+    b.addEventListener('pointercancel', up);
+    b.addEventListener('pointerleave', up);
+    dpadH.push({ b, down, up });
+  });
+
+  // Use item button
+  const useBtn = document.getElementById('useItemBtn');
+  const useBtnHandler = () => { useEdge = true; };
+  useBtn.addEventListener('pointerdown', useBtnHandler);
+
+  let running = true;
+  let lastTime = performance.now();
+  let raceStarted = false;
+  const startTime = performance.now();
+
+  // ===== MARIO-KART MUSIC + SFX (Web Audio) =====
+  let audioCtx = null, musicGain = null;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0.08;
+    musicGain.connect(audioCtx.destination);
+  } catch (e) {}
+
+  function sfx(freq, duration, type = 'square', vol = 0.2, slide = 0) {
+    if (!audioCtx) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(55, freq + slide), audioCtx.currentTime + duration);
+    g.gain.setValueAtTime(0, audioCtx.currentTime);
+    g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.01);
+    g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + duration);
+  }
+  const SFX = {
+    boost:   () => sfx(220, 0.4, 'sawtooth', 0.25, 400),
+    pickup:  () => { sfx(660, 0.08, 'square', 0.25); setTimeout(() => sfx(880, 0.12, 'square', 0.25), 80); },
+    banana:  () => sfx(400, 0.35, 'sawtooth', 0.2, -300),
+    shell:   () => sfx(520, 0.15, 'triangle', 0.3, 200),
+    star:    () => { sfx(523, 0.1); setTimeout(() => sfx(659, 0.1), 100); setTimeout(() => sfx(784, 0.1), 200); setTimeout(() => sfx(1047, 0.18), 300); },
+    count:   (n) => sfx(n === 'go' ? 880 : 440, 0.25, 'square', 0.3),
+    win:     () => { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => sfx(f, 0.18), i * 120)); },
+  };
+  // Upbeat looping melody (simplified "race theme")
+  const melody = [
+    [523, 0.2], [659, 0.2], [784, 0.2], [1047, 0.2],
+    [784, 0.2], [659, 0.2], [523, 0.4],
+    [587, 0.2], [698, 0.2], [880, 0.2], [1175, 0.2],
+    [880, 0.2], [698, 0.2], [587, 0.4],
+  ];
+  function playMelodyNote(note, offset) {
+    if (!audioCtx) return;
+    const [freq, dur] = note;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, audioCtx.currentTime + offset);
+    g.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + offset + 0.02);
+    g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + offset + dur - 0.02);
+    o.connect(g).connect(musicGain);
+    o.start(audioCtx.currentTime + offset); o.stop(audioCtx.currentTime + offset + dur);
+  }
+  let musicStopped = false;
+  function startMusicLoop() {
+    if (!audioCtx || musicStopped) return;
+    let t = 0;
+    melody.forEach(n => { playMelodyNote(n, t); t += n[1]; });
+    setTimeout(() => { if (running && !musicStopped) startMusicLoop(); }, t * 1000);
+  }
+  // Need a user gesture to start audio in most browsers — start on first input
+  const startAudio = () => {
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    if (!musicStopped) startMusicLoop();
+    window.removeEventListener('keydown', startAudio);
+    window.removeEventListener('pointerdown', startAudio);
+  };
+  window.addEventListener('keydown', startAudio, { once: true });
+  window.addEventListener('pointerdown', startAudio, { once: true });
+
+  function stop() {
+    running = false;
+    musicStopped = true;
+    if (audioCtx) { try { audioCtx.close(); } catch {} }
+    window.removeEventListener('keydown', kd);
+    window.removeEventListener('keyup', ku);
+    dpadH.forEach(({b,down,up}) => {
+      b.removeEventListener('pointerdown', down);
+      b.removeEventListener('pointerup', up);
+      b.removeEventListener('pointercancel', up);
+      b.removeEventListener('pointerleave', up);
+    });
+    useBtn.removeEventListener('pointerdown', useBtnHandler);
+    renderer.dispose();
+  }
+  state.race = { stop };
+
+  function showToast(text, ms = 1200) {
+    const el = document.getElementById('raceToast');
+    if (!el) return;
+    el.textContent = text;
+    el.style.opacity = '1';
+    setTimeout(() => { if (el) el.style.opacity = '0'; }, ms);
+  }
+
+  function updateItemUI() {
+    const slot = document.getElementById('itemSlot');
+    if (!slot) return;
+    const icons = { mushroom: '🍄', banana: '🍌', shell: '🐢', star: '⭐' };
+    slot.textContent = icons[player.item] || '—';
+    slot.style.borderColor = player.item ? '#30ff30' : '#ffd030';
+  }
+
+  function applyItem(racer) {
+    if (!racer.item) return;
+    if (racer.item === 'mushroom') {
+      racer.boostTime = Math.max(racer.boostTime, 1.6);
+      showToast('🍄 BOOST!');
+      SFX.boost();
+    } else if (racer.item === 'banana') {
+      dropBanana(racer);
+      showToast('🍌 Banana dropped!');
+      SFX.banana();
+    } else if (racer.item === 'shell') {
+      const myScore = racer.lap*1000 + racer.angle;
+      const target = racers.filter(r => r !== racer && !r.finished && (r.lap*1000+r.angle) > myScore)
+        .sort((a,b) => (a.lap*1000+a.angle) - (b.lap*1000+b.angle))[0];
+      if (target) { target.spinTime = 1.2; showToast('🐢 Shell hit ' + (target.isPlayer ? 'YOU' : 'opponent') + '!'); }
+      else showToast('🐢 Shell went wide!');
+      SFX.shell();
+    } else if (racer.item === 'star') {
+      racer.starTime = 4.0;
+      racer.boostTime = 4.0;
+      showToast('⭐ STAR POWER!');
+      SFX.star();
+    } else if (racer.item === 'lightning') {
+      racers.forEach(r => { if (r !== racer && !r.finished && !r.starTime) { r.spinTime = 1.0; r.speed *= 0.5; } });
+      showToast('⚡ LIGHTNING! All foes zapped!');
+      SFX.shell();
+      // flash the scene
+      scene.background = new THREE.Color(0xffffff);
+      setTimeout(() => { scene.background = new THREE.Color(0x87ceeb); }, 150);
+    }
+    racer.item = null;
+    if (racer === player) updateItemUI();
+  }
+
+  function pickRandomItem(racerPlace = 1) {
+    // Better items if you're behind (classic MK mechanic)
+    const behind = racerPlace > 2;
+    const r = Math.random();
+    if (behind && r < 0.12) return 'star';       // 12% star if behind
+    if (behind && r < 0.22) return 'lightning';  // 10% lightning if behind
+    if (r < 0.35) return 'mushroom';
+    if (r < 0.65) return 'banana';
+    return 'shell';
+  }
+
+  function checkItemBoxes(racer) {
+    itemBoxes.forEach(box => {
+      if (!box.active) return;
+      const c = trackCenter(box.angle);
+      const dx = racer.group.position.x - c.x;
+      const dz = racer.group.position.z - c.z;
+      if (dx*dx + dz*dz < 16) {
+        box.active = false;
+        box.group.visible = false;
+        box.respawnAt = performance.now() + 5000;
+        if (!racer.item) {
+          const place = racers.filter(r => (r.lap*1000+r.angle) > (racer.lap*1000+racer.angle)).length + 1;
+          racer.item = pickRandomItem(place);
+          if (racer === player) { updateItemUI(); showToast('📦 ' + racer.item.toUpperCase() + '!'); SFX.pickup(); }
+        }
+      }
+    });
+  }
+
+  function checkBoostPads(racer) {
+    boostPads.forEach(pad => {
+      const c = trackCenter(pad.angle);
+      const dx = racer.group.position.x - c.x;
+      const dz = racer.group.position.z - c.z;
+      if (dx*dx + dz*dz < 25) {
+        if (racer.boostTime < 1) racer.boostTime = 1.2;
+        if (racer === player && racer.boostTime > 0) showToast('⚡ BOOST PAD!', 500);
+      }
+    });
+  }
+
+  function checkBananas(racer) {
+    if (racer.starTime > 0) return; // invincible
+    for (let i = bananas.length - 1; i >= 0; i--) {
+      const b = bananas[i];
+      const dx = racer.group.position.x - b.x;
+      const dz = racer.group.position.z - b.z;
+      if (dx*dx + dz*dz < 9) {
+        racer.spinTime = 1.0;
+        if (racer === player) { showToast('🍌 SLIPPED!'); SFX.banana(); }
+        scene.remove(b.group);
+        bananas.splice(i, 1);
+      }
+    }
+  }
+
+  // Scheduled countdown — independent of render loop
+  let lastCountdownVal = null;
+  function tickCountdown() {
+    const el = document.getElementById('raceCountdown');
+    if (!el) return;
+    const elapsed = (performance.now() - startTime) / 1000;
+    let val = '';
+    if (elapsed < 1)      { val = '3'; el.style.color = '#ff4040'; }
+    else if (elapsed < 2) { val = '2'; el.style.color = '#ffa040'; }
+    else if (elapsed < 3) { val = '1'; el.style.color = '#ffd030'; }
+    else if (elapsed < 4) { val = 'GO!'; el.style.color = '#30ff30'; raceStarted = true; }
+    else                  { val = ''; }
+    if (val !== lastCountdownVal) {
+      el.textContent = val;
+      if (val === '3' || val === '2' || val === '1') SFX.count();
+      if (val === 'GO!') SFX.count('go');
+      lastCountdownVal = val;
+    }
+  }
+
+  function animate(now) {
+    if (!running) return;
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+
+    tickCountdown();
+
+    if (!raceStarted) {
+      // Pre-race idle: rotate item boxes only
+      itemBoxes.forEach(box => {
+        box.group.rotation.y += dt * 2;
+        box.group.position.y = 2 + Math.sin(now / 500) * 0.3;
+        if (!box.active && now > box.respawnAt) { box.active = true; box.group.visible = true; }
+      });
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+      return;
+    }
+
+    // Player item use
+    if (useEdge) {
+      useEdge = false;
+      if (player.item && player.spinTime <= 0) applyItem(player);
+    }
+
+    // Update each racer
+    racers.forEach((r, idx) => {
+      if (r.finished) return;
+      if (r.spinTime > 0 && !r.starTime) {
+        r.spinTime -= dt;
+        r.group.rotation.y += dt * 10;
+        r.speed *= 0.9;
+        return;
+      }
+      if (r.starTime > 0) r.starTime -= dt;
+
+      if (r.isPlayer) {
+        // Drift: hold SHIFT + a turn direction for mini-turbo after 1 sec
+        const drifting = keys.drift && (keys.left || keys.right);
+        if (drifting) r.driftTime = (r.driftTime || 0) + dt;
+        else if (r.driftTime > 0) {
+          // Release drift → mini-boost if held long enough
+          if (r.driftTime > 0.8) { r.boostTime = Math.max(r.boostTime, 0.8); showToast('✨ DRIFT BOOST!', 600); SFX.boost(); }
+          r.driftTime = 0;
+        }
+        if (keys.up)        r.speed = Math.min(r.speed + 14 * dt, 25 * (r.boostTime > 0 ? 1.7 : 1));
+        else if (keys.down) r.speed = Math.max(r.speed - 22 * dt, -6);
+        else                r.speed *= (1 - 0.5 * dt);
+        const steerMult = drifting ? 1.5 : 1;
+        if (keys.left)  r.radius = Math.max(trackBaseR - trackWidth/2 + 1, r.radius - 10 * dt * steerMult);
+        if (keys.right) r.radius = Math.min(trackBaseR + trackWidth/2 - 1, r.radius + 10 * dt * steerMult);
+      } else {
+        const targetSpeed = (19 + r.aiAggression * 7) * (r.boostTime > 0 ? 1.5 : 1);
+        r.speed += (r.speed < targetSpeed ? 11 : -5) * dt;
+        if (r.boostTime <= 0 && Math.random() < 0.004) { r.boostTime = 1.0; }
+        if (r.item && Math.random() < 0.008) applyItem(r);
+        r.radius += Math.sin(now / 1000 + idx) * 4 * dt;
+        r.radius = Math.max(trackBaseR - trackWidth/2 + 1, Math.min(trackBaseR + trackWidth/2 - 1, r.radius));
+      }
+      if (r.boostTime > 0) r.boostTime -= dt;
+
+      // STAR rainbow color cycling
+      if (r.starTime > 0) {
+        const hue = (now / 100) % 360;
+        const body = r.group.children[0];
+        if (body && body.material) {
+          body.material.color.setHSL(hue / 360, 1, 0.5);
+        }
+      }
+
+      r.angle += (r.speed / r.radius) * dt;
+      if (r.angle > Math.PI * 2) {
+        r.angle -= Math.PI * 2;
+        r.lap++;
+        if (r.isPlayer) showToast(`🏁 Lap ${Math.min(3, r.lap + 1)}/3!`, 800);
+        if (r.isPlayer && r.lap >= 3) r.finished = true;
+      }
+      const c = trackCenter(r.angle);
+      // Use radius offset from track center
+      const rx = Math.cos(r.angle) * r.radius;
+      const rz = Math.sin(r.angle) * r.radius;
+      r.group.position.set(rx, 0, rz);
+      if (r.spinTime <= 0) r.group.rotation.y = -Math.PI / 2 - r.angle;
+
+      checkItemBoxes(r);
+      checkBoostPads(r);
+      checkBananas(r);
+    });
+
+    // Rotate/float item boxes + respawn logic
+    itemBoxes.forEach(box => {
+      box.group.rotation.y += dt * 2;
+      box.group.position.y = 2 + Math.sin(now / 500) * 0.3;
+      if (!box.active && now > box.respawnAt) { box.active = true; box.group.visible = true; }
+    });
+
+    // Camera (chase + FOV change on boost)
+    const behindAngle = player.angle - 0.2;
+    const camR = player.radius + 9;
+    camera.position.set(Math.cos(behindAngle) * camR, 5 + (player.boostTime > 0 ? 0.5 : 0), Math.sin(behindAngle) * camR);
+    camera.lookAt(player.group.position.x, 1.5, player.group.position.z);
+    const targetFov = player.boostTime > 0 ? 85 : 75;
+    camera.fov += (targetFov - camera.fov) * dt * 4;
+    camera.updateProjectionMatrix();
+
+    // HUD
+    const place = racers.filter(r => (r.lap * 1000 + r.angle) > (player.lap * 1000 + player.angle)).length + 1;
+    const hLap = document.getElementById('raceLap');
+    const hPlace = document.getElementById('racePlace');
+    const hSpeed = document.getElementById('raceSpeed');
+    if (hLap)   hLap.textContent = Math.min(3, player.lap + 1);
+    if (hPlace) hPlace.textContent = place;
+    if (hSpeed) hSpeed.textContent = Math.round(player.speed * 5);
+
+    renderer.render(scene, camera);
+
+    if (player.finished) {
+      running = false;
+      const aiAhead = racers.filter(r => !r.isPlayer && r.lap >= 3).length;
+      const won = aiAhead === 0;
+      const place = aiAhead + 1;
+      const medals = ['🥇', '🥈', '🥉', '4️⃣'];
+      const placeText = place === 1 ? '1st' : place === 2 ? '2nd' : place === 3 ? '3rd' : '4th';
+      stop();
+      if (won) SFX.win();
+      // Podium finish display
+      const el = document.getElementById('raceCountdown');
+      if (el) {
+        el.innerHTML = `
+          <div style="font-size:36px;margin-bottom:8px;">${won ? '🏆 YOU WON!' : 'RACE OVER'}</div>
+          <div style="font-size:72px;">${medals[place-1] || '🏁'}</div>
+          <div style="font-size:28px;margin-top:8px;">${placeText} place!</div>
+        `;
+        el.style.color = won ? '#ffd030' : '#fff';
+      }
+      if (won) {
+        setTimeout(() => { if (opts.onWin) opts.onWin(); }, 2400);
+      } else {
+        setMsg(`Finished ${placeText} place! Try again?`);
+        setActions([
+          { label: '🔄 RACE AGAIN', primary: true, onClick: () => mkRace(opts) },
+          { label: '⬅ LEAVE', back: true, onClick: exitMiniGame },
+        ]);
+      }
+      return;
+    }
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+}
+
+// Legacy _startThemedRace — now uses the full MK engine too
+function _startThemedRace(gym, opts) {
+  mkRace({ title: opts.title, vehicleColor: opts.vehicleColor, onWin: () => familyGymWin(gym) });
+}
+
+function _OLD_startRaceGame_DEPRECATED() {
+  state.screen = 'minigame-race';
+  screen.innerHTML = `
+    <div class="minigame-screen">
+      <canvas id="raceCanvas"></canvas>
+      <div class="race-hud">
+        🏁 Lap <b id="raceLap">1</b>/3  •  Place: <b id="racePlace">1</b>/4  •  Speed: <b id="raceSpeed">0</b>
+      </div>
+    </div>
+  `;
+  setMsg("Tap UP to accelerate, LEFT/RIGHT to steer, DOWN to brake. Complete 3 laps to win!");
+  setActions([
+    { label: '⬅ GIVE UP', back: true, onClick: exitMiniGame },
+  ]);
+
+  if (typeof THREE === 'undefined') {
+    setMsg('3D engine not loaded. Please refresh the page.');
+    return;
+  }
+
+  const canvas = document.getElementById('raceCanvas');
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width; canvas.height = rect.height;
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x70a0d0);
+  scene.fog = new THREE.Fog(0x70a0d0, 50, 250);
+
+  const camera = new THREE.PerspectiveCamera(70, rect.width / rect.height, 0.1, 500);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(rect.width, rect.height);
+
+  // Lights
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+  const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+  sun.position.set(20, 50, 20);
+  scene.add(sun);
+
+  // Ground (green grass)
+  const groundGeo = new THREE.PlaneGeometry(400, 400);
+  const groundMat = new THREE.MeshLambertMaterial({ color: 0x58a048 });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  scene.add(ground);
+
+  // Track (oval, gray asphalt ring)
+  // We use a torus flattened
+  const trackRadius = 60, trackWidth = 12;
+  const trackGeo = new THREE.RingGeometry(trackRadius - trackWidth/2, trackRadius + trackWidth/2, 64);
+  const trackMat = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+  const track = new THREE.Mesh(trackGeo, trackMat);
+  track.rotation.x = -Math.PI / 2;
+  track.position.y = 0.05;
+  scene.add(track);
+
+  // Start line
+  const startGeo = new THREE.PlaneGeometry(trackWidth, 2);
+  const startMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const startLine = new THREE.Mesh(startGeo, startMat);
+  startLine.rotation.x = -Math.PI / 2;
+  startLine.position.set(trackRadius, 0.06, 0);
+  scene.add(startLine);
+
+  // Trees around edges for atmosphere
+  for (let i = 0; i < 30; i++) {
+    const angle = (i / 30) * Math.PI * 2;
+    const r = 100 + Math.random() * 40;
+    const tree = new THREE.Mesh(
+      new THREE.ConeGeometry(3, 10, 6),
+      new THREE.MeshLambertMaterial({ color: 0x286030 })
+    );
+    tree.position.set(Math.cos(angle) * r, 5, Math.sin(angle) * r);
+    scene.add(tree);
+  }
+
+  // Racer class
+  const racers = [];
+  const playerMon = state.party[state.activeMon];
+  function createRacer(color, pokemonId, isPlayer, lane) {
+    const group = new THREE.Group();
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(2, 0.8, 3),
+      new THREE.MeshLambertMaterial({ color })
+    );
+    body.position.y = 0.6;
+    group.add(body);
+    // Wheels
+    const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.4, 12);
+    const wheelMat = new THREE.MeshLambertMaterial({ color: 0x111111 });
+    [[-0.9, 0.4, -1.1], [0.9, 0.4, -1.1], [-0.9, 0.4, 1.1], [0.9, 0.4, 1.1]].forEach(([x,y,z]) => {
+      const w = new THREE.Mesh(wheelGeo, wheelMat);
+      w.rotation.z = Math.PI/2;
+      w.position.set(x, y, z);
+      group.add(w);
+    });
+    // Pokemon billboard on top
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: new THREE.TextureLoader().load(SPRITE_FRONT(pokemonId)),
+      color: 0xffffff,
+    }));
+    sprite.scale.set(2.5, 2.5, 1);
+    sprite.position.y = 2.5;
+    group.add(sprite);
+
+    // Start position on track
+    const startAngle = -0.05 + lane * 0.03;
+    group.position.set(Math.cos(startAngle) * trackRadius, 0, Math.sin(startAngle) * trackRadius);
+    group.rotation.y = -Math.PI / 2 - startAngle;
+    scene.add(group);
+
+    return {
+      group, isPlayer,
+      angle: startAngle,       // position around track (radians)
+      radius: trackRadius + (lane - 1.5) * 2.5,  // lane offset
+      speed: 0,
+      lap: 0,
+      pokemonId,
+      finished: false,
+      passedStart: false,
+    };
+  }
+
+  const colors = [0xe03030, 0x30e030, 0xe0e030, 0x3030e0];
+  racers.push(createRacer(0xe03030, playerMon.id, true, 0));
+  // Pick 3 random party/pokemon opponents
+  const aiPool = [133, 25, 447, 445, 448, 387, 390, 393];
+  for (let i = 0; i < 3; i++) {
+    racers.push(createRacer(colors[i+1], aiPool[Math.floor(Math.random() * aiPool.length)], false, i + 1));
+  }
+  const player = racers[0];
+
+  // Input
+  const keys = { up: false, down: false, left: false, right: false };
+  const setKey = (code, down) => {
+    if (code === 'ArrowUp' || code === 'KeyW') keys.up = down;
+    if (code === 'ArrowDown' || code === 'KeyS') keys.down = down;
+    if (code === 'ArrowLeft' || code === 'KeyA') keys.left = down;
+    if (code === 'ArrowRight' || code === 'KeyD') keys.right = down;
+  };
+  const kd = e => { setKey(e.code, true); e.preventDefault(); };
+  const ku = e => { setKey(e.code, false); e.preventDefault(); };
+  window.addEventListener('keydown', kd);
+  window.addEventListener('keyup', ku);
+
+  // Also allow D-pad taps
+  const dpadBtns = document.querySelectorAll('#dpad .dpad-btn[data-dir]');
+  const dpadHandlers = [];
+  dpadBtns.forEach(b => {
+    const dir = b.dataset.dir;
+    const down = () => { if (dir==='up') keys.up=true; if (dir==='down') keys.down=true; if (dir==='left') keys.left=true; if (dir==='right') keys.right=true; };
+    const up = () => { if (dir==='up') keys.up=false; if (dir==='down') keys.down=false; if (dir==='left') keys.left=false; if (dir==='right') keys.right=false; };
+    b.addEventListener('pointerdown', down);
+    b.addEventListener('pointerup', up);
+    b.addEventListener('pointercancel', up);
+    b.addEventListener('pointerleave', up);
+    dpadHandlers.push({ btn: b, down, up });
+  });
+
+  let running = true;
+  let lastTime = performance.now();
+
+  function stop() {
+    running = false;
+    window.removeEventListener('keydown', kd);
+    window.removeEventListener('keyup', ku);
+    dpadHandlers.forEach(({btn, down, up}) => {
+      btn.removeEventListener('pointerdown', down);
+      btn.removeEventListener('pointerup', up);
+      btn.removeEventListener('pointercancel', up);
+      btn.removeEventListener('pointerleave', up);
+    });
+    renderer.dispose();
+  }
+  state.race = { stop };
+
+  function animate(now) {
+    if (!running) return;
+    const dt = Math.min(0.05, (now - lastTime) / 1000);
+    lastTime = now;
+
+    racers.forEach(r => {
+      if (r.finished) return;
+      if (r.isPlayer) {
+        if (keys.up)    r.speed = Math.min(r.speed + 12 * dt, 25);
+        else if (keys.down) r.speed = Math.max(r.speed - 20 * dt, -6);
+        else r.speed *= (1 - 0.6 * dt);    // friction
+        // Steering = lane change
+        if (keys.left)  r.radius = Math.max(trackRadius - trackWidth/2 + 1, r.radius - 8 * dt);
+        if (keys.right) r.radius = Math.min(trackRadius + trackWidth/2 - 1, r.radius + 8 * dt);
+      } else {
+        // AI: gently accelerate, vary speed
+        const targetSpeed = 15 + (r.pokemonId % 4) * 1.5;
+        if (r.speed < targetSpeed) r.speed += 8 * dt;
+        else r.speed -= 4 * dt;
+      }
+      // Move along circle
+      const angDelta = (r.speed / r.radius) * dt;
+      r.angle += angDelta;
+      // Detect crossing start line (angle crossing through 0 going positive)
+      if (r.angle > Math.PI * 2) {
+        r.angle -= Math.PI * 2;
+        r.lap++;
+        if (r.isPlayer && r.lap >= 3) {
+          r.finished = true;
+        }
+      }
+      const x = Math.cos(r.angle) * r.radius;
+      const z = Math.sin(r.angle) * r.radius;
+      r.group.position.set(x, 0, z);
+      r.group.rotation.y = -Math.PI / 2 - r.angle;
+    });
+
+    // Camera follows player (chase cam)
+    const p = player;
+    const camDist = 8;
+    const camHeight = 4;
+    const camX = Math.cos(p.angle) * (p.radius + camDist * Math.cos(p.angle + Math.PI/2));
+    const camZ = Math.sin(p.angle) * (p.radius + camDist * Math.sin(p.angle + Math.PI/2));
+    const behindAngle = p.angle - 0.15;
+    camera.position.set(Math.cos(behindAngle) * (p.radius + 6), camHeight, Math.sin(behindAngle) * (p.radius + 6));
+    camera.lookAt(p.group.position.x, 1, p.group.position.z);
+
+    // HUD
+    const placement = racers.filter(r => r.lap * 1000 + r.angle > p.lap * 1000 + p.angle).length + 1;
+    const hLap = document.getElementById('raceLap');
+    const hPlace = document.getElementById('racePlace');
+    const hSpeed = document.getElementById('raceSpeed');
+    if (hLap) hLap.textContent = Math.min(3, p.lap + 1);
+    if (hPlace) hPlace.textContent = placement;
+    if (hSpeed) hSpeed.textContent = Math.round(p.speed * 5);
+
+    renderer.render(scene, camera);
+
+    if (p.finished) {
+      running = false;
+      // Determine placement
+      const finalPlace = racers.filter(r => !r.finished || (r.finished && r.lap > p.lap) || (r === p)).indexOf(p) + 1;
+      // Simpler: did player finish first? Check if any AI completed 3 laps before player
+      const aiAhead = racers.filter(r => !r.isPlayer && r.lap >= 3).length;
+      const won = aiAhead === 0;
+      stop();
+      if (won) {
+        setTimeout(() => minigameWin('race'), 800);
+      } else {
+        setMsg(`Finished in ${aiAhead + 1}${aiAhead === 0 ? 'st' : 'nd'} place! Try again?`);
+        setActions([
+          { label: '🔄 RACE AGAIN', primary: true, onClick: () => startRaceGame() },
+          { label: '⬅ LEAVE', back: true, onClick: exitMiniGame },
+        ]);
+      }
+      return;
+    }
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+}
+
+// =========================================================================
+// 🧩 SUDOKU (4x4 easy)
+// =========================================================================
+function startSudokuGame() {
+  state.screen = 'minigame-sudoku';
+  // Fixed easy 4x4 sudoku with a valid solution (each row/col/2x2 box has 1-4)
+  const solution = [
+    [1,2,3,4],
+    [3,4,1,2],
+    [2,1,4,3],
+    [4,3,2,1],
+  ];
+  // Reveal 7 cells, hide 9
+  const revealed = [
+    [1,0,3,0],
+    [0,4,0,2],
+    [0,1,0,3],
+    [4,0,2,0],
+  ];
+  const state_ = { selected: null, board: revealed.map(row => row.slice()) };
+
+  function render() {
+    let html = `
+      <div class="party-screen fade-in" style="padding:16px;">
+        <h2>🧩 SUDOKU SANCTUARY</h2>
+        <div style="background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;margin-bottom:12px;font-size:9px;color:#fff;text-align:center;line-height:1.7;">
+          Fill each row, column, and 2x2 box with numbers 1 through 4.<br>
+          Tap a blank cell, then tap a number!
+        </div>
+        <div class="sudoku-board" id="sudokuBoard">
+    `;
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        const v = state_.board[r][c];
+        const fixed = revealed[r][c] !== 0;
+        const sel = state_.selected && state_.selected[0] === r && state_.selected[1] === c;
+        html += `<div class="sudoku-cell ${fixed ? 'fixed' : ''} ${sel ? 'selected' : ''}" data-r="${r}" data-c="${c}">${v || ''}</div>`;
+      }
+    }
+    html += `</div>
+      <div class="sudoku-numpad">
+        <button data-n="1">1</button>
+        <button data-n="2">2</button>
+        <button data-n="3">3</button>
+        <button data-n="4">4</button>
+      </div>
+      <div style="text-align:center;margin-top:10px;">
+        <button class="btn" id="sudokuClear" style="font-size:9px;margin-right:6px;">🗑 CLEAR CELL</button>
+        <button class="btn primary" id="sudokuCheck" style="font-size:9px;">✓ CHECK SOLUTION</button>
+      </div>
+      </div>
+    `;
+    screen.innerHTML = html;
+    document.querySelectorAll('.sudoku-cell').forEach(cell => {
+      cell.onclick = () => {
+        const r = +cell.dataset.r, c = +cell.dataset.c;
+        if (revealed[r][c] !== 0) return;
+        state_.selected = [r, c];
+        render();
+      };
+    });
+    document.querySelectorAll('.sudoku-numpad button').forEach(b => {
+      b.onclick = () => {
+        if (!state_.selected) { flashCloudIndicator('Select a cell first!', '#d08030'); return; }
+        const [r, c] = state_.selected;
+        state_.board[r][c] = +b.dataset.n;
+        render();
+      };
+    });
+    document.getElementById('sudokuClear').onclick = () => {
+      if (!state_.selected) return;
+      const [r, c] = state_.selected;
+      if (revealed[r][c] !== 0) return;
+      state_.board[r][c] = 0;
+      render();
+    };
+    document.getElementById('sudokuCheck').onclick = () => {
+      // Check if all cells are filled and match solution
+      let correct = true, filled = true;
+      for (let r = 0; r < 4; r++) {
+        for (let c = 0; c < 4; c++) {
+          if (state_.board[r][c] === 0) { filled = false; break; }
+          if (state_.board[r][c] !== solution[r][c]) { correct = false; }
+        }
+      }
+      if (!filled) { flashCloudIndicator('Fill all cells first!', '#d08030'); return; }
+      if (correct) {
+        document.querySelectorAll('.sudoku-cell').forEach(c => c.classList.add('correct-set'));
+        setTimeout(() => minigameWin('sudoku'), 1200);
+      } else {
+        // Mark wrong cells
+        document.querySelectorAll('.sudoku-cell').forEach(cell => {
+          const r = +cell.dataset.r, c = +cell.dataset.c;
+          if (revealed[r][c] === 0 && state_.board[r][c] !== solution[r][c]) {
+            cell.classList.add('wrong');
+          }
+        });
+        flashCloudIndicator('Some cells are wrong — try again!', '#d04040');
+      }
+    };
+  }
+  render();
+  setMsg("Fill every row, column, and box with 1-4. No repeats!");
+  setActions([{ label: '⬅ GIVE UP', back: true, onClick: exitMiniGame }]);
+}
+
+// =========================================================================
+// 🃏 MEMORY MATCH
+// =========================================================================
+function startMemoryGame() {
+  state.screen = 'minigame-memory';
+  // 4x4 grid = 8 pairs
+  const pool = [25, 133, 387, 390, 393, 396, 129, 447];
+  const cards = [...pool, ...pool].sort(() => Math.random() - 0.5);
+  const flipped = new Set();
+  const matched = new Set();
+  let first = -1, waiting = false;
+
+  function render() {
+    let html = `
+      <div class="party-screen fade-in" style="padding:12px;">
+        <h2>🃏 MEMORY MATCH — Find all 8 pairs!</h2>
+        <div style="background:rgba(0,0,0,0.4);padding:6px;border-radius:6px;margin-bottom:10px;font-size:9px;color:#fff;text-align:center;">
+          Matched: <b>${matched.size / 2}</b>/8 pairs
+        </div>
+        <div class="memory-board" style="grid-template-columns:repeat(4, 1fr);">
+    `;
+    cards.forEach((pid, i) => {
+      const isFlipped = flipped.has(i) || matched.has(i);
+      const isMatched = matched.has(i);
+      html += `<div class="memory-card ${isFlipped ? 'flipped' : ''} ${isMatched ? 'matched' : ''}" data-i="${i}">
+        ${isFlipped ? `<img src="${SPRITE_FRONT(pid)}" alt="p">` : ''}
+      </div>`;
+    });
+    html += '</div></div>';
+    screen.innerHTML = html;
+    document.querySelectorAll('.memory-card').forEach(c => {
+      c.onclick = () => {
+        if (waiting) return;
+        const i = +c.dataset.i;
+        if (flipped.has(i) || matched.has(i)) return;
+        flipped.add(i);
+        if (first === -1) {
+          first = i;
+          render();
+        } else {
+          render();
+          if (cards[i] === cards[first]) {
+            // Match!
+            matched.add(i); matched.add(first);
+            flipped.clear();
+            first = -1;
+            setTimeout(() => {
+              render();
+              if (matched.size === cards.length) {
+                setTimeout(() => minigameWin('memory'), 600);
+              }
+            }, 400);
+          } else {
+            waiting = true;
+            setTimeout(() => {
+              flipped.clear();
+              first = -1;
+              waiting = false;
+              render();
+            }, 900);
+          }
+        }
+      };
+    });
+  }
+  render();
+  setMsg("Flip cards to find matching Pokemon pairs. Find all 8!");
+  setActions([{ label: '⬅ GIVE UP', back: true, onClick: exitMiniGame }]);
+}
+
+// =========================================================================
+// 🔐 MATH ESCAPE ROOM
+// =========================================================================
+function startEscapeGame() {
+  state.screen = 'minigame-escape';
+  const problems = [
+    { q: 'A dragon has 7 heads. Each head has 4 horns. How many horns total?', a: 28, hint: '7 × 4 = ?' },
+    { q: 'Legendary birds come in groups of 3. If there are 24 birds, how many groups?', a: 8, hint: '24 ÷ 3 = ?' },
+    { q: 'The final gate shows: (6 × 5) + 12 = ?', a: 42, hint: 'Do times first, then add. 6×5=30, then 30+12.' },
+  ];
+  let step = 0;
+
+  function render() {
+    if (step >= problems.length) { minigameWin('escape'); return; }
+    const p = problems[step];
+    const dots = problems.map((_, i) =>
+      `<div class="dot ${i < step ? 'done' : i === step ? 'current' : ''}">${i < step ? '✓' : i+1}</div>`
+    ).join('');
+    screen.innerHTML = `
+      <div class="party-screen fade-in" style="padding:16px;">
+        <h2>🔐 MATH ESCAPE ROOM</h2>
+        <div class="escape-progress">${dots}</div>
+        <div class="escape-panel">
+          <h3>🗝️ PUZZLE ${step + 1} OF 3</h3>
+          <p>${p.q}</p>
+          <div style="margin-top:12px;display:flex;gap:6px;">
+            <input id="escAns" type="number" style="flex:1;padding:10px;font-family:inherit;font-size:14px;border:2px solid var(--fr-brown);border-radius:4px;" placeholder="Your answer...">
+            <button class="btn primary" id="escSubmit" style="font-size:10px;">SUBMIT</button>
+          </div>
+          <button class="btn" id="escHint" style="font-size:8px;margin-top:8px;width:100%;">💡 HINT</button>
+          <div id="escResult" style="font-size:9px;margin-top:8px;min-height:14px;"></div>
+        </div>
+      </div>
+    `;
+    const input = document.getElementById('escAns');
+    const result = document.getElementById('escResult');
+    input.focus();
+    document.getElementById('escHint').onclick = () => { result.textContent = '💡 ' + p.hint; result.style.color = '#c08020'; };
+    const submit = () => {
+      const ans = parseInt(input.value, 10);
+      if (ans === p.a) {
+        result.style.color = '#208020';
+        result.textContent = '✓ Correct! Lock clicks open...';
+        setTimeout(() => { step++; render(); }, 1100);
+      } else {
+        result.style.color = '#a02020';
+        result.textContent = `Not quite — try again! (You typed: ${isNaN(ans) ? 'nothing' : ans})`;
+        input.value = '';
+      }
+    };
+    document.getElementById('escSubmit').onclick = submit;
+    input.addEventListener('keypress', e => { if (e.key === 'Enter') submit(); });
+  }
+  render();
+  setMsg("Solve each puzzle to unlock the next door!");
+  setActions([{ label: '⬅ GIVE UP', back: true, onClick: exitMiniGame }]);
+}
+
+// =========================================================================
+// FAMILY GYMS — 11 personalized challenges
+// =========================================================================
+function enterFamilyGym(id) {
+  const gym = FAMILY_GYMS.find(g => g.id === id);
+  if (!gym) return;
+  state.screen = 'family-gym';
+  state.returnPos = state.returnPos || { x: state.player.x, y: state.player.y };
+  state.currentFamilyGym = gym;
+  const uri = caricatureDataUri(gym.id);
+  const defeated = state.defeatedFamilyGyms && state.defeatedFamilyGyms[gym.id];
+  screen.innerHTML = `
+    <div class="trainer-intro fade-in" style="padding:14px;">
+      <div style="background:linear-gradient(90deg,#ff70a0,#ffd030,#70e0ff,#a070ff);background-size:400% 400%;animation:familyShimmer 3s ease infinite;padding:6px 14px;border-radius:4px;font-size:10px;color:#fff;margin-bottom:10px;text-shadow:1px 1px 0 #000;">
+        ⭐ FAMILY GYM — ${gym.title.toUpperCase()} ${defeated ? '✓ CLEARED' : ''}
+      </div>
+      <img class="trainer-portrait" src="${uri}" alt="${gym.leader}"
+           style="width:120px;height:120px;border-color:#ffd030;box-shadow:0 0 30px rgba(255,208,48,0.7);">
+      <div class="trainer-name" style="color:#ffd030;">${gym.leader}</div>
+      <div class="trainer-role">${gym.title}</div>
+      <div class="trainer-fact" style="border-left-color:#ffd030;max-width:560px;">
+        ${gym.intro}<br><br>
+        <b style="color:#ffd030;">🎁 REWARD:</b> Win to battle & capture <b>${gym.rewardName}</b>!
+      </div>
+    </div>
+  `;
+  setMsg(`${gym.leader} is ready to challenge you!`);
+  setActions([
+    { label: '▶ START CHALLENGE', primary: true, onClick: () => startFamilyMinigame(gym) },
+    { label: '⬅ LEAVE', back: true, onClick: exitMiniGame },
+  ]);
+}
+
+async function familyGymWin(gym) {
+  if (!state.defeatedFamilyGyms) state.defeatedFamilyGyms = {};
+  state.defeatedFamilyGyms[gym.id] = true;
+  saveLocal();
+  setMsg(`🏆 ${gym.leader}: "You did it! Here comes ${gym.rewardName.toUpperCase()}!"`);
+  setActions([]);
+  await sleep(1600);
+  const wild = makeMon(gym.reward, gym.level);
+  state.battle = { wild };
+  state.screen = 'battle';
+  renderBattle(true);
+  setMsg(`A wild ${gym.rewardName.toUpperCase()} appeared!`);
+  setTimeout(battleMainMenu, 1100);
+}
+
+function startFamilyMinigame(gym) {
+  const map = {
+    bike_race:  startBikeRaceGame,
+    aerospace:  startAerospaceGame,
+    cooking:    startCookingGame,
+    royalty:    startRoyaltyGame,
+    tictactoe:  startTicTacToeGame,
+    concert:    startConcertGame,
+    pharmacy:   startPharmacyGame,
+    basketball: startBasketballGame,
+    car_race:   startCarRaceGame,
+    soccer:     startSoccerGame,
+    running:    startRunningGame,
+  };
+  const fn = map[gym.minigame];
+  if (fn) fn(gym);
+  else setMsg("This challenge isn't built yet!");
+}
+
+// Shared helper: series of math problems — win after N correct
+async function mathSeries(gym, problems, wrapMsg, leadColor='#ffd030') {
+  let i = 0, correct = 0;
+  function renderProblem() {
+    if (i >= problems.length) return familyGymWin(gym);
+    const p = problems[i];
+    screen.innerHTML = `
+      <div class="party-screen fade-in" style="padding:14px;">
+        <h2 style="color:${leadColor};">${gym.title}</h2>
+        <div class="escape-progress">${problems.map((_, idx) =>
+          `<div class="dot ${idx < i ? 'done' : idx === i ? 'current' : ''}">${idx < i ? '✓' : idx+1}</div>`
+        ).join('')}</div>
+        <div class="escape-panel">
+          <h3>${gym.leader.toUpperCase()}: ${wrapMsg}</h3>
+          <p style="font-size:11px;">${p.q}</p>
+          <div style="margin-top:12px;display:flex;gap:6px;">
+            <input id="famAns" type="number" style="flex:1;padding:10px;font-family:inherit;font-size:14px;border:2px solid var(--fr-brown);border-radius:4px;" placeholder="Your answer...">
+            <button class="btn primary" id="famSubmit" style="font-size:10px;">SUBMIT</button>
+          </div>
+          ${p.hint ? `<button class="btn" id="famHint" style="font-size:8px;margin-top:8px;width:100%;">💡 HINT</button>` : ''}
+          <div id="famResult" style="font-size:9px;margin-top:8px;min-height:14px;"></div>
+        </div>
+      </div>
+    `;
+    const input = document.getElementById('famAns');
+    const result = document.getElementById('famResult');
+    input.focus();
+    if (p.hint) document.getElementById('famHint').onclick = () => { result.textContent = '💡 ' + p.hint; result.style.color = '#c08020'; };
+    const submit = () => {
+      const ans = parseFloat(input.value);
+      if (Math.abs(ans - p.a) < 0.01) {
+        result.style.color = '#208020';
+        result.textContent = '✓ Correct! ' + (p.nextText || '');
+        correct++;
+        setTimeout(() => { i++; renderProblem(); }, 1100);
+      } else {
+        result.style.color = '#a02020';
+        result.textContent = `Not quite — try again! (You typed: ${isNaN(ans) ? 'nothing' : ans})`;
+        input.value = '';
+      }
+    };
+    document.getElementById('famSubmit').onclick = submit;
+    input.addEventListener('keypress', e => { if (e.key === 'Enter') submit(); });
+  }
+  setActions([{ label: '⬅ GIVE UP', back: true, onClick: exitMiniGame }]);
+  renderProblem();
+}
+
+// === Massoud's Aerospace Engineering ===
+function startAerospaceGame(gym) {
+  const problems = [
+    { q: "🚀 Our rocket burns 12 tons of fuel every minute. How many tons will it burn in 5 minutes?", a: 60, hint: "12 × 5 = ?", nextText: "Stage 1 built!" },
+    { q: "🛰️ The rocket travels 8 km per second. How far does it go in 60 seconds?", a: 480, hint: "8 × 60 = ?", nextText: "Engine calibrated!" },
+    { q: "🌌 We need enough food for 4 astronauts. Each eats 3 meals a day for 7 days. Total meals?", a: 84, hint: "4 astronauts × 3 meals × 7 days", nextText: "Provisions loaded! Countdown...3...2...1..." },
+  ];
+  mathSeries(gym, problems, "Solve to build the rocket!", '#70a0ff');
+}
+
+// === Fafa's Ghormeh Sabzi Kitchen ===
+function startCookingGame(gym) {
+  const problems = [
+    { q: "🌿 The recipe uses 3 cups of herbs for 6 servings. How many cups for 12 servings?", a: 6, hint: "Double the servings = double the herbs. 3 × 2 = ?" },
+    { q: "🍋 You need 2 limes per serving. How many limes for 8 servings?", a: 16, hint: "2 × 8 = ?" },
+    { q: "⏰ Simmer time is 90 minutes. How many hours is that? (answer as a decimal like 1.5)", a: 1.5, hint: "60 minutes = 1 hour. 90 ÷ 60 = ?" },
+  ];
+  mathSeries(gym, problems, "Let's scale this recipe — math is cooking!", '#d06090');
+}
+
+// === Azadeh's Law Firm (Michael Jackson royalties, with Thriller beat) ===
+function startRoyaltyGame(gym) {
+  playThrillerBeat();
+  const problems = [
+    { q: "🎬 The movie earned $1,000,000. MJ's family gets 10% royalties. How much do they receive?", a: 100000, hint: "10% = 1/10. Move decimal one place: $1,000,000 → $100,000." },
+    { q: "💵 Another film made $500,000 and the family gets 20%. How much?", a: 100000, hint: "20% = 1/5. $500,000 ÷ 5 = ?" },
+    { q: "⭐ A Thriller re-release made $2,000,000 at 15% royalty. How much?", a: 300000, hint: "15% = 10% + 5%. 10% of 2,000,000 = 200,000. 5% = 100,000. Add them." },
+  ];
+  mathSeries(gym, problems, "Calculate MJ's family's royalties! 🎶", '#8080e0');
+}
+
+function playThrillerBeat() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Iconic Thriller bassline-inspired sequence
+    const notes = [ // freq Hz, start time, duration
+      [146, 0.0, 0.15], [146, 0.2, 0.15], [196, 0.4, 0.2], [146, 0.7, 0.15],
+      [220, 1.0, 0.2], [196, 1.3, 0.15], [146, 1.6, 0.2],
+    ];
+    const doLoop = (offset) => {
+      notes.forEach(([f, t, d]) => {
+        const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = 'square'; osc.frequency.value = f;
+        gain.gain.setValueAtTime(0, ctx.currentTime + offset + t);
+        gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + offset + t + 0.02);
+        gain.gain.linearRampToValueAtTime(0, ctx.currentTime + offset + t + d);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(ctx.currentTime + offset + t); osc.stop(ctx.currentTime + offset + t + d);
+      });
+    };
+    for (let l = 0; l < 4; l++) doLoop(l * 2.0); // 4 loops
+  } catch (e) { /* audio blocked */ }
+}
+
+// === Jason's Concert Hall ===
+function startConcertGame(gym) {
+  const problems = [
+    { q: "🎤 We sell 500 tickets at $45 each. Total revenue?", a: 22500, hint: "500 × 45. Think: 5 × 45 = 225, then add two zeros." },
+    { q: "🎟️ 1,200 tickets at $30 each. Total?", a: 36000, hint: "12 × 30 = 360, then add two zeros." },
+    { q: "💰 Sold out 3,000 seats at $75 each. How much did we make?", a: 225000, hint: "3 × 75 = 225. Then 225 × 1000." },
+  ];
+  mathSeries(gym, problems, "Help me calculate ticket sales!", '#b080e0');
+}
+
+// === Yaya's Pharmacy ===
+function startPharmacyGame(gym) {
+  const problems = [
+    { q: "💊 Patient #1 needs 15mg of medicine A, 25mg of B, and 10mg of C. Total dose?", a: 50, hint: "15 + 25 + 10 = ?" },
+    { q: "🏥 Patient #2 takes 8mg every 4 hours. How much in 12 hours?", a: 24, hint: "12 hours ÷ 4 = 3 doses. 3 × 8mg = ?" },
+    { q: "💉 Three patients each need 35mg. Total mg to prepare?", a: 105, hint: "3 × 35 = ? (30×3 + 5×3)" },
+  ];
+  mathSeries(gym, problems, "Let's dose the medicine correctly!", '#60c070');
+}
+
+// === Coco's Tic-Tac-Toe Palace (Ana-themed, girly) ===
+function startTicTacToeGame(gym) {
+  state.screen = 'family-minigame';
+  const board = [null,null,null,null,null,null,null,null,null];
+  const player = '🌸', ai = '💫';
+  let over = false;
+
+  function render() {
+    const cells = board.map((v, i) => `
+      <div class="ttt-cell" data-i="${i}" style="background:${v ? '#fff0f8' : '#ffd0e6'};border:3px solid #e060a0;border-radius:12px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:40px;cursor:pointer;">${v || ''}</div>
+    `).join('');
+    screen.innerHTML = `
+      <div class="party-screen fade-in" style="padding:16px;background:linear-gradient(180deg,#ffd0e6,#f8a0c8);">
+        <h2 style="color:#a04080;text-shadow:1px 1px 0 #fff;">💖 Coco's Tic-Tac-Toe 💖</h2>
+        <div style="background:rgba(255,255,255,0.6);padding:8px;border-radius:10px;margin-bottom:12px;font-size:9px;color:#a04080;text-align:center;">
+          You are 🌸 blossoms. Coco is 💫 sparkles. Get 3 in a row to win!
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:320px;margin:0 auto;">${cells}</div>
+      </div>
+    `;
+    document.querySelectorAll('.ttt-cell').forEach(c => {
+      c.onclick = () => {
+        if (over) return;
+        const i = +c.dataset.i;
+        if (board[i]) return;
+        board[i] = player;
+        if (checkWin(player)) { over = true; render(); setTimeout(() => familyGymWin(gym), 1100); return; }
+        if (board.every(v => v)) { over = true; render(); setTimeout(() => { setMsg("Tie game! Try again."); setActions([{label:'🔄 REPLAY',primary:true,onClick:()=>startTicTacToeGame(gym)},{label:'⬅ LEAVE',back:true,onClick:exitMiniGame}]); }, 800); return; }
+        aiMove();
+        render();
+        if (checkWin(ai)) { over = true; setTimeout(() => { setMsg("Coco won this round! Try again!"); setActions([{label:'🔄 REPLAY',primary:true,onClick:()=>startTicTacToeGame(gym)},{label:'⬅ LEAVE',back:true,onClick:exitMiniGame}]); }, 800); }
+      };
+    });
+  }
+  function checkWin(sym) {
+    const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    return lines.some(l => l.every(i => board[i] === sym));
+  }
+  function aiMove() {
+    // Try to win, then block, then center/corner
+    for (const sym of [ai, player]) {
+      const lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+      for (const l of lines) {
+        const vals = l.map(i => board[i]);
+        const symCount = vals.filter(v => v === sym).length;
+        const empties = l.filter(i => !board[i]);
+        if (symCount === 2 && empties.length === 1) { board[empties[0]] = ai; return; }
+      }
+    }
+    const prefs = [4, 0, 2, 6, 8, 1, 3, 5, 7];
+    for (const p of prefs) if (!board[p]) { board[p] = ai; return; }
+  }
+  render();
+  setActions([{ label: '⬅ GIVE UP', back: true, onClick: exitMiniGame }]);
+  setMsg("Place your 🌸 to get 3 in a row before Coco does!");
+}
+
+// === Mikey's Basketball (timing bar) ===
+function startBasketballGame(gym) {
+  state.screen = 'family-minigame';
+  let shots = 0, made = 0, over = false;
+  let pos = 0, dir = 1;
+  function render() {
+    screen.innerHTML = `
+      <div class="party-screen fade-in" style="padding:16px;background:linear-gradient(180deg,#f0a040,#c06020);">
+        <h2 style="color:#fff;text-shadow:2px 2px 0 #000;">🏀 Mikey's Free Throw Line</h2>
+        <div style="background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;margin-bottom:12px;font-size:9px;color:#fff;text-align:center;">
+          Made: <b>${made}</b>/5 &nbsp;|&nbsp; Attempts: <b>${shots}</b>/8<br>Tap SHOOT when the ball is in the GREEN zone!
+        </div>
+        <div style="font-size:80px;text-align:center;margin:10px 0;">🏀</div>
+        <div style="background:#444;height:40px;border-radius:8px;position:relative;max-width:440px;margin:0 auto;overflow:hidden;">
+          <div style="position:absolute;left:40%;width:20%;height:100%;background:#30c030;"></div>
+          <div id="ballMark" style="position:absolute;width:16px;height:100%;background:#fff;left:${pos}%;transition:left 0.05s linear;border-radius:4px;"></div>
+        </div>
+        <button class="btn primary" id="shootBtn" style="width:100%;margin-top:14px;font-size:14px;padding:18px;">🏀 SHOOT!</button>
+        <div id="shotResult" style="font-size:10px;text-align:center;margin-top:8px;color:#fff;min-height:14px;"></div>
+      </div>
+    `;
+    document.getElementById('shootBtn').onclick = () => {
+      if (over) return;
+      shots++;
+      const sweet = pos >= 40 && pos <= 60;
+      const result = document.getElementById('shotResult');
+      if (sweet) { made++; result.textContent = '✓ SWISH!'; result.style.color='#90ff90'; }
+      else       { result.textContent = '❌ MISS!'; result.style.color='#ff9090'; }
+      if (made >= 5) { over = true; setTimeout(() => familyGymWin(gym), 900); return; }
+      if (shots >= 8) { over = true; setTimeout(() => { setMsg(`Only ${made}/5 — try again!`); setActions([{label:'🔄 REPLAY',primary:true,onClick:()=>startBasketballGame(gym)},{label:'⬅ LEAVE',back:true,onClick:exitMiniGame}]); }, 900); return; }
+      render();
+    };
+  }
+  let animId;
+  function animate() {
+    if (over) return;
+    pos += dir * 1.8;
+    if (pos >= 100) dir = -1;
+    if (pos <= 0) dir = 1;
+    const mark = document.getElementById('ballMark');
+    if (mark) mark.style.left = pos + '%';
+    animId = requestAnimationFrame(animate);
+  }
+  render();
+  animate();
+  setActions([{ label: '⬅ GIVE UP', back: true, onClick: () => { over = true; exitMiniGame(); } }]);
+  setMsg("Tap SHOOT when the ball hits the green zone! Get 5 swishes!");
+}
+
+// === Benjamin's Soccer (click to aim, goalie moves) ===
+function startSoccerGame(gym) {
+  state.screen = 'family-minigame';
+  let goals = 0, shots = 0, over = false;
+  let keeperX = 150;
+  let keeperDir = 1;
+  function render() {
+    screen.innerHTML = `
+      <div class="party-screen fade-in" style="padding:16px;background:linear-gradient(180deg,#60a030,#306020);">
+        <h2 style="color:#fff;text-shadow:2px 2px 0 #000;">⚽ Benjamin's Soccer Pitch</h2>
+        <div style="background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;margin-bottom:12px;font-size:9px;color:#fff;text-align:center;">
+          Goals: <b>${goals}</b>/3 &nbsp;|&nbsp; Shots: <b>${shots}</b>/6<br>Click/tap the GOAL where you want to shoot!
+        </div>
+        <svg viewBox="0 0 400 200" style="width:100%;max-width:500px;display:block;margin:0 auto;background:#70b040;border:3px solid #fff;border-radius:8px;">
+          <rect x="40" y="30" width="320" height="100" fill="none" stroke="#fff" stroke-width="4"/>
+          <rect id="netL" x="40" y="30" width="320" height="100" fill="rgba(255,255,255,0.1)"/>
+          <rect id="keeper" x="${keeperX}" y="50" width="40" height="60" fill="#ffd030" stroke="#000" stroke-width="2"/>
+          <circle cx="200" cy="170" r="10" fill="#fff" stroke="#000" stroke-width="2"/>
+        </svg>
+        <div id="shotResult" style="font-size:12px;text-align:center;margin-top:8px;color:#fff;min-height:14px;"></div>
+      </div>
+    `;
+    const svg = document.querySelector('svg');
+    svg.onclick = (e) => {
+      if (over) return;
+      const rect = svg.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width * 400;
+      const y = (e.clientY - rect.top) / rect.height * 200;
+      if (y > 130 || y < 30 || x < 40 || x > 360) return; // must aim at goal
+      shots++;
+      // Does keeper block?
+      const blocked = x >= keeperX && x <= keeperX + 40 && y >= 50 && y <= 110;
+      const result = document.getElementById('shotResult');
+      if (!blocked) { goals++; result.textContent = '⚽ GOAAAAL!'; result.style.color='#ffff90'; }
+      else          { result.textContent = '🧤 Saved by the keeper!'; result.style.color='#ff9090'; }
+      if (goals >= 3) { over = true; setTimeout(() => familyGymWin(gym), 900); return; }
+      if (shots >= 6) { over = true; setTimeout(() => { setMsg(`Only ${goals}/3 — try again!`); setActions([{label:'🔄 REPLAY',primary:true,onClick:()=>startSoccerGame(gym)},{label:'⬅ LEAVE',back:true,onClick:exitMiniGame}]); }, 900); return; }
+      setTimeout(render, 600);
+    };
+  }
+  function animate() {
+    if (over) return;
+    keeperX += keeperDir * 2.5;
+    if (keeperX >= 280) keeperDir = -1;
+    if (keeperX <= 60) keeperDir = 1;
+    const k = document.getElementById('keeper');
+    if (k) k.setAttribute('x', keeperX);
+    requestAnimationFrame(animate);
+  }
+  render();
+  animate();
+  setActions([{ label: '⬅ GIVE UP', back: true, onClick: () => { over = true; exitMiniGame(); } }]);
+  setMsg("Click the goal to shoot past the keeper! Score 3!");
+}
+
+// === Melody's Running (rhythm: press SPACE to pace the beat) ===
+function startRunningGame(gym) {
+  state.screen = 'family-minigame';
+  let beats = 0, correct = 0, over = false;
+  let lastBeat = 0;
+  const bpm = 120;
+  const beatInterval = 60000 / bpm;
+  function render() {
+    screen.innerHTML = `
+      <div class="party-screen fade-in" style="padding:16px;background:linear-gradient(180deg,#f060a0,#a03060);">
+        <h2 style="color:#fff;text-shadow:2px 2px 0 #000;">🏃 Melody's Running Track</h2>
+        <div style="background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;margin-bottom:12px;font-size:9px;color:#fff;text-align:center;">
+          Perfect steps: <b>${correct}</b>/8<br>Tap STEP or press SPACE each time the circle pulses!
+        </div>
+        <div id="beatCircle" style="width:160px;height:160px;border-radius:50%;background:#ffd030;margin:20px auto;transition:transform 0.1s, background 0.1s;box-shadow:0 0 30px rgba(255,208,48,0.6);"></div>
+        <button class="btn primary" id="stepBtn" style="width:100%;font-size:14px;padding:18px;">🏃 STEP!</button>
+        <div id="runResult" style="font-size:10px;text-align:center;margin-top:8px;color:#fff;min-height:14px;"></div>
+      </div>
+    `;
+    document.getElementById('stepBtn').onclick = step;
+  }
+  function step() {
+    if (over) return;
+    const now = performance.now();
+    const offset = Math.abs(now - lastBeat);
+    const res = document.getElementById('runResult');
+    if (offset < 180) { correct++; res.textContent = '✓ PERFECT STEP!'; res.style.color='#90ff90'; }
+    else              { correct = Math.max(0, correct - 1); res.textContent = '❌ Off-beat!'; res.style.color='#ff9090'; }
+    if (correct >= 8) { over = true; setTimeout(() => familyGymWin(gym), 900); return; }
+    render();
+  }
+  function pulse() {
+    if (over) return;
+    lastBeat = performance.now();
+    const c = document.getElementById('beatCircle');
+    if (c) { c.style.transform = 'scale(1.15)'; c.style.background = '#ff70a0'; setTimeout(() => { if (c) { c.style.transform='scale(1)'; c.style.background='#ffd030'; } }, 150); }
+    beats++;
+    if (beats > 16 && correct < 8) { over = true; setMsg(`${correct}/8 perfect steps — try again!`); setActions([{label:'🔄 REPLAY',primary:true,onClick:()=>startRunningGame(gym)},{label:'⬅ LEAVE',back:true,onClick:exitMiniGame}]); return; }
+    setTimeout(pulse, beatInterval);
+  }
+  function keyHandler(e) { if (e.code === 'Space') { e.preventDefault(); step(); } }
+  window.addEventListener('keydown', keyHandler);
+  const cleanup = () => { over = true; window.removeEventListener('keydown', keyHandler); };
+  render();
+  pulse();
+  setActions([{ label: '⬅ GIVE UP', back: true, onClick: () => { cleanup(); exitMiniGame(); } }]);
+  setMsg("Tap STEP in time with the pulsing beat! Stay on tempo!");
+}
+
+// === David's Bike Race & Matson's Car Race — reuse 3D engine with themed opponents ===
+function startBikeRaceGame(gym) { _startThemedRace(gym, { title: "David's Bike Race", vehicleScale: 0.75, vehicleColor: 0x40a040 }); }
+function startCarRaceGame(gym)  { _startThemedRace(gym, { title: "Matson's Speedway", vehicleScale: 1.1,  vehicleColor: 0x202020 }); }
+
+function _startThemedRace(gym, opts) {
+  state.screen = 'minigame-race';
+  screen.innerHTML = `
+    <div class="minigame-screen">
+      <canvas id="raceCanvas"></canvas>
+      <div class="race-hud">🏁 Lap <b id="raceLap">1</b>/3 • Place: <b id="racePlace">1</b>/4 • Speed: <b id="raceSpeed">0</b></div>
+    </div>
+  `;
+  setMsg(opts.title + " — UP to go, LEFT/RIGHT to steer, DOWN to brake. 3 laps to win!");
+  setActions([{ label: '⬅ GIVE UP', back: true, onClick: exitMiniGame }]);
+  if (typeof THREE === 'undefined') { setMsg('3D engine not loaded. Refresh the page.'); return; }
+
+  const canvas = document.getElementById('raceCanvas');
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width; canvas.height = rect.height;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x70a0d0);
+  scene.fog = new THREE.Fog(0x70a0d0, 50, 250);
+  const camera = new THREE.PerspectiveCamera(70, rect.width/rect.height, 0.1, 500);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setSize(rect.width, rect.height);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.8); sun.position.set(20,50,20); scene.add(sun);
+  scene.add(Object.assign(new THREE.Mesh(new THREE.PlaneGeometry(400,400), new THREE.MeshLambertMaterial({color:0x58a048})), { rotation: new THREE.Euler(-Math.PI/2,0,0) }));
+  const trackRadius = 60, trackWidth = 12;
+  const track = new THREE.Mesh(new THREE.RingGeometry(trackRadius-trackWidth/2, trackRadius+trackWidth/2, 64), new THREE.MeshLambertMaterial({color:0x4a4a4a}));
+  track.rotation.x = -Math.PI/2; track.position.y = 0.05; scene.add(track);
+
+  const racers = [];
+  const playerMon = state.party[state.activeMon];
+  function createRacer(color, pid, isPlayer, lane) {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2*opts.vehicleScale,0.8*opts.vehicleScale,3*opts.vehicleScale), new THREE.MeshLambertMaterial({color}));
+    body.position.y = 0.6; g.add(body);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.TextureLoader().load(SPRITE_FRONT(pid))}));
+    sprite.scale.set(2.5,2.5,1); sprite.position.y = 2.5; g.add(sprite);
+    const startAngle = -0.05 + lane * 0.03;
+    g.position.set(Math.cos(startAngle)*trackRadius, 0, Math.sin(startAngle)*trackRadius);
+    g.rotation.y = -Math.PI/2 - startAngle;
+    scene.add(g);
+    return { group:g, isPlayer, angle:startAngle, radius:trackRadius+(lane-1.5)*2.5, speed:0, lap:0, pokemonId:pid, finished:false };
+  }
+  racers.push(createRacer(opts.vehicleColor, playerMon.id, true, 0));
+  const aiPool = [133, 25, 447, 445, 448];
+  for (let i = 0; i < 3; i++) racers.push(createRacer([0xe03030,0xe0e030,0x3030e0][i], aiPool[Math.floor(Math.random()*aiPool.length)], false, i+1));
+  const player = racers[0];
+  const keys = { up:false, down:false, left:false, right:false };
+  const setKey = (c,d) => { if(c==='ArrowUp'||c==='KeyW')keys.up=d; if(c==='ArrowDown'||c==='KeyS')keys.down=d; if(c==='ArrowLeft'||c==='KeyA')keys.left=d; if(c==='ArrowRight'||c==='KeyD')keys.right=d; };
+  const kd = e => { setKey(e.code,true); e.preventDefault(); };
+  const ku = e => { setKey(e.code,false); e.preventDefault(); };
+  window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
+  const dpadBtns = document.querySelectorAll('#dpad .dpad-btn[data-dir]');
+  const dpadH = [];
+  dpadBtns.forEach(b => { const dir=b.dataset.dir; const down=()=>{keys[dir]=true;}; const up=()=>{keys[dir]=false;}; b.addEventListener('pointerdown',down); b.addEventListener('pointerup',up); b.addEventListener('pointercancel',up); b.addEventListener('pointerleave',up); dpadH.push({b,down,up}); });
+  let running = true, lastTime = performance.now();
+  function stop() { running=false; window.removeEventListener('keydown',kd); window.removeEventListener('keyup',ku); dpadH.forEach(({b,down,up})=>{b.removeEventListener('pointerdown',down);b.removeEventListener('pointerup',up);b.removeEventListener('pointercancel',up);b.removeEventListener('pointerleave',up);}); renderer.dispose(); }
+  state.race = { stop };
+  function animate(now) {
+    if (!running) return;
+    const dt = Math.min(0.05, (now-lastTime)/1000); lastTime = now;
+    racers.forEach(r => {
+      if (r.finished) return;
+      if (r.isPlayer) {
+        if (keys.up) r.speed = Math.min(r.speed+12*dt, 25);
+        else if (keys.down) r.speed = Math.max(r.speed-20*dt, -6);
+        else r.speed *= (1 - 0.6*dt);
+        if (keys.left) r.radius = Math.max(trackRadius-trackWidth/2+1, r.radius - 8*dt);
+        if (keys.right) r.radius = Math.min(trackRadius+trackWidth/2-1, r.radius + 8*dt);
+      } else {
+        const t = 15 + (r.pokemonId % 4)*1.5;
+        r.speed += (r.speed<t ? 8 : -4) * dt;
+      }
+      r.angle += (r.speed / r.radius) * dt;
+      if (r.angle > Math.PI*2) { r.angle -= Math.PI*2; r.lap++; if (r.isPlayer && r.lap>=3) r.finished = true; }
+      r.group.position.set(Math.cos(r.angle)*r.radius, 0, Math.sin(r.angle)*r.radius);
+      r.group.rotation.y = -Math.PI/2 - r.angle;
+    });
+    const behindAngle = player.angle - 0.15;
+    camera.position.set(Math.cos(behindAngle)*(player.radius+6), 4, Math.sin(behindAngle)*(player.radius+6));
+    camera.lookAt(player.group.position.x, 1, player.group.position.z);
+    const place = racers.filter(r => r.lap*1000+r.angle > player.lap*1000+player.angle).length + 1;
+    const hLap=document.getElementById('raceLap'); const hPlace=document.getElementById('racePlace'); const hSpeed=document.getElementById('raceSpeed');
+    if (hLap) hLap.textContent = Math.min(3, player.lap+1);
+    if (hPlace) hPlace.textContent = place;
+    if (hSpeed) hSpeed.textContent = Math.round(player.speed*5);
+    renderer.render(scene, camera);
+    if (player.finished) {
+      running = false; const aiAhead = racers.filter(r => !r.isPlayer && r.lap >= 3).length; stop();
+      if (aiAhead === 0) setTimeout(() => familyGymWin(gym), 800);
+      else { setMsg(`Finished ${aiAhead+1}${aiAhead===0?'st':'nd'} — try again!`); setActions([{label:'🔄 RACE AGAIN',primary:true,onClick:()=>_startThemedRace(gym, opts)},{label:'⬅ LEAVE',back:true,onClick:exitMiniGame}]); }
+      return;
+    }
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+}
+
+// Pokedex viewer — shows all Pokemon species with caught/uncaught status
+function showPokedexViewer() {
+  state.screen = 'pokedex';
+  const caught = state.caughtSpecies || {};
+  const allIds = Object.keys(POKEDEX).map(Number).sort((a,b) => a - b);
+  const totalCaught = allIds.filter(id => caught[id]).length;
+  const pct = Math.round((totalCaught / allIds.length) * 100);
+
+  // Group by generation/range
+  const groups = [
+    { label: '🔥 KANTO (Gen 1)', range: [1, 151] },
+    { label: '🌱 SINNOH (Gen 4)', range: [387, 460] },
+    { label: '📦 OTHER', range: [0, 386] },
+  ];
+
+  const body = groups.map(group => {
+    const ids = allIds.filter(id => id >= group.range[0] && id <= group.range[1]);
+    if (ids.length === 0) return '';
+    const tiles = ids.map(id => {
+      const mon = POKEDEX[id];
+      const got = !!caught[id];
+      return `
+        <div style="background:${got ? '#fff8e0' : '#2a2a2a'};border:2px solid ${got ? '#c02020' : '#444'};border-radius:6px;padding:4px;text-align:center;opacity:${got ? 1 : 0.75};">
+          <div style="font-size:7px;color:${got ? '#666' : '#888'};">#${String(id).padStart(3,'0')}</div>
+          <img src="${got ? SPRITE_FRONT(id) : ''}" style="width:48px;height:48px;image-rendering:pixelated;${got ? '' : 'filter:brightness(0) invert(0.4);'}"
+               ${got ? '' : `onerror="this.style.display='none'"`}>
+          <div style="font-size:7px;color:${got ? '#202830' : '#888'};margin-top:2px;">${got ? mon.name.toUpperCase() : '???'}</div>
+        </div>
+      `;
+    }).join('');
+    return `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:10px;color:#ffd030;margin-bottom:6px;text-shadow:1px 1px 0 #000;">${group.label} — ${ids.filter(id => caught[id]).length}/${ids.length}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(72px, 1fr));gap:4px;">
+          ${tiles}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  screen.innerHTML = `
+    <div class="party-screen fade-in" style="padding:12px;">
+      <h2>📕 POKEDEX — ${totalCaught}/${allIds.length} (${pct}%)</h2>
+      <div style="background:rgba(0,0,0,0.5);padding:8px;border-radius:6px;margin-bottom:10px;">
+        <div style="background:#333;height:8px;border-radius:4px;overflow:hidden;">
+          <div style="background:linear-gradient(90deg, #e02020, #ffd030, #30c030);height:100%;width:${pct}%;transition:width 0.5s;"></div>
+        </div>
+        <div style="font-size:8px;color:#fff;margin-top:4px;text-align:center;">
+          ${pct < 25 ? "Just getting started! Explore every region!" :
+            pct < 50 ? "Great progress! Keep catching!" :
+            pct < 75 ? "Halfway there! You're a true trainer!" :
+            pct < 100 ? "So close to completing it! Rare Pokemon hide in Victory Road, Mt. Coronet, and Fullmoon Island!" :
+            "🏆 POKEDEX COMPLETE! YOU ARE A MASTER!"}
+        </div>
+      </div>
+      ${body}
+    </div>
+  `;
+  setMsg(`You've seen ${totalCaught} out of ${allIds.length} Pokemon species. Explore more regions to find them all!`);
+  setActions([{ label: '⬅ BACK', back: true, onClick: () => {
+    if (state.interior) renderInterior();
+    else enterOverworld();
+  }}]);
 }
 
 // Badge case screen
@@ -4843,8 +7845,10 @@ async function tryCatch() {
   const es = $('#enemySprite'); if (es) es.style.visibility = 'hidden';
 
   const hpRatio = b.wild.hp / b.wild.maxHp;
-  const mathMultiplier = mathCorrect ? 1.6 : 1.05;   // big boost if right, tiny pity if wrong
-  const chance = Math.min(0.97, b.wild.catchRate * (1.8 - hpRatio) * mathMultiplier);
+  const mathMultiplier = mathCorrect ? 1.5 : 1.0;   // boost if right
+  // CATCH HARDENING — overall 35% harder than before, legendaries harder still
+  const difficultyPenalty = b.wild.catchRate < 0.1 ? 0.5 : 0.65;
+  const chance = Math.min(0.92, b.wild.catchRate * (1.6 - hpRatio) * mathMultiplier * difficultyPenalty);
   const shakes = Math.min(3, Math.floor(chance * 4) + Math.floor(Math.random() * 2));
 
   pb.classList.add('wiggle');
@@ -4855,6 +7859,8 @@ async function tryCatch() {
   if (Math.random() < chance) {
     setMsg(`Gotcha! ${b.wild.name.toUpperCase()} was caught!${b.wild.shiny ? ' ⭐ It was SHINY!' : ''}`);
     state.caught++;
+    state.caughtSpecies = state.caughtSpecies || {};
+    state.caughtSpecies[b.wild.id] = true;
     const captured = makeMon(b.wild.id, b.wild.level, { location: state.location, date: new Date().toLocaleDateString() });
     captured.shiny = b.wild.shiny || captured.shiny;   // preserve wild's shiny flag
     captured.gender = b.wild.gender;
